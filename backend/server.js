@@ -10,6 +10,12 @@ const path = require("path")
 const app = express()
 
 // ==========================================
+// CONFIGURAÇÃO PARA RAILWAY / PROXY
+// ==========================================
+// Necessário para o express-rate-limit funcionar corretamente em hospedagens como Railway
+app.set("trust proxy", 1)
+
+// ==========================================
 // SEGURANÇA BÁSICA
 // ==========================================
 app.use(cors())
@@ -63,12 +69,14 @@ app.use("/areas-ads", areasAdsRoutes)
 // ROTA TESTE
 // ==========================================
 app.get("/", (req, res) => {
-    res.send("API rodando 🚀")
+    res.send("API rodando")
 })
 
 // ==========================================
 // SUBIR SERVIDOR
 // ==========================================
-app.listen(3000, () => {
-    console.log("Servidor rodando na porta 3000")
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`)
 })
