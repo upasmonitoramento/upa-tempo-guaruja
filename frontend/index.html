@@ -1,0 +1,4691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>UPA Tempo Guarujá</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d47a1">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding-top: 90px;
+            font-family: 'Poppins', sans-serif;
+            background:
+                radial-gradient(circle at 12% 12%, rgba(13, 71, 161, .08), transparent 28%),
+                radial-gradient(circle at 86% 18%, rgba(0, 200, 83, .06), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, #f3f6fb 42%, #eef3f8 100%);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 35px;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.78);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+            z-index: 9999;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+
+        .logo-area {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0d47a1;
+            letter-spacing: -0.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .topbar-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-buttons button {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: #0d47a1;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .topbar-buttons button:hover {
+            transform: translateY(-2px);
+            background: #1565c0;
+        }
+
+        #menuUsuario button {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #menuUsuario button:hover {
+            background: #f4f6f9 !important;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px;
+        }
+
+        .menu button {
+            padding: 10px 18px;
+            border: none;
+            background: #0d47a1;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .menu button:hover {
+            transform: scale(1.05);
+            background: #1565c0;
+        }
+
+        .btn-cadastrar-premium {
+            background: linear-gradient(135deg, #00c853, #00e676) !important;
+            color: white !important;
+            border: none;
+            padding: 12px 22px !important;
+            border-radius: 14px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 8px 20px rgba(0, 200, 83, 0.35);
+            transition: 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-cadastrar-premium:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 14px 30px rgba(0, 200, 83, 0.45);
+            background: linear-gradient(135deg, #00b248, #00d864) !important;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .ads-lateral {
+            min-height: 520px;
+            border-radius: 22px;
+            border: 2px dashed #c7d2df;
+            background: rgba(223, 230, 239, 0.65);
+            color: #7b8794;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ads-lateral.vazio::before {
+            content: "PUBLICIDADE";
+            opacity: .75;
+        }
+
+        .ads-slot {
+            width: 100%;
+            position: relative;
+            border-radius: 22px;
+            overflow: hidden;
+            background: #eef3f8;
+            border: 1px solid #d7e1ea;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ads-slot.vazio {
+            border: 2px dashed #c7d2df;
+            background: rgba(223, 230, 239, 0.65);
+            box-shadow: none;
+            color: #7b8794;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .ads-slot.tem-ads {
+            border: none;
+            background: white;
+        }
+
+        .ads-lateral-coluna {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            align-self: start;
+        }
+
+        .ads-slot-lateral {
+            min-height: 520px;
+        }
+
+        .ads-slot-lateral-pequeno {
+            min-height: 220px;
+            height: 220px;
+        }
+
+        .ads-slot-mobile {
+            display: none;
+            grid-column: 1 / -1;
+            min-height: 110px;
+            height: 120px;
+            margin: 0;
+        }
+
+        .ads-slot-banner {
+            grid-column: 1 / -1;
+            min-height: 150px;
+            height: 180px;
+            margin-top: 6px;
+        }
+
+
+
+        .ads-slot-card {
+            width: 100%;
+            height: 76px;
+            min-height: 76px;
+            margin: 14px 0;
+            border-radius: 16px;
+        }
+
+        .ads-slot-card .ads-placeholder {
+            font-size: 11px;
+            letter-spacing: .5px;
+        }
+
+        .site-soft-glow {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 8% 35%, rgba(13, 71, 161, .05), transparent 26%),
+                radial-gradient(circle at 92% 60%, rgba(0, 200, 83, .045), transparent 28%);
+        }
+
+        .ads-footer-grid {
+            max-width: 970px;
+            margin: 26px auto 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .ads-slot-footer {
+            height: 160px;
+            margin: 0;
+        }
+
+        .ads-placeholder {
+            padding: 18px;
+            color: #7b8794;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .ad-link-publico {
+            width: 100%;
+            height: 100%;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+        }
+
+        .ad-midia-publica {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .ad-etiqueta-publicidade {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 2;
+            background: rgba(0, 0, 0, .55);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+
+        .ad-numero-slot-admin {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 3;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(13, 71, 161, .92);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 900;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .28);
+        }
+
+        .ads-check-list-slots {
+            max-height: 240px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            padding: 12px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            gap: 10px;
+        }
+
+        .ads-check-slot-item {
+            display: grid;
+            grid-template-columns: 18px 34px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #eee;
+            font-weight: 800;
+            color: #0d47a1;
+            min-width: 0;
+        }
+
+        .ads-check-slot-item small {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: initial;
+            line-height: 1.2;
+        }
+
+        .ads-info-box {
+            background: #eef4ff;
+            border: 1px solid #cfe0ff;
+            color: #0d47a1;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.5;
+            margin-top: 12px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white !important;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .normal {
+            background: linear-gradient(135deg, #16a34a, #28c76f) !important;
+        }
+
+        .lotado {
+            background: linear-gradient(135deg, #ff9800, #ffb300) !important;
+        }
+
+        .critico {
+            background: linear-gradient(135deg, #d50000, #ff4d4d) !important;
+        }
+
+        #map {
+            height: 80vh;
+            display: none;
+            margin: 20px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+        }
+
+        .auth-box {
+            max-width: 430px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 22px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.13);
+            text-align: center;
+        }
+
+        .auth-box h2 {
+            color: #0d47a1;
+            margin-top: 0;
+        }
+
+        .auth-box input {
+            width: 92%;
+            padding: 13px;
+            margin: 8px 0;
+            border-radius: 12px;
+            border: 1px solid #dbdbdb;
+            transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .auth-box input:focus {
+            outline: none;
+            border-color: #0d47a1;
+            transform: scale(1.02);
+        }
+
+        .auth-box input[readonly] {
+            background: #f1f3f6;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .auth-box button {
+            padding: 13px 22px;
+            border: none;
+            background: #0d47a1;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .auth-box button:hover {
+            transform: scale(1.05);
+            background: #1565c0;
+        }
+
+        .link-btn {
+            font-size: 13px;
+            color: #0d47a1;
+            cursor: pointer;
+            margin-top: 14px;
+            font-weight: 700;
+        }
+
+        .password-msg {
+            width: 92%;
+            margin: -2px auto 10px auto;
+            font-size: 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #777;
+        }
+
+        .password-msg.ok {
+            color: #16a34a;
+        }
+
+        .password-msg.erro {
+            color: #d50000;
+        }
+
+        .input-error {
+            border-color: #d50000 !important;
+            background: #fff5f5;
+        }
+
+        .input-ok {
+            border-color: #16a34a !important;
+            background: #f7fff9;
+        }
+
+        #formulario {
+            max-width: 520px;
+            margin: 30px auto;
+            background: white;
+            padding: 28px;
+            border-radius: 22px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        #formulario h2 {
+            text-align: center;
+            margin-bottom: 22px;
+            color: #0d47a1;
+        }
+
+        #formulario input,
+        #formulario select {
+            width: 100%;
+            padding: 13px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            transition: 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #formulario input:focus,
+        #formulario select:focus {
+            outline: none;
+            border-color: #0d47a1;
+            transform: scale(1.01);
+        }
+
+        #formulario button {
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 800;
+            border: none;
+            padding: 14px;
+            background: #0d47a1;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #statusPreview {
+            font-weight: 800;
+            color: #0d47a1;
+        }
+
+        #adminPanel {
+            display: none;
+            padding: 20px;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+            margin-bottom: 22px;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .admin-table th {
+            color: #0d47a1;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .admin-table select,
+        .admin-input,
+        .admin-select {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            background: white;
+        }
+
+        .admin-input {
+            min-width: 260px;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .admin-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 9px 11px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+        }
+
+        .btn-blue {
+            background: #0d47a1;
+            color: white;
+        }
+
+        .btn-gray {
+            background: #f1f3f6;
+            color: #111;
+        }
+
+        .btn-orange {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .btn-red {
+            background: #ffebee;
+            color: #d50000;
+        }
+
+        .btn-green {
+            background: #e8f5e9;
+            color: #16a34a;
+        }
+
+        .badge-admin {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e3f2fd;
+            color: #0d47a1;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .badge-funcionario {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e8f5e9;
+            color: #16a34a;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .badge-usuario {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f1f3f6;
+            color: #333;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .badge-status {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .status-ativo {
+            background: #e8f5e9;
+            color: #16a34a;
+        }
+
+        .status-suspenso {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .status-banido {
+            background: #ffebee;
+            color: #d50000;
+        }
+
+        .status-removido {
+            background: #eceff1;
+            color: #546e7a;
+        }
+
+        .admin-modal-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            z-index: 100000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .admin-modal {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            width: min(720px, 96vw);
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+        }
+
+        .whatsapp-float {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #25d366;
+            color: white;
+            font-size: 28px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, .45);
+            transition: .2s;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.08);
+            box-shadow: 0 14px 30px rgba(37, 211, 102, .55);
+        }
+
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .admin-tab-btn {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            background: #f1f3f6;
+            color: #111;
+            transition: .2s;
+        }
+
+        .admin-tab-btn:hover {
+            transform: translateY(-2px);
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .admin-tab-btn.active {
+            background: #0d47a1;
+            color: white;
+            box-shadow: 0 8px 20px rgba(13, 71, 161, .25);
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-toolbar-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            color: #555;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .admin-pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .admin-pagination span {
+            font-size: 13px;
+            font-weight: 800;
+            color: #555;
+        }
+
+
+
+        .ads-area-card {
+            background: #ffffff;
+            border: 1px solid #e8eef5;
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+            margin-bottom: 16px;
+        }
+
+        .ads-area-preview {
+            border: 2px dashed #c7d2df;
+            background: #f4f6f9;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7b8794;
+            font-weight: 800;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .ads-area-preview img,
+        .ads-area-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+
+        .site-footer {
+            margin-top: 50px;
+            background: #0b1f3a;
+            color: white;
+            padding: 38px 22px 24px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr;
+            gap: 28px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, .75);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, .75);
+            text-decoration: none;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+            transform: translateX(3px);
+        }
+
+        .footer-alert {
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .14);
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, .8);
+            line-height: 1.6;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 28px auto 0;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, .12);
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            color: rgba(255, 255, 255, .58);
+            font-size: 12px;
+        }
+
+        @media (max-width: 800px) {
+            .site-footer {
+                padding: 32px 18px 22px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .footer-logo {
+                font-size: 22px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
+
+        .campo-admin {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .campo-admin label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #0d47a1;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        .ads-numero-slot {
+            font-size: 34px;
+            font-weight: 900;
+            color: #0d47a1;
+            opacity: .35;
+        }
+
+        .ads-slot.vazio .ads-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ads-check-list {
+            max-height: 260px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            padding: 12px;
+            background: #fafafa;
+        }
+
+        .ads-check-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px;
+            border-radius: 12px;
+            background: white;
+            margin-bottom: 8px;
+            border: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .ads-check-item input {
+            margin-top: 3px;
+        }
+
+
+        .whatsapp-float svg {
+            width: 30px;
+            height: 30px;
+            display: block;
+            fill: white;
+        }
+
+
+
+        /* Ajuste compacto sem usar zoom no body, para não jogar o site para a direita */
+        @media (min-width: 901px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .topbar {
+                width: 100%;
+                padding: 12px 28px;
+            }
+
+            .logo-area {
+                font-size: 22px;
+            }
+
+            .topbar-buttons button {
+                padding: 9px 15px;
+                border-radius: 11px;
+            }
+
+            .menu {
+                margin: 12px;
+            }
+
+            .btn-cadastrar-premium {
+                padding: 10px 18px !important;
+            }
+
+            .container {
+                padding: 16px 18px;
+            }
+        }
+
+
+
+        .status-dot-card {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .22);
+            z-index: 3;
+        }
+
+        .status-dot-normal {
+            background: #00c853;
+        }
+
+        .status-dot-lotado {
+            background: #ff9800;
+        }
+
+        .status-dot-critico {
+            background: #ff1744;
+        }
+
+        .filtro-status-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .filtro-bolinha {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, .85);
+            cursor: pointer;
+            transition: .2s;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+        }
+
+        .filtro-bolinha:hover {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .filtro-bolinha.ativo {
+            outline: 4px solid rgba(255, 255, 255, .35);
+            transform: scale(1.08);
+        }
+
+        .btn-filtro-todos {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, .15);
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .upa-card-publicidade {
+            margin: 14px 0;
+            height: 72px;
+            border-radius: 16px;
+            border: 1px dashed #c7d2df;
+            background: #f4f6f9;
+            color: #91a0b6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .5px;
+        }
+
+        .medico-row {
+            display: grid;
+            grid-template-columns: 1fr 190px auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .medico-row button {
+            margin-top: 0 !important;
+            width: auto !important;
+            background: #ffebee !important;
+            color: #d50000 !important;
+            padding: 12px 14px !important;
+        }
+
+        .label-form-atendimento {
+            display: block;
+            margin: 10px 0 6px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #0d47a1;
+            text-transform: uppercase;
+        }
+
+        .detalhe-medicos-box {
+            background: #f4f6f9;
+            padding: 20px;
+            border-radius: 18px;
+            grid-column: 1 / -1;
+        }
+
+        .detalhe-medico-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e9f0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .detalhe-medico-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1200px) {
+            .ads-lateral {
+                display: none;
+            }
+
+            .ads-slot-mobile {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding-top: 120px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 14px 18px;
+            }
+
+            .logo-area {
+                font-size: 20px;
+            }
+
+            .topbar-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .admin-input {
+                min-width: 100%;
+            }
+
+            .ads-slot-mobile {
+                height: 110px;
+                border-radius: 18px;
+            }
+
+            .ads-slot-banner {
+                height: 130px;
+                border-radius: 18px;
+            }
+
+            .ads-slot-footer {
+                height: 120px;
+                border-radius: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="site-soft-glow"></div>
+
+    <header class="topbar">
+        <div class="logo-area" onclick="mostrarLista()">UPA Tempo Guarujá</div>
+
+        <div class="topbar-buttons">
+            <button onclick="mostrarLista()">Início</button>
+            <button onclick="mostrarMapa()">Mapa</button>
+
+            <div id="menuUsuarioArea" style="display:none; position:relative;">
+                <button onclick="toggleMenuUsuario()">Conta</button>
+
+                <div id="menuUsuario" style="
+                    display:none;
+                    position:absolute;
+                    top:55px;
+                    right:0;
+                    background:white;
+                    width:230px;
+                    border-radius:16px;
+                    box-shadow:0 12px 35px rgba(0,0,0,.16);
+                    overflow:hidden;
+                    z-index:99999;
+                ">
+                    <div id="nomeUsuarioMenu" style="
+                        padding:16px;
+                        font-weight:800;
+                        border-bottom:1px solid #eee;
+                        color:#0d47a1;
+                    ">Usuário</div>
+
+                    <button onclick="abrirPerfil()"
+                        style="width:100%; border:none; background:white; color:#111; padding:14px; text-align:left; cursor:pointer; border-radius:0;">Meu
+                        Perfil</button>
+                    <button id="btnPainelAdmin" onclick="abrirPainelAdmin()"
+                        style="width:100%; border:none; background:white; color:#111; padding:14px; text-align:left; cursor:pointer; border-radius:0; display:none;">Painel
+                        Admin</button>
+                    <button onclick="logout()"
+                        style="width:100%; border:none; background:#ffebee; color:#d50000; padding:14px; text-align:left; cursor:pointer; font-weight:800; border-radius:0;">Sair</button>
+                </div>
+            </div>
+
+            <button id="btnLoginTopo" onclick="mostrarLogin()">Logar</button>
+        </div>
+    </header>
+
+    <div class="menu">
+        <button id="btnCadastrar" class="btn-cadastrar-premium" onclick="mostrarForm()" style="display:none;">Atualizar
+            Atendimento</button>
+    </div>
+
+    <div id="lista" class="container"></div>
+    <div id="map"></div>
+
+    <div id="formulario" class="container" style="display:none;">
+        <h2>Atualizar Atendimento</h2>
+
+        <label class="label-form-atendimento" for="upa">UPA/PAN</label>
+        <select id="upa" onchange="carregarFormularioUnidadeSelecionada()"></select>
+
+        <label class="label-form-atendimento" for="tempo">Tempo de espera em minutos</label>
+        <input id="tempo" type="number" min="0" inputmode="numeric">
+        <p>Status calculado: <span id="statusPreview">-</span></p>
+
+        <label class="label-form-atendimento">Médicos de plantão</label>
+        <div id="medicosPlantaoContainer"></div>
+        <button type="button" onclick="adicionarMedicoPlantao()"
+            style="background:#e8f5e9 !important; color:#16a34a !important; margin-bottom:16px;">
+            Adicionar médico
+        </button>
+
+        <label class="label-form-atendimento" for="fotoUrl">URL da imagem da unidade</label>
+        <input id="fotoUrl">
+
+        <label class="label-form-atendimento" for="fotoFile">Enviar nova imagem da unidade</label>
+        <input type="file" id="fotoFile" accept="image/*"><br><br>
+
+        <button onclick="cadastrar()">Salvar</button>
+    </div>
+
+    <div id="login" style="display:none;">
+
+        <div id="loginBox" class="auth-box">
+            <h2>Login</h2>
+
+            <input id="email" placeholder="Email" autocomplete="email">
+            <input id="senha" type="password" placeholder="Senha" autocomplete="current-password">
+
+            <button onclick="fazerLogin()">Entrar</button>
+
+            <div class="link-btn" onclick="mostrarCadastro()">Criar conta</div>
+
+            <div class="link-btn" onclick="mostrarRedefinirSenha()">
+                Esqueci minha senha
+            </div>
+        </div>
+
+        <div id="cadastroBox" class="auth-box" style="display:none;">
+            <h2>Criar Conta</h2>
+
+            <input id="nomeCadastro" placeholder="Nome completo" autocomplete="name">
+            <input id="emailCadastro" placeholder="Email" autocomplete="email">
+            <input id="senhaCadastro" type="password" placeholder="Senha (mínimo 8 caracteres)"
+                autocomplete="new-password" minlength="8"
+                oninput="validarSenhaVisual('senhaCadastro', 'msgSenhaCadastro')">
+            <div id="msgSenhaCadastro" class="password-msg">A senha precisa ter no mínimo 8 caracteres.</div>
+            <input id="cpfCadastro" placeholder="000.000.000-00" maxlength="14">
+
+            <button onclick="registrar()">Cadastrar</button>
+
+            <div class="link-btn" onclick="voltarLogin()">Voltar</div>
+        </div>
+
+        <div id="redefinirBox" class="auth-box" style="display:none;">
+            <h2>Redefinir Senha</h2>
+
+            <input id="emailRedefinir" placeholder="Email cadastrado" autocomplete="email">
+            <input id="cpfRedefinir" placeholder="CPF cadastrado" maxlength="14">
+            <input id="novaSenhaRedefinir" type="password" placeholder="Nova senha (mínimo 8 caracteres)"
+                autocomplete="new-password" minlength="8"
+                oninput="validarSenhaVisual('novaSenhaRedefinir', 'msgNovaSenhaRedefinir')">
+            <div id="msgNovaSenhaRedefinir" class="password-msg">A nova senha precisa ter no mínimo 8 caracteres.</div>
+
+            <button onclick="redefinirSenha()">Redefinir senha</button>
+
+            <div class="link-btn" onclick="voltarLogin()">Voltar ao login</div>
+        </div>
+
+    </div>
+
+    <div id="perfil" style="display:none;">
+        <div class="auth-box">
+            <h2>Meu Perfil</h2>
+            <img id="fotoPreview" src="https://via.placeholder.com/120" style="
+                width:120px;
+                height:120px;
+                border-radius:50%;
+                object-fit:cover;
+                margin-bottom:16px;
+                border:4px solid #0d47a1;
+                box-shadow:0 8px 20px rgba(13,71,161,.25);
+            ">
+            <input type="file" id="fotoPerfil" accept="image/*" style="display:none;">
+            <button type="button" onclick="document.getElementById('fotoPerfil').click()"
+                style="margin-bottom:18px; background:#eef4ff; color:#0d47a1; border:1px solid #cfe0ff;">Alterar foto de
+                perfil</button>
+            <input id="perfilNome" placeholder="Nome" readonly>
+            <input id="perfilEmail" placeholder="Email" readonly>
+            <input id="perfilCpf" placeholder="CPF" readonly>
+            <input id="perfilSenha" type="password" placeholder="Nova senha (mínimo 8 caracteres)" minlength="8"
+                oninput="validarSenhaVisual('perfilSenha', 'msgPerfilSenha', true)">
+            <div id="msgPerfilSenha" class="password-msg">Para alterar a senha, digite no mínimo 8 caracteres.</div>
+            <button onclick="salvarPerfil()">Salvar alterações</button>
+            <button onclick="mostrarLista()" style="margin-top:10px; background:#eee; color:#111;">Voltar</button>
+        </div>
+    </div>
+
+    <div id="adminPanel"></div>
+
+    <div id="modalAdmin" class="admin-modal-bg">
+        <div class="admin-modal" id="modalAdminConteudo"></div>
+    </div>
+
+
+    <footer id="siteFooter" class="site-footer">
+        <div class="footer-content">
+            <div>
+                <div class="footer-logo">UPA Tempo Guarujá</div>
+
+                <p class="footer-text">
+                    Plataforma criada para facilitar o acompanhamento dos tempos de espera,
+                    especialidades e status de atendimento das UPAs e prontos-socorros do Guarujá.
+                </p>
+
+                <p class="footer-text">
+                    As informações são atualizadas por usuários autorizados e podem variar conforme
+                    a demanda de cada unidade.
+                </p>
+            </div>
+
+            <div>
+                <div class="footer-title">Informações</div>
+
+                <div class="footer-links">
+                    <a href="javascript:void(0)" onclick="alert('Em breve: página Sobre o Projeto')">Sobre o projeto</a>
+                    <a href="javascript:void(0)" onclick="alert('Em breve: Política de Privacidade')">Política de
+                        Privacidade</a>
+                    <a href="javascript:void(0)" onclick="alert('Em breve: Termos de Uso')">Termos de Uso</a>
+                    <a href="javascript:void(0)" onclick="alert('Em breve: área de Patrocinadores')">Patrocinadores</a>
+                </div>
+            </div>
+
+            <div>
+                <div class="footer-title">Aviso importante</div>
+
+                <div class="footer-alert">
+                    Este site não substitui canais oficiais de emergência.
+                    Em caso de urgência, procure atendimento imediatamente
+                    ou acione os serviços oficiais de emergência.
+                </div>
+            </div>
+        </div>
+
+        <div class="ads-footer-grid">
+            <div id="adRodape1" class="ads-slot ads-slot-footer vazio">
+                <div class="ads-placeholder">
+                    <div class="ads-numero-slot">9</div>
+                </div>
+            </div>
+
+            <div id="adRodape2" class="ads-slot ads-slot-footer vazio">
+                <div class="ads-placeholder">
+                    <div class="ads-numero-slot">10</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© 2026 UPA Tempo Guarujá. Todos os direitos reservados.</span>
+            <span>Projeto independente em desenvolvimento.</span>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/5513999999999?text=Olá,%20gostaria%20de%20enviar%20um%20feedback%20sobre%20o%20atendimento."
+        target="_blank" class="whatsapp-float" title="Enviar feedback pelo WhatsApp"
+        aria-label="Enviar feedback pelo WhatsApp">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path
+                d="M16.01 3.2c-7.05 0-12.78 5.62-12.78 12.54 0 2.2.59 4.35 1.71 6.24L3.2 28.8l7.03-1.82a13.03 13.03 0 0 0 5.78 1.35c7.05 0 12.79-5.62 12.79-12.54S23.06 3.2 16.01 3.2Zm0 22.99c-1.86 0-3.68-.49-5.27-1.42l-.38-.22-4.17 1.08 1.11-4.01-.25-.41a10.19 10.19 0 0 1-1.57-5.47c0-5.74 4.72-10.4 10.53-10.4 5.82 0 10.54 4.66 10.54 10.4 0 5.75-4.72 10.45-10.54 10.45Zm5.78-7.82c-.32-.16-1.88-.91-2.17-1.01-.29-.11-.5-.16-.71.16-.21.31-.82 1.01-1 1.22-.19.21-.37.24-.69.08-.32-.16-1.34-.49-2.55-1.55-.94-.82-1.58-1.84-1.76-2.15-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.19.21-.32.32-.53.11-.21.05-.39-.03-.55-.08-.16-.71-1.68-.98-2.3-.26-.6-.52-.52-.71-.53h-.61c-.21 0-.55.08-.84.39-.29.32-1.1 1.07-1.1 2.61 0 1.54 1.13 3.03 1.29 3.24.16.21 2.23 3.36 5.41 4.72.76.32 1.35.51 1.81.66.76.24 1.45.21 2 .13.61-.09 1.88-.76 2.14-1.49.26-.74.26-1.37.18-1.5-.08-.13-.29-.21-.61-.37Z" />
+        </svg>
+    </a>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        const API = "http://localhost:3000"
+
+        let unidades = []
+        let map = null
+        let markersLayer = null
+        let adminBuscaAtual = ""
+        let adminFiltroAtual = "todos"
+        let adminUsuariosCache = []
+        let logsAdminCache = []
+        let logsFiltradosCache = []
+
+        let adminAbaAtual = "usuarios"
+
+        let usuariosPaginaAtual = 1
+        let usuariosPorPagina = 25
+
+        let patrocinadoresPaginaAtual = 1
+        let patrocinadoresPorPagina = 25
+
+        let logsPaginaAtual = 1
+        let logsPorPagina = 10
+
+        let patrocinadorBuscaAtual = ""
+        let patrocinadorStatusAtual = "todos"
+        let patrocinadoresCache = []
+
+        let anunciosBuscaAtual = ""
+        let anunciosStatusAtual = "todos"
+        let anunciosPosicaoAtual = "todos"
+        let anunciosCache = []
+        let anunciosPaginaAtual = 1
+        let anunciosPorPagina = 25
+
+        let filtroAtendimentoAtual = "todos"
+
+        let areasAdsCache = []
+        let areasAdsPublicasCache = []
+
+        let anunciosPublicosCache = []
+        let adsCarouselTimers = []
+
+        function getUser() {
+            try { return JSON.parse(localStorage.getItem("user")) } catch { return null }
+        }
+
+        function fecharMenuUsuario() {
+            const menu = document.getElementById("menuUsuario")
+            if (menu) menu.style.display = "none"
+        }
+
+        function normalizarStatus(status) {
+            return String(status || "normal").toLowerCase()
+        }
+
+        function fotoUnidade(u) {
+            if (!u.foto) return "https://via.placeholder.com/500"
+            if (String(u.foto).startsWith("http")) return u.foto
+            return `${API}/uploads/${u.foto}`
+        }
+
+        function fotoUsuario(user) {
+            if (!user || !user.foto) return "https://via.placeholder.com/120"
+            if (String(user.foto).startsWith("http")) return user.foto
+            return `${API}/uploads/${user.foto}`
+        }
+
+        function tipoBadge(tipo) {
+            const t = tipo || "usuario"
+            if (t === "admin") return `<span class="badge-admin">Admin</span>`
+            if (t === "funcionario") return `<span class="badge-funcionario">Funcionário</span>`
+            return `<span class="badge-usuario">Usuário</span>`
+        }
+
+        function statusBadge(status) {
+            const s = status || "ativo"
+            return `<span class="badge-status status-${s}">${s}</span>`
+        }
+
+        function fotoPatrocinador(p) {
+            if (!p || !p.logo) return "https://via.placeholder.com/120"
+            if (String(p.logo).startsWith("http")) return p.logo
+            return `${API}/uploads/${p.logo}`
+        }
+
+        function formatarCNPJ(cnpj) {
+            let v = String(cnpj || "").replace(/\D/g, "")
+            if (v.length !== 14) return cnpj || "-"
+            return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")
+        }
+
+        function formatarDocumentoPatrocinador(tipo, documento) {
+            if (tipo === "cpf") return formatarCPF(documento)
+            if (tipo === "cnpj") return formatarCNPJ(documento)
+            return documento || "-"
+        }
+
+
+        function somenteNumeros(valor) {
+            return String(valor || "").replace(/\D/g, "")
+        }
+
+        function formatarTelefone(valor) {
+            let v = somenteNumeros(valor)
+            if (v.length > 11) v = v.slice(0, 11)
+
+            if (v.length <= 10) {
+                return v
+                    .replace(/(\d{2})(\d)/, "($1) $2")
+                    .replace(/(\d{4})(\d)/, "$1-$2")
+            }
+
+            return v
+                .replace(/(\d{2})(\d)/, "($1) $2")
+                .replace(/(\d{5})(\d)/, "$1-$2")
+        }
+
+        function aplicarMascaraTelefoneInput(id) {
+            const input = document.getElementById(id)
+            if (!input) return
+            input.value = formatarTelefone(input.value)
+        }
+
+        function aplicarMascaraCNPJInput(id) {
+            const input = document.getElementById(id)
+            if (!input) return
+            let v = somenteNumeros(input.value)
+            if (v.length > 14) v = v.slice(0, 14)
+            input.value = v
+                .replace(/(\d{2})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d)/, "$1/$2")
+                .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
+        }
+
+        function aplicarMascaraDocumentoPatrocinador() {
+            const tipo = document.getElementById("patTipoDoc")?.value || "cpf"
+            const input = document.getElementById("patDocResp")
+            if (!input) return
+
+            let v = somenteNumeros(input.value)
+
+            if (tipo === "cpf") {
+                if (v.length > 11) v = v.slice(0, 11)
+                input.value = v
+                    .replace(/(\d{3})(\d)/, "$1.$2")
+                    .replace(/(\d{3})(\d)/, "$1.$2")
+                    .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+                return
+            }
+
+            if (v.length > 14) v = v.slice(0, 14)
+            input.value = v
+                .replace(/(\d{2})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d)/, "$1/$2")
+                .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
+        }
+
+        function manterSomenteNumeroInput(id) {
+            const input = document.getElementById(id)
+            if (!input) return
+            input.value = somenteNumeros(input.value)
+        }
+
+        function statusPatrocinadorBadge(status) {
+            const s = status || "ativo"
+            if (s === "ativo") {
+                return `<span class="badge-status status-ativo">ativo</span>`
+            }
+            return `<span class="badge-status status-removido">inativo</span>`
+        }
+
+        function escapeHTML(valor) {
+            return String(valor || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;")
+        }
+
+        function midiaAnuncio(a) {
+            if (!a || !a.midia) return "https://via.placeholder.com/300x300"
+            if (String(a.midia).startsWith("http")) return a.midia
+            return `${API}/uploads/${a.midia}`
+        }
+
+        function statusAnuncioBadge(status) {
+            const s = status || "ativo"
+
+            if (s === "ativo") return `<span class="badge-status status-ativo">ativo</span>`
+            if (s === "pausado") return `<span class="badge-status status-suspenso">pausado</span>`
+            if (s === "removido") return `<span class="badge-status status-removido">removido</span>`
+            return `<span class="badge-status status-banido">expirado</span>`
+        }
+
+        function posicaoAnuncioTexto(posicao) {
+            const mapa = {
+                lateral_esquerda: "Lateral esquerda",
+                lateral_direita: "Lateral direita",
+                banner_inferior: "Banner inferior",
+                mobile: "Mobile",
+                rodape: "Rodapé",
+                card: "Publicidade dos cards",
+                detalhe: "Publicidade dos detalhes"
+            }
+
+            return mapa[posicao] || posicao || "-"
+        }
+
+        function tamanhoPresetTexto(preset) {
+            const mapa = {
+                lateral_pequeno: "Lateral pequena",
+                lateral_medio: "Lateral média",
+                lateral_grande: "Lateral grande",
+                quadrado: "Quadrado",
+                banner_inferior: "Banner inferior",
+                mobile: "Mobile",
+                personalizado: "Personalizado"
+            }
+
+            return mapa[preset] || preset || "-"
+        }
+
+        function obterDimensoesPresetAnuncio(preset) {
+            const presets = {
+                lateral_pequeno: { largura: 180, altura: 300 },
+                lateral_medio: { largura: 220, altura: 500 },
+                lateral_grande: { largura: 300, altura: 600 },
+                quadrado: { largura: 300, altura: 300 },
+                banner_inferior: { largura: 970, altura: 250 },
+                mobile: { largura: 320, altura: 100 }
+            }
+
+            return presets[preset] || null
+        }
+
+        function aplicarPresetAnuncio() {
+            const preset = document.getElementById("anuncioTamanhoPreset")
+            const largura = document.getElementById("anuncioLargura")
+            const altura = document.getElementById("anuncioAltura")
+
+            if (!preset || !largura || !altura) return
+
+            const dimensoes = obterDimensoesPresetAnuncio(preset.value)
+
+            if (dimensoes) {
+                largura.value = dimensoes.largura
+                altura.value = dimensoes.altura
+            }
+
+            atualizarPreviewTamanhoAnuncio()
+        }
+
+        function atualizarPreviewTamanhoAnuncio() {
+            const largura = Number(document.getElementById("anuncioLargura")?.value || 0)
+            const altura = Number(document.getElementById("anuncioAltura")?.value || 0)
+            const preview = document.getElementById("previewTamanhoAnuncio")
+
+            if (!preview) return
+
+            preview.innerHTML = `Prévia do tamanho: <b>${largura || 0} x ${altura || 0}px</b>`
+        }
+
+
+        async function carregarAnunciosPublicos() {
+            try {
+                const res = await fetch(`${API}/anuncios/publicos`)
+
+                if (!res.ok) {
+                    anunciosPublicosCache = []
+                    return
+                }
+
+                anunciosPublicosCache = await res.json()
+            } catch (err) {
+                console.warn("Erro ao carregar anúncios públicos:", err)
+                anunciosPublicosCache = []
+            }
+        }
+
+        async function carregarAreasAdsPublicas() {
+            try {
+                const res = await fetch(`${API}/areas-ads/publicas`)
+
+                if (!res.ok) {
+                    areasAdsPublicasCache = []
+                    return
+                }
+
+                areasAdsPublicasCache = await res.json()
+            } catch (err) {
+                console.warn("Erro ao carregar áreas públicas de ADS:", err)
+                areasAdsPublicasCache = []
+            }
+        }
+
+        function anunciosPorPosicao(posicao) {
+            return anunciosPublicosCache.filter(a => a && a.posicao === posicao)
+        }
+
+        function anunciosDaArea(codigo) {
+            const area = areasAdsPublicasCache.find(a => a && a.codigo === codigo)
+
+            if (area && area.status === "ativo") {
+                let lista = []
+
+                if (Array.isArray(area.anunciosAtuais)) {
+                    lista = area.anunciosAtuais.filter(Boolean)
+                }
+
+                if (lista.length === 0 && area.anuncioAtual) {
+                    lista = [area.anuncioAtual]
+                }
+
+                if (lista.length > 0) {
+                    return {
+                        anuncios: lista,
+                        rotacionar: area.rotacionar !== false,
+                        tempoTrocaSegundos: Number(area.tempoTrocaSegundos) || 6
+                    }
+                }
+            }
+
+            // Importante: os quadros numerados 1-10 NÃO puxam mais todos os anúncios por posição.
+            // Agora cada quadro só mostra os anúncios escolhidos nele em Painel Admin → Áreas de ADS
+            // ou marcados no formulário do próprio anúncio.
+            return {
+                anuncios: [],
+                rotacionar: true,
+                tempoTrocaSegundos: 6
+            }
+        }
+
+        function limparTimersAds() {
+            adsCarouselTimers.forEach(timer => clearTimeout(timer))
+            adsCarouselTimers = []
+        }
+
+        function linkSeguroAnuncio(url) {
+            if (!url) return ""
+
+            try {
+                const link = new URL(url)
+
+                if (link.protocol === "http:" || link.protocol === "https:") {
+                    return link.href
+                }
+
+                return ""
+            } catch {
+                return ""
+            }
+        }
+
+        function criarMidiaAnuncioPublico(anuncio) {
+            const src = midiaAnuncio(anuncio)
+            const nome = escapeHTML(anuncio.nome || "Publicidade")
+
+            if (anuncio.tipoMidia === "video") {
+                return `<video class="ad-midia-publica" src="${src}" autoplay muted loop playsinline title="${nome}"></video>`
+            }
+
+            return `<img class="ad-midia-publica" src="${src}" alt="${nome}">`
+        }
+
+        function renderizarCarrosselAds(elementId, anuncios, textoVazio = "PUBLICIDADE", indiceInicial = 0, opcoes = {}) {
+            const el = document.getElementById(elementId)
+
+            if (!el) return
+
+            if (!Array.isArray(anuncios) || anuncios.length === 0) {
+                el.classList.add("vazio")
+                el.classList.remove("tem-ads")
+                el.innerHTML = `<div class="ads-placeholder">${textoVazio}</div>`
+                return
+            }
+
+            el.classList.remove("vazio")
+            el.classList.add("tem-ads")
+
+            let indice = indiceInicial
+
+            function mostrarAtual() {
+                const anuncio = anuncios[indice % anuncios.length]
+                const link = linkSeguroAnuncio(anuncio.linkDestino)
+                const midia = criarMidiaAnuncioPublico(anuncio)
+                const nome = escapeHTML(anuncio.nome || "Publicidade")
+
+                const numeroAdmin = opcoes.numero ? `<span class="ad-numero-slot-admin">${opcoes.numero}</span>` : ""
+
+                const conteudo = `
+                    <span class="ad-etiqueta-publicidade">Publicidade</span>
+                    ${getUser() && getUser().tipo === "admin" ? numeroAdmin : ""}
+                    ${midia}
+                `
+
+                if (link) {
+                    el.innerHTML = `
+                        <a class="ad-link-publico" href="${link}" target="_blank" rel="noopener" title="${nome}">
+                            ${conteudo}
+                        </a>
+                    `
+                } else {
+                    el.innerHTML = `
+                        <div class="ad-link-publico" title="${nome}">
+                            ${conteudo}
+                        </div>
+                    `
+                }
+
+                if (anuncios.length > 1 && opcoes.rotacionar !== false) {
+                    const tempoAnuncio = Number(anuncio.tempoExibicaoSegundos || 0)
+                    const tempoArea = Number(opcoes.tempoTrocaSegundos || 0)
+                    const tempoBase = tempoAnuncio > 0 ? tempoAnuncio : tempoArea
+                    const tempo = tempoBase > 0 ? tempoBase * 1000 : (anuncio.tipoMidia === "video" ? 15000 : 6000)
+
+                    const timer = setTimeout(() => {
+                        indice = (indice + 1) % anuncios.length
+                        mostrarAtual()
+                    }, tempo)
+
+                    adsCarouselTimers.push(timer)
+                }
+            }
+
+            mostrarAtual()
+        }
+
+        function iniciarCarrosseisAds() {
+            limparTimersAds()
+
+            const slots = [
+                { id: "adLateralEsquerda1", codigo: "ADS_01", vazio: "1", inicio: 0, numero: 1 },
+                { id: "adLateralEsquerda2", codigo: "ADS_02", vazio: "2", inicio: 1, numero: 2 },
+                { id: "adLateralEsquerda3", codigo: "ADS_03", vazio: "3", inicio: 2, numero: 3 },
+                { id: "adLateralEsquerda4", codigo: "ADS_04", vazio: "4", inicio: 3, numero: 4 },
+                { id: "adLateralDireita1", codigo: "ADS_05", vazio: "5", inicio: 0, numero: 5 },
+                { id: "adLateralDireita2", codigo: "ADS_06", vazio: "6", inicio: 1, numero: 6 },
+                { id: "adLateralDireita3", codigo: "ADS_07", vazio: "7", inicio: 2, numero: 7 },
+                { id: "adLateralDireita4", codigo: "ADS_08", vazio: "8", inicio: 3, numero: 8 },
+                { id: "adRodape1", codigo: "ADS_09", vazio: "9", inicio: 0, numero: 9 },
+                { id: "adRodape2", codigo: "ADS_10", vazio: "10", inicio: 1, numero: 10 }
+            ]
+
+            slots.forEach(slot => {
+                const config = anunciosDaArea(slot.codigo)
+                renderizarCarrosselAds(
+                    slot.id,
+                    config.anuncios,
+                    `<div class="ads-numero-slot">${slot.vazio}</div>`,
+                    slot.inicio,
+                    { ...config, numero: slot.numero }
+                )
+            })
+
+            for (let numero = 11; numero <= 15; numero++) {
+                const elementId = `adCard${numero}`
+                if (!document.getElementById(elementId)) continue
+
+                const codigo = `ADS_${String(numero).padStart(2, "0")}`
+                const config = anunciosDaArea(codigo)
+
+                renderizarCarrosselAds(
+                    elementId,
+                    config.anuncios,
+                    `<div class="ads-numero-slot">${numero}</div>`,
+                    0,
+                    { ...config, numero }
+                )
+            }
+
+            const mobile = anunciosPorPosicao("mobile")
+            const bannerPorPosicao = anunciosPorPosicao("banner_inferior")
+            const configBannerInferior = anunciosDaArea("ADS_17")
+
+            renderizarCarrosselAds(
+                "adMobileEntreUpas",
+                mobile.length > 0 ? mobile : bannerPorPosicao,
+                "PUBLICIDADE",
+                0,
+                { rotacionar: true, tempoTrocaSegundos: 6 }
+            )
+
+            renderizarCarrosselAds(
+                "adBannerInferior",
+                configBannerInferior.anuncios.length > 0 ? configBannerInferior.anuncios : bannerPorPosicao,
+                `<div class="ads-numero-slot">17</div>`,
+                0,
+                { ...configBannerInferior, numero: 17 }
+            )
+        }
+
+
+        async function carregarDados() {
+            try {
+                const res = await fetch(`${API}/atendimento`)
+                unidades = await res.json()
+
+                await carregarAnunciosPublicos()
+                await carregarAreasAdsPublicas()
+
+                carregarLista()
+                preencherSelectUPA()
+                if (map) atualizarMapa()
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err)
+                document.getElementById("lista").innerHTML = `
+                    <div style="max-width:900px; margin:40px auto; background:white; padding:30px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,.08); text-align:center;">
+                        <h2 style="color:#d50000;">Erro ao carregar dados</h2>
+                        <p>Confira se o backend está ligado e se o MongoDB conectou corretamente.</p>
+                    </div>
+                `
+            }
+        }
+
+        function preencherSelectUPA() {
+            const select = document.getElementById("upa")
+            select.innerHTML = ""
+            unidades.forEach(u => { select.innerHTML += `<option value="${u._id}">${u.upa}</option>` })
+        }
+
+
+        function minutosDaUnidade(u) {
+            const valor = u ? (u.tempo_minutos ?? u.tempoMinutos ?? u.tempo ?? u.tempo_espera ?? 0) : 0
+            const numeros = String(valor).replace(/\D/g, "")
+            return Number(numeros || 0)
+        }
+
+        function statusPorTempoMinutos(minutos) {
+            const m = Number(minutos || 0)
+            if (m <= 25) return "normal"
+            if (m < 70) return "lotado"
+            return "critico"
+        }
+
+        function statusDaUnidade(u) {
+            return statusPorTempoMinutos(minutosDaUnidade(u))
+        }
+
+        function textoStatusTempo(status) {
+            if (status === "normal") return "Até 25 min"
+            if (status === "lotado") return "Até 1h09min"
+            return "1h10min ou mais"
+        }
+
+
+        const enderecosPadraoUPA = {
+            pereque: "Estrada Guarujá-Bertioga, entre km 7 e 8 - Perequê, Guarujá - SP",
+            rodoviaria: "Av. Santos Dumont, 856 - Santo Antônio, Guarujá - SP",
+            santamaria: "Av. Santos Dumont, 856 - Santo Antônio, Guarujá - SP",
+            enseada: "Rua Luiz Rodrigues Pedro, 267 - Cidade Atlântica, Guarujá - SP",
+            santa: "Rua Antônio Pinto Rodrigues, s/nº - Santa Cruz dos Navegantes, Guarujá - SP",
+            navegantes: "Rua Antônio Pinto Rodrigues, s/nº - Santa Cruz dos Navegantes, Guarujá - SP",
+            vicente: "Av. São João, 111 - Pae-Cará, Guarujá - SP",
+            "pae cara": "Av. São João, 111 - Pae-Cará, Guarujá - SP",
+            "pae-cara": "Av. São João, 111 - Pae-Cará, Guarujá - SP"
+        }
+
+        function normalizarTextoChave(valor) {
+            return String(valor || "")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+        }
+
+        function enderecoDaUnidade(u) {
+            if (u && u.endereco && String(u.endereco).trim() !== "") return u.endereco
+
+            const nome = normalizarTextoChave(u ? u.upa : "")
+
+            if (nome.includes("pereque")) return enderecosPadraoUPA.pereque
+            if (nome.includes("rodoviaria") || nome.includes("santamaria")) return enderecosPadraoUPA.rodoviaria
+            if (nome.includes("enseada") || nome.includes("paulo flavio")) return enderecosPadraoUPA.enseada
+            if (nome.includes("santa cruz") || nome.includes("navegantes")) return enderecosPadraoUPA.santa
+            if (nome.includes("vicente") || nome.includes("pae cara") || nome.includes("pae-cara")) return enderecosPadraoUPA.vicente
+
+            return "Endereço ainda não cadastrado"
+        }
+
+        function filtrarAtendimentos(status) {
+            filtroAtendimentoAtual = status || "todos"
+            carregarLista()
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+
+        function medicosDaUnidade(u) {
+            if (u && Array.isArray(u.medicosPlantao) && u.medicosPlantao.length > 0) {
+                return u.medicosPlantao.filter(m => m && (m.nome || m.especialidade))
+            }
+
+            if (u && (u.medico || u.especialidade)) {
+                return [{ nome: u.medico || "Médico não informado", especialidade: u.especialidade || "Especialidade não informada" }]
+            }
+
+            return []
+        }
+
+        function htmlMedicosDetalhe(u) {
+            const medicos = medicosDaUnidade(u)
+
+            if (medicos.length === 0) {
+                return `<div class="detalhe-medico-item">Médicos de plantão ainda não informados.</div>`
+            }
+
+            return medicos.map(m => `
+                <div class="detalhe-medico-item">
+                    <div style="font-size:13px; color:#666; font-weight:800; text-transform:uppercase; margin-bottom:3px;">${escapeHTML(m.especialidade || "Especialidade não informada")}</div>
+                    <div>${escapeHTML(m.nome || "Médico não informado")}</div>
+                </div>
+            `).join("")
+        }
+
+        function adicionarMedicoPlantao(nome = "", especialidade = "Clínico Geral") {
+            const container = document.getElementById("medicosPlantaoContainer")
+            if (!container) return
+
+            const div = document.createElement("div")
+            div.className = "medico-row"
+            div.innerHTML = `
+                <input class="medicoNomePlantao" value="${escapeHTML(nome)}">
+                <select class="medicoEspecialidadePlantao">
+                    <option value="Clínico Geral" ${especialidade === "Clínico Geral" ? "selected" : ""}>Clínico Geral</option>
+                    <option value="Pediatria" ${especialidade === "Pediatria" ? "selected" : ""}>Pediatria</option>
+                    <option value="Psiquiatria" ${especialidade === "Psiquiatria" ? "selected" : ""}>Psiquiatria</option>
+                    <option value="Ortopedia" ${especialidade === "Ortopedia" ? "selected" : ""}>Ortopedia</option>
+                    <option value="Enfermagem" ${especialidade === "Enfermagem" ? "selected" : ""}>Enfermagem</option>
+                </select>
+                <button type="button" onclick="this.closest('.medico-row').remove()">Remover</button>
+            `
+            container.appendChild(div)
+        }
+
+        function montarMedicosPlantao() {
+            const nomes = Array.from(document.querySelectorAll(".medicoNomePlantao"))
+            const especialidades = Array.from(document.querySelectorAll(".medicoEspecialidadePlantao"))
+
+            return nomes.map((input, index) => ({
+                nome: input.value.trim(),
+                especialidade: especialidades[index] ? especialidades[index].value : "Clínico Geral"
+            })).filter(m => m.nome || m.especialidade)
+        }
+
+        function carregarFormularioUnidadeSelecionada() {
+            const id = document.getElementById("upa")?.value
+            const unidade = unidades.find(u => String(u._id) === String(id))
+            const container = document.getElementById("medicosPlantaoContainer")
+
+            if (!container) return
+
+            container.innerHTML = ""
+
+            const minutos = minutosDaUnidade(unidade)
+            document.getElementById("tempo").value = minutos || ""
+
+            const medicos = medicosDaUnidade(unidade)
+            if (medicos.length > 0) {
+                medicos.forEach(m => adicionarMedicoPlantao(m.nome || "", m.especialidade || "Clínico Geral"))
+            } else {
+                adicionarMedicoPlantao()
+            }
+
+            atualizarStatusPreviewTempo()
+        }
+
+        function atualizarStatusPreviewTempo() {
+            const tempo = Number(document.getElementById("tempo")?.value || 0)
+            const status = statusPorTempoMinutos(tempo)
+            const preview = document.getElementById("statusPreview")
+            if (preview) preview.innerText = `${status} (${formatarTempo(tempo)})`
+        }
+
+        function carregarLista() {
+            const lista = document.getElementById("lista")
+
+            const unidadesFiltradas = filtroAtendimentoAtual === "todos"
+                ? unidades
+                : unidades.filter(u => statusDaUnidade(u) === filtroAtendimentoAtual)
+
+            lista.innerHTML = `
+                <div style="max-width: min(1320px, calc(100vw - 36px)); margin: auto; display:grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap:16px; align-items:start;">
+                    <div class="ads-lateral-coluna">
+                        <div id="adLateralEsquerda1" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">1</div></div></div>
+                        <div id="adLateralEsquerda2" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">2</div></div></div>
+                        <div id="adLateralEsquerda3" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">3</div></div></div>
+                        <div id="adLateralEsquerda4" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">4</div></div></div>
+                    </div>
+
+                    <div>
+                        <div style="background: linear-gradient(135deg,#0d47a1,#1565c0); padding:34px; border-radius:26px; margin-bottom:26px; color:white; box-shadow:0 15px 40px rgba(0,0,0,0.18); position:relative; overflow:hidden;">
+                            <div style="position:absolute; width:250px; height:250px; background:rgba(255,255,255,0.08); border-radius:50%; top:-100px; right:-60px;"></div>
+                            <div style="position:relative; z-index:2;">
+                                <div style="font-size:14px; font-weight:700; opacity:.85; margin-bottom:10px; letter-spacing:.5px;">Atualizado em tempo real</div>
+                                <h1 style="margin:0; font-size:38px; font-weight:800; line-height:1.1;">Saúde de Guarujá ao vivo</h1>
+                                <p style="margin-top:18px; max-width:750px; font-size:16px; line-height:1.6; opacity:.92;">Veja a situação das UPAs e prontos-socorros da cidade por cor de tempo de espera.</p>
+
+                                <div class="filtro-status-area">
+                                    <button onclick="filtrarAtendimentos('normal')" title="Até 25 minutos" class="filtro-bolinha ${filtroAtendimentoAtual === 'normal' ? 'ativo' : ''}" style="background:#00c853;"></button>
+                                    <button onclick="filtrarAtendimentos('lotado')" title="De 26 minutos até 1h09min" class="filtro-bolinha ${filtroAtendimentoAtual === 'lotado' ? 'ativo' : ''}" style="background:#ff9800;"></button>
+                                    <button onclick="filtrarAtendimentos('critico')" title="1h10min ou mais" class="filtro-bolinha ${filtroAtendimentoAtual === 'critico' ? 'ativo' : ''}" style="background:#ff1744;"></button>
+                                    ${filtroAtendimentoAtual !== "todos" ? `<button class="btn-filtro-todos" onclick="filtrarAtendimentos('todos')">Voltar para todas</button>` : ""}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:18px;" id="cardsContainer"></div>
+                    </div>
+
+                    <div class="ads-lateral-coluna">
+                        <div id="adLateralDireita1" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">5</div></div></div>
+                        <div id="adLateralDireita2" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">6</div></div></div>
+                        <div id="adLateralDireita3" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">7</div></div></div>
+                        <div id="adLateralDireita4" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">8</div></div></div>
+                    </div>
+                </div>
+            `
+
+            const cardsContainer = document.getElementById("cardsContainer")
+            cardsContainer.innerHTML = ""
+
+            if (unidadesFiltradas.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div style="grid-column:1/-1; background:white; padding:28px; border-radius:22px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.08);">
+                        <b>Nenhuma UPA encontrada para esse filtro.</b><br>
+                        <button onclick="filtrarAtendimentos('todos')" class="admin-btn btn-blue" style="margin-top:14px; padding:12px 18px;">Voltar para todas</button>
+                    </div>
+                `
+            }
+
+            unidadesFiltradas.forEach((u, index) => {
+                const statusClasse = statusDaUnidade(u)
+                const indiceOriginal = unidades.indexOf(u)
+                const slotCardNumero = 11 + indiceOriginal
+
+                cardsContainer.innerHTML += `
+                    <div style="background:white; border-radius:24px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08); transition:.3s; border:1px solid #ececec;" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 18px 40px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)';">
+                        <div style="position:relative; height:180px; overflow:hidden; background:#dfefff;">
+                            <img src="${fotoUnidade(u)}" style="width:100%; height:100%; object-fit:cover;">
+                            <span class="status-dot-card status-dot-${statusClasse}" title="${textoStatusTempo(statusClasse)}"></span>
+                        </div>
+
+                        <div style="padding:18px;">
+                            <h2 style="margin:0; font-size:20px; color:#111; line-height:1.2; min-height:52px; display:flex; align-items:flex-start;">${u.upa || "Unidade sem nome"}</h2>
+                            <div id="adCard${slotCardNumero}" class="ads-slot ads-slot-card vazio"><div class="ads-placeholder"><div class="ads-numero-slot">${slotCardNumero}</div></div></div>
+                            <button onclick="verDetalhesPorIndice(${indiceOriginal})" style="width:100%; border:none; background:#0d47a1; color:white; padding:14px; border-radius:14px; cursor:pointer; font-weight:800; transition:.2s;" onmouseover="this.style.background='#1565c0'" onmouseout="this.style.background='#0d47a1'">Detalhes</button>
+                        </div>
+                    </div>
+                `
+
+                if (index === 0) {
+                    cardsContainer.innerHTML += `
+                        <div id="adMobileEntreUpas" class="ads-slot ads-slot-mobile vazio">
+                            <div class="ads-placeholder">PUBLICIDADE</div>
+                        </div>
+                    `
+                }
+            })
+
+            cardsContainer.innerHTML += `
+                <div id="adBannerInferior" class="ads-slot ads-slot-banner vazio">
+                    <div class="ads-placeholder"><div class="ads-numero-slot">17</div></div>
+                </div>
+            `
+
+            iniciarCarrosseisAds()
+        }
+
+
+        function verDetalhesPorIndice(index) {
+            const u = unidades[index]
+            if (!u) return alert("Unidade não encontrada")
+            verDetalhes(u)
+        }
+
+        function verDetalhes(u) {
+            fecharMenuUsuario()
+            const statusClasse = statusDaUnidade(u)
+            let corStatus = "#00c853"
+            if (statusClasse === "lotado") corStatus = "#ff9800"
+            if (statusClasse === "critico") corStatus = "#ff1744"
+
+            document.getElementById("lista").style.display = "block"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+
+            document.getElementById("lista").innerHTML = `
+                <div style="max-width:1000px; margin:auto;">
+                    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+                        <button onclick="mostrarLista()" style="min-width:180px; border:none; background:#f1f3f6; padding:14px 20px; border-radius:14px; cursor:pointer; font-weight:800;">Voltar</button>
+                    </div>
+
+                    <div style="background:white; border-radius:28px; overflow:hidden; box-shadow:0 10px 35px rgba(0,0,0,0.10); border:1px solid #ececec;">
+                        <div style="position:relative; height:360px; background:#dfefff;">
+                            <img src="${fotoUnidade(u)}" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+
+                        <div style="padding:35px;">
+                            <h1 style="margin:0 0 15px 0; font-size:34px; color:#111; line-height:1.2;">${u.upa || "Unidade sem nome"}</h1>
+                            <p style="color:#666; margin-bottom:30px; font-size:16px;">${enderecoDaUnidade(u)}</p>
+
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px;">
+                                <div style="background:#f4f6f9; padding:20px; border-radius:18px;">
+                                    <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:800;">TEMPO DE ESPERA</div>
+                                    <div style="font-size:28px; font-weight:800; color:#0d47a1;">${u.tempo_espera || formatarTempo(minutosDaUnidade(u))}</div>
+                                </div>
+
+                                <div class="detalhe-medicos-box">
+                                    <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:800;">MÉDICOS DE PLANTÃO</div>
+                                    ${htmlMedicosDetalhe(u)}
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:15px; margin-top:35px; flex-wrap:wrap;">
+                                <button onclick="mostrarLista()" style="flex:1; min-width:220px; border:none; background:#f1f3f6; padding:16px; border-radius:16px; cursor:pointer; font-size:16px; font-weight:800;">Voltar</button>
+                                <button onclick="abrirRota(${Number(u.lat) || 0}, ${Number(u.lng) || 0})" style="flex:1; min-width:220px; border:none; background:#0d47a1; color:white; padding:16px; border-radius:16px; cursor:pointer; font-size:16px; font-weight:800;">Abrir rota no Google Maps</button>
+                            </div>
+
+                            <div id="adDetalheUpa" class="ads-slot ads-slot-banner vazio" style="margin-top:26px;">
+                                <div class="ads-placeholder"><div class="ads-numero-slot">16</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+
+            const configDetalhe = anunciosDaArea("ADS_16")
+            renderizarCarrosselAds(
+                "adDetalheUpa",
+                configDetalhe.anuncios,
+                `<div class="ads-numero-slot">16</div>`,
+                0,
+                { ...configDetalhe, numero: 16 }
+            )
+
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+
+        function abrirRota(lat, lng) {
+            fecharMenuUsuario()
+            if (!lat || !lng) return alert("Localização não disponível")
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank")
+        }
+
+        function carregarMapa() {
+            if (!map) {
+                map = L.map('map').setView([-23.97, -46.25], 12)
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+                markersLayer = L.layerGroup().addTo(map)
+            }
+            atualizarMapa()
+            setTimeout(() => { map.invalidateSize() }, 200)
+        }
+
+        function atualizarMapa() {
+            if (!map || !markersLayer) return
+            markersLayer.clearLayers()
+            unidades.forEach(u => {
+                if (!u.lat || !u.lng) return
+                L.marker([u.lat, u.lng]).addTo(markersLayer).bindPopup(`<b>${u.upa}</b><br>${u.tempo_espera}<br><br><a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${u.lat},${u.lng}">Abrir rota</a>`)
+            })
+        }
+
+        async function fazerLogin() {
+            if (!email.value || !senha.value) return alert("Preencha email e senha")
+
+            const res = await fetch(`${API}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.value, senha: senha.value })
+            })
+
+            const data = await res.json()
+
+            if (data.token) {
+                localStorage.setItem("token", data.token)
+                localStorage.setItem("user", JSON.stringify(data.user))
+                atualizarInterfaceUsuario()
+                alert("Login realizado!")
+                mostrarLista()
+            } else {
+                alert(data.erro || "Email ou senha inválidos")
+            }
+        }
+
+        function atualizarInterfaceUsuario() {
+            const user = getUser()
+            const btnCadastrar = document.getElementById("btnCadastrar")
+            const menuArea = document.getElementById("menuUsuarioArea")
+            const btnLoginTopo = document.getElementById("btnLoginTopo")
+            const nomeUsuarioMenu = document.getElementById("nomeUsuarioMenu")
+            const btnPainelAdmin = document.getElementById("btnPainelAdmin")
+
+            if (user) {
+                menuArea.style.display = "block"
+                btnLoginTopo.style.display = "none"
+                nomeUsuarioMenu.innerText = user.nome || "Usuário"
+                btnPainelAdmin.style.display = user.tipo === "admin" ? "block" : "none"
+            } else {
+                menuArea.style.display = "none"
+                btnLoginTopo.style.display = "inline-block"
+                btnPainelAdmin.style.display = "none"
+            }
+
+            if (user && (user.tipo === "funcionario" || user.tipo === "admin")) {
+                btnCadastrar.style.display = "inline-block"
+            } else {
+                btnCadastrar.style.display = "none"
+            }
+        }
+
+        function verificarPermissao() { atualizarInterfaceUsuario() }
+
+        function toggleMenuUsuario() {
+            const menu = document.getElementById("menuUsuario")
+            menu.style.display = menu.style.display === "block" ? "none" : "block"
+        }
+
+        function logout() {
+            localStorage.removeItem("token")
+            localStorage.removeItem("user")
+            atualizarInterfaceUsuario()
+            alert("Logout realizado!")
+            mostrarLista()
+        }
+
+        async function abrirPerfil() {
+            fecharMenuUsuario()
+            const token = localStorage.getItem("token")
+            let user = getUser()
+            if (!user) return alert("Você precisa estar logado")
+
+            document.getElementById("lista").style.display = "none"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+            document.getElementById("perfil").style.display = "block"
+
+            try {
+                const res = await fetch(`${API}/auth/perfil`, { headers: { Authorization: token } })
+                if (res.ok) {
+                    user = await res.json()
+                    localStorage.setItem("user", JSON.stringify({ id: user._id || user.id, nome: user.nome, email: user.email, cpf: user.cpf, tipo: user.tipo, foto: user.foto, status: user.status, suspensoAte: user.suspensoAte }))
+                }
+            } catch (err) { console.log("Perfil usando dados locais") }
+
+            document.getElementById("perfilNome").value = user.nome || ""
+            document.getElementById("perfilEmail").value = user.email || ""
+            document.getElementById("perfilCpf").value = formatarCPF(user.cpf || "")
+            document.getElementById("perfilSenha").value = ""
+            document.getElementById("fotoPreview").src = fotoUsuario(user)
+        }
+
+        async function salvarPerfil() {
+            const token = localStorage.getItem("token")
+            if (!token) return alert("Você precisa estar logado")
+
+            const senhaNova = document.getElementById("perfilSenha").value.trim()
+            const foto = document.getElementById("fotoPerfil").files[0]
+            if (!senhaNova && !foto) return alert("Nenhuma alteração foi feita")
+
+            if (senhaNova && !senhaTemMinimo8(senhaNova)) {
+                validarSenhaVisual("perfilSenha", "msgPerfilSenha", true)
+                return alert("A nova senha precisa ter no mínimo 8 caracteres.")
+            }
+
+            const formData = new FormData()
+            if (senhaNova) formData.append("senha", senhaNova)
+            if (foto) formData.append("foto", foto)
+
+            const res = await fetch(`${API}/auth/perfil`, { method: "PUT", headers: { Authorization: token }, body: formData })
+            const data = await res.json()
+
+            if (res.ok) {
+                const userAtualizado = { id: data.user._id || data.user.id, nome: data.user.nome, email: data.user.email, cpf: data.user.cpf, tipo: data.user.tipo, foto: data.user.foto, status: data.user.status, suspensoAte: data.user.suspensoAte }
+                localStorage.setItem("user", JSON.stringify(userAtualizado))
+                atualizarInterfaceUsuario()
+                alert("Perfil atualizado com sucesso!")
+                document.getElementById("fotoPerfil").value = ""
+                document.getElementById("perfilSenha").value = ""
+                abrirPerfil()
+            } else {
+                alert(data.erro || "Erro ao salvar perfil")
+            }
+        }
+
+        async function abrirPainelAdmin() {
+            fecharMenuUsuario()
+            const user = getUser()
+            if (!user || user.tipo !== "admin") return alert("Acesso permitido somente para administrador")
+
+            document.getElementById("lista").style.display = "none"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "block"
+
+            document.getElementById("adminPanel").innerHTML = `
+                <div style="max-width:1300px; margin:auto;">
+                    <div class="admin-card">
+                        <h2 style="margin:0 0 8px 0; color:#0d47a1;">Painel Administrativo</h2>
+                        <p style="margin:0; color:#555;">
+                            Gerencie usuários, patrocinadores e histórico sem deixar a página gigante.
+                        </p>
+
+                        <div class="admin-tabs">
+                            <button id="tabBtnUsuarios" class="admin-tab-btn" onclick="selecionarAbaAdmin('usuarios')">Usuários</button>
+
+                            <button id="tabBtnPatrocinadores" class="admin-tab-btn" onclick="selecionarAbaAdmin('patrocinadores')">Patrocinadores</button>
+
+                            <button id="tabBtnAnuncios" class="admin-tab-btn" onclick="selecionarAbaAdmin('anuncios')">Anúncios/ADS</button>
+
+                            <button id="tabBtnAreasAds" class="admin-tab-btn" onclick="selecionarAbaAdmin('areasAds')">Áreas de ADS</button>
+
+                            <button id="tabBtnHistorico" class="admin-tab-btn" onclick="selecionarAbaAdmin('historico')">Histórico</button>
+                        </div>
+                    </div>
+
+                    <div id="tabUsuarios" class="admin-tab-content">
+                        <div class="admin-card">
+                            <h3 style="color:#0d47a1; margin-top:0;">Usuários cadastrados</h3>
+
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
+                                <input id="adminBusca" class="admin-input" placeholder="Buscar por nome, email ou CPF" value="${adminBuscaAtual}">
+                                <select id="adminFiltro" class="admin-select">
+                                    <option value="todos">Todos</option>
+                                    <option value="admins">Admins</option>
+                                    <option value="funcionarios">Funcionários</option>
+                                    <option value="usuarios">Usuários</option>
+                                    <option value="suspensos">Suspensos</option>
+                                    <option value="banidos">Banidos</option>
+                                    <option value="removidos">Removidos</option>
+                                </select>
+                                <button class="admin-btn btn-blue" onclick="buscarUsuariosAdmin()">Buscar</button>
+                                <button class="admin-btn btn-gray" onclick="limparBuscaAdmin()">Limpar</button>
+                            </div>
+
+                            <div id="adminUsuarios">Carregando usuários...</div>
+                        </div>
+                    </div>
+
+                    <div id="tabPatrocinadores" class="admin-tab-content">
+                        <div class="admin-card">
+                            <h3 style="color:#0d47a1; margin-top:0;">Patrocinadores</h3>
+
+                            <p style="margin-top:0; color:#555;">
+                                Cadastre empresas e responsáveis que vão aparecer futuramente nos espaços de ADS do site.
+                            </p>
+
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
+                                <input id="patrocinadorBusca" class="admin-input" placeholder="Buscar por empresa, responsável, email, CPF/CNPJ ou segmento" value="${patrocinadorBuscaAtual}">
+                                <select id="patrocinadorStatus" class="admin-select">
+                                    <option value="todos">Todos</option>
+                                    <option value="ativo">Ativos</option>
+                                    <option value="inativo">Inativos</option>
+                                </select>
+                                <button class="admin-btn btn-blue" onclick="buscarPatrocinadoresAdmin()">Buscar</button>
+                                <button class="admin-btn btn-gray" onclick="limparBuscaPatrocinadoresAdmin()">Limpar</button>
+                                <button class="admin-btn btn-green" onclick="abrirFormularioPatrocinador()">Cadastrar patrocinador</button>
+                            </div>
+
+                            <div id="adminPatrocinadores">Carregando patrocinadores...</div>
+                        </div>
+                    </div>
+
+
+                    <div id="tabAnuncios" class="admin-tab-content">
+                        <div class="admin-card">
+                            <h3 style="color:#0d47a1; margin-top:0;">Anúncios/ADS</h3>
+
+                            <p style="margin-top:0; color:#555;">
+                                Cadastre imagens ou vídeos dos patrocinadores para exibir futuramente nos espaços de ADS do site.
+                            </p>
+
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
+                                <input id="anuncioBusca" class="admin-input" placeholder="Buscar por nome, descrição, posição ou status" value="${anunciosBuscaAtual}">
+
+                                <select id="anuncioStatus" class="admin-select">
+                                    <option value="todos">Todos os status</option>
+                                    <option value="ativo">Ativos</option>
+                                    <option value="pausado">Pausados</option>
+                                    <option value="expirado">Expirados</option>
+                                    <option value="removido">Removidos</option>
+                                </select>
+
+                                <select id="anuncioPosicao" class="admin-select">
+                                    <option value="todos">Todas as posições</option>
+                                    <option value="lateral_esquerda">Lateral esquerda</option>
+                                    <option value="lateral_direita">Lateral direita</option>
+                                    <option value="banner_inferior">Banner inferior</option>
+                                    <option value="mobile">Mobile</option>
+                                    <option value="rodape">Rodapé</option>
+                                    <option value="card">Publicidade dos cards</option>
+                                    <option value="detalhe">Publicidade dos detalhes</option>
+                                </select>
+
+                                <button class="admin-btn btn-blue" onclick="buscarAnunciosAdmin()">Buscar</button>
+                                <button class="admin-btn btn-gray" onclick="limparBuscaAnunciosAdmin()">Limpar</button>
+                                <button class="admin-btn btn-green" onclick="abrirFormularioAnuncio()">Cadastrar anúncio</button>
+                            </div>
+
+                            <div id="adminAnuncios">Carregando anúncios...</div>
+                        </div>
+                    </div>
+
+                    <div id="tabAreasAds" class="admin-tab-content">
+                        <div class="admin-card">
+                            <h3 style="color:#0d47a1; margin-top:0;">Áreas de ADS</h3>
+
+                            <p style="margin-top:0; color:#555;">
+                                Defina qual anúncio aparece em cada espaço do site, altere o tamanho em pixels e ative/desative áreas.
+                            </p>
+
+                            <div id="adminAreasAds">Carregando áreas de ADS...</div>
+                        </div>
+                    </div>
+
+                    <div id="tabHistorico" class="admin-tab-content">
+                        <div class="admin-card">
+                            <h3 style="color:#0d47a1; margin-top:0;">Histórico de alterações</h3>
+
+                            <input
+                                id="buscaLogsAdmin"
+                                class="admin-input"
+                                placeholder="Buscar por data, usuário, ação, alvo ou detalhes..."
+                                oninput="filtrarLogsAdmin()"
+                                style="width:100%; max-width:520px; margin-bottom:18px;"
+                            >
+
+                            <div id="adminLogs">Carregando logs...</div>
+                        </div>
+                    </div>
+
+                    <button onclick="mostrarLista()" class="admin-btn btn-blue" style="padding:14px 22px;">Voltar ao início</button>
+                </div>
+            `
+
+            document.getElementById("adminFiltro").value = adminFiltroAtual
+            document.getElementById("adminBusca").addEventListener("keydown", e => { if (e.key === "Enter") buscarUsuariosAdmin() })
+            document.getElementById("adminFiltro").addEventListener("change", buscarUsuariosAdmin)
+
+            document.getElementById("patrocinadorStatus").value = patrocinadorStatusAtual
+            document.getElementById("patrocinadorBusca").addEventListener("keydown", e => { if (e.key === "Enter") buscarPatrocinadoresAdmin() })
+            document.getElementById("patrocinadorStatus").addEventListener("change", buscarPatrocinadoresAdmin)
+
+            document.getElementById("anuncioStatus").value = anunciosStatusAtual
+            document.getElementById("anuncioPosicao").value = anunciosPosicaoAtual
+            document.getElementById("anuncioBusca").addEventListener("keydown", e => { if (e.key === "Enter") buscarAnunciosAdmin() })
+            document.getElementById("anuncioStatus").addEventListener("change", buscarAnunciosAdmin)
+            document.getElementById("anuncioPosicao").addEventListener("change", buscarAnunciosAdmin)
+
+            selecionarAbaAdmin(adminAbaAtual)
+
+            await carregarUsuariosAdmin()
+            await carregarPatrocinadoresAdmin()
+            await carregarAnunciosAdmin()
+            await carregarAreasAdsAdmin()
+            await carregarLogsAdmin()
+        }
+
+        function selecionarAbaAdmin(aba) {
+            adminAbaAtual = aba
+
+            const abas = ["usuarios", "patrocinadores", "anuncios", "areasAds", "historico"]
+
+            abas.forEach(nome => {
+                const conteudo = document.getElementById(`tab${nome.charAt(0).toUpperCase() + nome.slice(1)}`)
+                const botao = document.getElementById(`tabBtn${nome.charAt(0).toUpperCase() + nome.slice(1)}`)
+
+                if (conteudo) {
+                    conteudo.style.display = nome === aba ? "block" : "none"
+                }
+
+                if (botao) {
+                    botao.classList.toggle("active", nome === aba)
+                }
+            })
+        }
+
+        async function carregarUsuariosAdmin() {
+            const token = localStorage.getItem("token")
+            const params = new URLSearchParams()
+            if (adminBuscaAtual) params.append("busca", adminBuscaAtual)
+            if (adminFiltroAtual && adminFiltroAtual !== "todos") params.append("filtro", adminFiltroAtual)
+
+            try {
+                const res = await fetch(`${API}/admin/usuarios?${params.toString()}`, { headers: { Authorization: token } })
+                const data = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById("adminUsuarios").innerHTML = data.erro || "Erro ao carregar usuários"
+                    return
+                }
+
+                adminUsuariosCache = data
+                renderizarUsuariosAdmin(adminUsuariosCache)
+            } catch {
+                document.getElementById("adminUsuarios").innerHTML = "Erro ao conectar com o backend."
+            }
+        }
+
+        function buscarUsuariosAdmin() {
+            adminBuscaAtual = document.getElementById("adminBusca").value.trim()
+            adminFiltroAtual = document.getElementById("adminFiltro").value
+            usuariosPaginaAtual = 1
+            carregarUsuariosAdmin()
+        }
+
+        function limparBuscaAdmin() {
+            adminBuscaAtual = ""
+            adminFiltroAtual = "todos"
+            usuariosPaginaAtual = 1
+            document.getElementById("adminBusca").value = ""
+            document.getElementById("adminFiltro").value = "todos"
+            carregarUsuariosAdmin()
+        }
+
+        function alterarLimiteUsuarios() {
+            usuariosPorPagina = Number(document.getElementById("usuariosPorPagina").value)
+            usuariosPaginaAtual = 1
+            renderizarUsuariosAdmin(adminUsuariosCache)
+        }
+
+        function mudarPaginaUsuarios(delta) {
+            usuariosPaginaAtual += delta
+            renderizarUsuariosAdmin(adminUsuariosCache)
+        }
+
+        function renderizarUsuariosAdmin(usuarios) {
+            if (!Array.isArray(usuarios) || usuarios.length === 0) {
+                document.getElementById("adminUsuarios").innerHTML = "Nenhum usuário encontrado."
+                return
+            }
+
+            const usuariosOrdenados = [...usuarios].sort((a, b) => {
+                const ar = (a.status || "ativo") === "removido" ? 1 : 0
+                const br = (b.status || "ativo") === "removido" ? 1 : 0
+
+                if (ar !== br) return ar - br
+
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+            })
+
+            const total = usuariosOrdenados.length
+            const totalPaginas = Math.max(1, Math.ceil(total / usuariosPorPagina))
+
+            if (usuariosPaginaAtual > totalPaginas) usuariosPaginaAtual = totalPaginas
+            if (usuariosPaginaAtual < 1) usuariosPaginaAtual = 1
+
+            const inicio = (usuariosPaginaAtual - 1) * usuariosPorPagina
+            const fim = Math.min(inicio + usuariosPorPagina, total)
+            const usuariosPagina = usuariosOrdenados.slice(inicio, fim)
+
+            let html = `
+                <div class="admin-toolbar-info">
+                    <span>Mostrando ${inicio + 1}-${fim} de ${total} usuário(s)</span>
+
+                    <label>
+                        Exibir:
+                        <select id="usuariosPorPagina" class="admin-select" onchange="alterarLimiteUsuarios()">
+                            <option value="10" ${usuariosPorPagina === 10 ? "selected" : ""}>10</option>
+                            <option value="25" ${usuariosPorPagina === 25 ? "selected" : ""}>25</option>
+                            <option value="50" ${usuariosPorPagina === 50 ? "selected" : ""}>50</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div style="overflow:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>CPF</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `
+
+            usuariosPagina.forEach(u => {
+                html += `
+                    <tr>
+                        <td style="min-width:220px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <img src="${fotoUsuario(u)}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #e3f2fd;">
+                                <div><b>${u.nome || "-"}</b><br><small style="color:#666;">Criado: ${formatarDataCurta(u.createdAt)}</small></div>
+                            </div>
+                        </td>
+                        <td>${u.email || "-"}</td>
+                        <td>${formatarCPF(u.cpf || "")}</td>
+                        <td>${tipoBadge(u.tipo)}</td>
+                        <td>${statusBadge(u.status || "ativo")}</td>
+                        <td>
+                            <div class="admin-actions">
+                                <button class="admin-btn btn-blue" onclick="verDadosUsuario('${u._id}')">Ver dados</button>
+                                <select onchange="alterarTipoUsuario('${u._id}', this.value)" class="admin-select">
+                                    <option value="usuario" ${u.tipo === "usuario" ? "selected" : ""}>Usuário</option>
+                                    <option value="funcionario" ${u.tipo === "funcionario" ? "selected" : ""}>Funcionário</option>
+                                    <option value="admin" ${u.tipo === "admin" ? "selected" : ""}>Admin</option>
+                                </select>
+                                ${u.status === "removido" ? `<span class="badge-status status-removido">removido</span>` : `<button class="admin-btn btn-red" onclick="removerUsuario('${u._id}')">Remover</button>`}
+                            </div>
+                        </td>
+                    </tr>
+                `
+            })
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination">
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaUsuarios(-1)" ${usuariosPaginaAtual === 1 ? "disabled" : ""}>Anterior</button>
+                    <span>Página ${usuariosPaginaAtual} de ${totalPaginas}</span>
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaUsuarios(1)" ${usuariosPaginaAtual === totalPaginas ? "disabled" : ""}>Próxima</button>
+                </div>
+            `
+
+            document.getElementById("adminUsuarios").innerHTML = html
+        }
+
+        async function verDadosUsuario(id) {
+            const token = localStorage.getItem("token")
+            const res = await fetch(`${API}/admin/usuarios/${id}`, { headers: { Authorization: token } })
+            const u = await res.json()
+
+            if (!res.ok) return alert(u.erro || "Erro ao carregar dados")
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Dados da conta</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <div style="display:flex; gap:22px; align-items:center; margin-top:22px; flex-wrap:wrap;">
+                    <img src="${fotoUsuario(u)}" style="width:130px; height:130px; border-radius:50%; object-fit:cover; border:4px solid #0d47a1;">
+                    <div>
+                        <h2 style="margin:0 0 8px 0;">${u.nome || "-"}</h2>
+                        <p style="margin:4px 0;"><b>Email:</b> ${u.email || "-"}</p>
+                        <p style="margin:4px 0;"><b>CPF:</b> ${formatarCPF(u.cpf || "")}</p>
+                        <p style="margin:4px 0;"><b>Tipo:</b> ${tipoBadge(u.tipo)}</p>
+                        <p style="margin:4px 0;"><b>Status:</b> ${statusBadge(u.status || "ativo")}</p>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:24px;">
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Criado em</b><br>${formatarData(u.createdAt)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Atualizado em</b><br>${formatarData(u.updatedAt)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Suspenso até</b><br>${formatarData(u.suspensoAte)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Banido em</b><br>${formatarData(u.banidoEm)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Removido em</b><br>${formatarData(u.removidoEm)}</div>
+                </div>
+            `)
+        }
+
+        function abrirSuspensaoUsuario(id, nome) {
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Suspender usuário</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+                <p>Defina por quanto tempo a conta <b>${nome || "selecionada"}</b> ficará suspensa.</p>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+                    <input id="suspensaoQuantidade" type="number" min="1" value="1" class="admin-input" style="min-width:140px;" placeholder="Quantidade">
+                    <select id="suspensaoUnidade" class="admin-select">
+                        <option value="horas">Horas</option>
+                        <option value="dias">Dias</option>
+                        <option value="meses">Meses</option>
+                    </select>
+                    <button onclick="suspenderUsuario('${id}')" class="admin-btn btn-orange">Confirmar suspensão</button>
+                </div>
+            `)
+        }
+
+        async function alterarTipoUsuario(id, tipo) {
+            const token = localStorage.getItem("token")
+            if (!confirm(`Deseja alterar esse usuário para "${tipo}"?`)) return carregarUsuariosAdmin()
+
+            const res = await fetch(`${API}/admin/usuarios/${id}/tipo`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: token },
+                body: JSON.stringify({ tipo })
+            })
+
+            const data = await res.json()
+            if (res.ok) { alert("Permissão alterada com sucesso!"); await carregarUsuariosAdmin(); await carregarLogsAdmin() }
+            else { alert(data.erro || "Erro ao alterar permissão"); carregarUsuariosAdmin() }
+        }
+
+        async function suspenderUsuario(id) {
+            const token = localStorage.getItem("token")
+            const quantidade = document.getElementById("suspensaoQuantidade").value
+            const unidade = document.getElementById("suspensaoUnidade").value
+            if (!quantidade || quantidade <= 0) return alert("Informe uma quantidade válida")
+
+            const res = await fetch(`${API}/admin/usuarios/${id}/suspender`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: token },
+                body: JSON.stringify({ quantidade, unidade })
+            })
+
+            const data = await res.json()
+            if (res.ok) { alert("Usuário suspenso com sucesso!"); fecharModalAdmin(); await carregarUsuariosAdmin(); await carregarLogsAdmin() }
+            else alert(data.erro || "Erro ao suspender usuário")
+        }
+
+        async function banirUsuario(id) {
+            if (!confirm("Tem certeza que deseja banir esta conta?")) return
+            await executarAcaoUsuario(`${API}/admin/usuarios/${id}/banir`, "Usuário banido com sucesso!")
+        }
+
+        async function removerUsuario(id) {
+            if (!confirm("Tem certeza que deseja remover esta conta da lista ativa?")) return
+            await executarAcaoUsuario(`${API}/admin/usuarios/${id}/remover`, "Usuário removido com sucesso!")
+        }
+
+        async function reativarUsuario(id) {
+            if (!confirm("Deseja reativar esta conta?")) return
+            await executarAcaoUsuario(`${API}/admin/usuarios/${id}/reativar`, "Usuário reativado com sucesso!")
+        }
+
+        async function executarAcaoUsuario(url, mensagem) {
+            const token = localStorage.getItem("token")
+            const res = await fetch(url, { method: "PUT", headers: { Authorization: token } })
+            const data = await res.json()
+            if (res.ok) { alert(mensagem); await carregarUsuariosAdmin(); await carregarLogsAdmin() }
+            else alert(data.erro || "Erro ao executar ação")
+        }
+
+
+        async function carregarPatrocinadoresAdmin() {
+            const token = localStorage.getItem("token")
+            const params = new URLSearchParams()
+
+            if (patrocinadorBuscaAtual) params.append("busca", patrocinadorBuscaAtual)
+            if (patrocinadorStatusAtual && patrocinadorStatusAtual !== "todos") params.append("status", patrocinadorStatusAtual)
+
+            try {
+                const res = await fetch(`${API}/patrocinadores?${params.toString()}`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById("adminPatrocinadores").innerHTML = data.erro || "Erro ao carregar patrocinadores"
+                    return
+                }
+
+                patrocinadoresCache = data
+                renderizarPatrocinadoresAdmin(patrocinadoresCache)
+
+            } catch {
+                document.getElementById("adminPatrocinadores").innerHTML = "Erro ao conectar com o backend."
+            }
+        }
+
+        function buscarPatrocinadoresAdmin() {
+            patrocinadorBuscaAtual = document.getElementById("patrocinadorBusca").value.trim()
+            patrocinadorStatusAtual = document.getElementById("patrocinadorStatus").value
+            patrocinadoresPaginaAtual = 1
+            carregarPatrocinadoresAdmin()
+        }
+
+        function limparBuscaPatrocinadoresAdmin() {
+            patrocinadorBuscaAtual = ""
+            patrocinadorStatusAtual = "todos"
+            patrocinadoresPaginaAtual = 1
+
+            document.getElementById("patrocinadorBusca").value = ""
+            document.getElementById("patrocinadorStatus").value = "todos"
+
+            carregarPatrocinadoresAdmin()
+        }
+
+        function alterarLimitePatrocinadores() {
+            patrocinadoresPorPagina = Number(document.getElementById("patrocinadoresPorPagina").value)
+            patrocinadoresPaginaAtual = 1
+            renderizarPatrocinadoresAdmin(patrocinadoresCache)
+        }
+
+        function mudarPaginaPatrocinadores(delta) {
+            patrocinadoresPaginaAtual += delta
+            renderizarPatrocinadoresAdmin(patrocinadoresCache)
+        }
+
+        function renderizarPatrocinadoresAdmin(patrocinadores) {
+            if (!Array.isArray(patrocinadores) || patrocinadores.length === 0) {
+                document.getElementById("adminPatrocinadores").innerHTML = "Nenhum patrocinador encontrado."
+                return
+            }
+
+            const total = patrocinadores.length
+            const totalPaginas = Math.max(1, Math.ceil(total / patrocinadoresPorPagina))
+
+            if (patrocinadoresPaginaAtual > totalPaginas) patrocinadoresPaginaAtual = totalPaginas
+            if (patrocinadoresPaginaAtual < 1) patrocinadoresPaginaAtual = 1
+
+            const inicio = (patrocinadoresPaginaAtual - 1) * patrocinadoresPorPagina
+            const fim = Math.min(inicio + patrocinadoresPorPagina, total)
+            const patrocinadoresPagina = patrocinadores.slice(inicio, fim)
+
+            let html = `
+                <div class="admin-toolbar-info">
+                    <span>Mostrando ${inicio + 1}-${fim} de ${total} patrocinador(es)</span>
+
+                    <label>
+                        Exibir:
+                        <select id="patrocinadoresPorPagina" class="admin-select" onchange="alterarLimitePatrocinadores()">
+                            <option value="10" ${patrocinadoresPorPagina === 10 ? "selected" : ""}>10</option>
+                            <option value="25" ${patrocinadoresPorPagina === 25 ? "selected" : ""}>25</option>
+                            <option value="50" ${patrocinadoresPorPagina === 50 ? "selected" : ""}>50</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div style="overflow:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Responsável</th>
+                                <th>Email</th>
+                                <th>Documento</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `
+
+            patrocinadoresPagina.forEach(p => {
+                const novoStatus = (p.status || "ativo") === "ativo" ? "inativo" : "ativo"
+                const textoStatus = novoStatus === "ativo" ? "Ativar" : "Inativar"
+
+                html += `
+                    <tr>
+                        <td style="min-width:240px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <img src="${fotoPatrocinador(p)}" style="width:46px; height:46px; border-radius:14px; object-fit:cover; border:2px solid #e3f2fd;">
+                                <div>
+                                    <b>${p.empresaNome || "-"}</b><br>
+                                    <small style="color:#666;">${p.segmento || "Segmento não informado"}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${p.responsavelNome || "-"}</td>
+                        <td>${p.email || "-"}</td>
+                        <td>${formatarDocumentoPatrocinador(p.tipoDocumentoResponsavel, p.documentoResponsavel)}</td>
+                        <td>${statusPatrocinadorBadge(p.status)}</td>
+                        <td>
+                            <div class="admin-actions">
+                                <button class="admin-btn btn-blue" onclick="verDadosPatrocinador('${p._id}')">Ver dados</button>
+                                <button class="admin-btn btn-gray" onclick="abrirFormularioPatrocinador('${p._id}')">Editar</button>
+                                <button class="admin-btn ${novoStatus === "ativo" ? "btn-green" : "btn-orange"}" onclick="alterarStatusPatrocinador('${p._id}', '${novoStatus}')">${textoStatus}</button>
+                            </div>
+                        </td>
+                    </tr>
+                `
+            })
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination">
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaPatrocinadores(-1)" ${patrocinadoresPaginaAtual === 1 ? "disabled" : ""}>Anterior</button>
+                    <span>Página ${patrocinadoresPaginaAtual} de ${totalPaginas}</span>
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaPatrocinadores(1)" ${patrocinadoresPaginaAtual === totalPaginas ? "disabled" : ""}>Próxima</button>
+                </div>
+            `
+
+            document.getElementById("adminPatrocinadores").innerHTML = html
+        }
+
+        async function verDadosPatrocinador(id) {
+            const token = localStorage.getItem("token")
+
+            const res = await fetch(`${API}/patrocinadores/${id}`, {
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const p = await res.json()
+
+            if (!res.ok) {
+                return alert(p.erro || "Erro ao carregar patrocinador")
+            }
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Dados do patrocinador</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <div style="display:flex; gap:22px; align-items:center; margin-top:22px; flex-wrap:wrap;">
+                    <img src="${fotoPatrocinador(p)}" style="width:130px; height:130px; border-radius:24px; object-fit:cover; border:4px solid #0d47a1;">
+
+                    <div>
+                        <h2 style="margin:0 0 8px 0;">${p.empresaNome || "-"}</h2>
+                        <p style="margin:4px 0;"><b>Segmento:</b> ${p.segmento || "-"}</p>
+                        <p style="margin:4px 0;"><b>Status:</b> ${statusPatrocinadorBadge(p.status)}</p>
+                        <p style="margin:4px 0;"><b>Email:</b> ${p.email || "-"}</p>
+                        <p style="margin:4px 0;"><b>Telefone:</b> ${p.telefone || "-"}</p>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:24px;">
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Responsável</b><br>${p.responsavelNome || "-"}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Documento responsável</b><br>${formatarDocumentoPatrocinador(p.tipoDocumentoResponsavel, p.documentoResponsavel)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>CNPJ empresa</b><br>${formatarCNPJ(p.empresaCnpj || "")}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Data nascimento</b><br>${p.dataNascimento ? formatarDataCurta(p.dataNascimento) : "-"}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Cadastrado em</b><br>${formatarData(p.createdAt)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Atualizado em</b><br>${formatarData(p.updatedAt)}</div>
+                </div>
+
+                <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
+                    <b>Observações</b><br>
+                    ${p.observacoes || "-"}
+                </div>
+            `)
+        }
+
+        async function abrirFormularioPatrocinador(id = "") {
+            const token = localStorage.getItem("token")
+
+            let p = null
+            let titulo = "Cadastrar patrocinador"
+            let textoBotao = "Cadastrar patrocinador"
+
+            if (id) {
+                const res = await fetch(`${API}/patrocinadores/${id}`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                p = await res.json()
+
+                if (!res.ok) {
+                    return alert(p.erro || "Erro ao carregar patrocinador")
+                }
+
+                titulo = "Editar patrocinador"
+                textoBotao = "Salvar alterações"
+            }
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">${titulo}</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <p style="color:#555;">
+                    Preencha os dados do responsável e da empresa. A logo aceita JPG, JPEG, PNG ou WEBP.
+                </p>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:18px;">
+                    <div class="campo-admin">
+                        <label>Nome completo do responsável</label>
+                        <input id="patRespNome" class="admin-input" style="width:100%; min-width:0;" value="${p ? escapeHTML(p.responsavelNome || "") : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Tipo de documento do responsável</label>
+                        <select id="patTipoDoc" class="admin-select" style="width:100%;" onchange="aplicarMascaraDocumentoPatrocinador()">
+                            <option value="cpf" ${p && p.tipoDocumentoResponsavel === "cpf" ? "selected" : ""}>CPF</option>
+                            <option value="cnpj" ${p && p.tipoDocumentoResponsavel === "cnpj" ? "selected" : ""}>CNPJ</option>
+                        </select>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>CPF/CNPJ do responsável</label>
+                        <input id="patDocResp" class="admin-input" style="width:100%; min-width:0;" inputmode="numeric" value="${p ? formatarDocumentoPatrocinador(p.tipoDocumentoResponsavel, p.documentoResponsavel) : ""}" oninput="aplicarMascaraDocumentoPatrocinador()">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Email</label>
+                        <input id="patEmail" class="admin-input" style="width:100%; min-width:0;" value="${p ? escapeHTML(p.email || "") : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Telefone/WhatsApp</label>
+                        <input id="patTelefone" class="admin-input" style="width:100%; min-width:0;" inputmode="numeric" maxlength="15" value="${p ? formatarTelefone(p.telefone || "") : ""}" oninput="aplicarMascaraTelefoneInput('patTelefone')">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Data de nascimento</label>
+                        <input id="patDataNasc" class="admin-input" style="width:100%; min-width:0;" type="date" value="${p && p.dataNascimento ? String(p.dataNascimento).slice(0, 10) : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Nome da empresa</label>
+                        <input id="patEmpresaNome" class="admin-input" style="width:100%; min-width:0;" value="${p ? escapeHTML(p.empresaNome || "") : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>CNPJ da empresa</label>
+                        <input id="patEmpresaCnpj" class="admin-input" style="width:100%; min-width:0;" inputmode="numeric" maxlength="18" value="${p ? formatarCNPJ(p.empresaCnpj || "") : ""}" oninput="aplicarMascaraCNPJInput('patEmpresaCnpj')">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Segmento</label>
+                        <input id="patSegmento" class="admin-input" style="width:100%; min-width:0;" value="${p ? escapeHTML(p.segmento || "") : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Status</label>
+                        <select id="patStatus" class="admin-select" style="width:100%;">
+                            <option value="ativo" ${!p || p.status === "ativo" ? "selected" : ""}>Ativo</option>
+                            <option value="inativo" ${p && p.status === "inativo" ? "selected" : ""}>Inativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <textarea id="patObservacoes" class="admin-input" style="width:100%; min-height:90px; margin-top:14px;" placeholder="Observações">${p ? (p.observacoes || "") : ""}</textarea>
+
+                <div style="margin-top:14px; background:#f4f6f9; padding:14px; border-radius:16px;">
+                    <b>Logo/foto da empresa</b><br>
+                    <small style="color:#666;">Formatos permitidos: JPG, JPEG, PNG ou WEBP. Limite: 3 MB.</small><br><br>
+                    <input id="patLogo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                </div>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+                    <button class="admin-btn btn-green" style="padding:13px 18px;" onclick="salvarPatrocinador('${id}')">${textoBotao}</button>
+                    <button class="admin-btn btn-gray" style="padding:13px 18px;" onclick="fecharModalAdmin()">Cancelar</button>
+                </div>
+            `)
+        }
+
+        async function salvarPatrocinador(id = "") {
+            const token = localStorage.getItem("token")
+
+            const responsavelNome = document.getElementById("patRespNome").value.trim()
+            const tipoDocumentoResponsavel = document.getElementById("patTipoDoc").value
+            const documentoResponsavel = document.getElementById("patDocResp").value.replace(/\D/g, "")
+            const email = document.getElementById("patEmail").value.trim()
+            const telefone = document.getElementById("patTelefone").value.replace(/\D/g, "")
+            const dataNascimento = document.getElementById("patDataNasc").value
+            const empresaNome = document.getElementById("patEmpresaNome").value.trim()
+            const empresaCnpj = document.getElementById("patEmpresaCnpj").value.replace(/\D/g, "")
+            const segmento = document.getElementById("patSegmento").value.trim()
+            const status = document.getElementById("patStatus").value
+            const observacoes = document.getElementById("patObservacoes").value.trim()
+            const logo = document.getElementById("patLogo").files[0]
+
+            if (!responsavelNome || !tipoDocumentoResponsavel || !documentoResponsavel || !email || !empresaNome) {
+                return alert("Preencha responsável, documento, email e nome da empresa")
+            }
+
+            const formData = new FormData()
+            formData.append("responsavelNome", responsavelNome)
+            formData.append("tipoDocumentoResponsavel", tipoDocumentoResponsavel)
+            formData.append("documentoResponsavel", documentoResponsavel)
+            formData.append("email", email)
+            formData.append("telefone", telefone)
+            formData.append("dataNascimento", dataNascimento)
+            formData.append("empresaNome", empresaNome)
+            formData.append("empresaCnpj", empresaCnpj)
+            formData.append("segmento", segmento)
+            formData.append("status", status)
+            formData.append("observacoes", observacoes)
+
+            if (logo) {
+                formData.append("logo", logo)
+            }
+
+            const url = id ? `${API}/patrocinadores/${id}` : `${API}/patrocinadores`
+            const metodo = id ? "PUT" : "POST"
+
+            const res = await fetch(url, {
+                method: metodo,
+                headers: {
+                    Authorization: token
+                },
+                body: formData
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert(data.msg || "Patrocinador salvo com sucesso")
+                fecharModalAdmin()
+                await carregarPatrocinadoresAdmin()
+                await carregarLogsAdmin()
+            } else {
+                alert(data.erro || "Erro ao salvar patrocinador")
+            }
+        }
+
+        async function alterarStatusPatrocinador(id, status) {
+            const token = localStorage.getItem("token")
+
+            if (!confirm(`Deseja alterar este patrocinador para "${status}"?`)) return
+
+            const res = await fetch(`${API}/patrocinadores/${id}/status`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token
+                },
+                body: JSON.stringify({
+                    status
+                })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert("Status do patrocinador atualizado")
+                await carregarPatrocinadoresAdmin()
+                await carregarLogsAdmin()
+            } else {
+                alert(data.erro || "Erro ao alterar status")
+            }
+        }
+
+
+        async function carregarAnunciosAdmin() {
+            const token = localStorage.getItem("token")
+            const params = new URLSearchParams()
+
+            if (anunciosBuscaAtual) params.append("busca", anunciosBuscaAtual)
+            if (anunciosStatusAtual && anunciosStatusAtual !== "todos") params.append("status", anunciosStatusAtual)
+            if (anunciosPosicaoAtual && anunciosPosicaoAtual !== "todos") params.append("posicao", anunciosPosicaoAtual)
+
+            try {
+                const res = await fetch(`${API}/anuncios?${params.toString()}`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById("adminAnuncios").innerHTML = data.erro || "Erro ao carregar anúncios"
+                    return
+                }
+
+                anunciosCache = data
+                renderizarAnunciosAdmin(anunciosCache)
+
+            } catch {
+                document.getElementById("adminAnuncios").innerHTML = "Erro ao conectar com o backend."
+            }
+        }
+
+        function buscarAnunciosAdmin() {
+            anunciosBuscaAtual = document.getElementById("anuncioBusca").value.trim()
+            anunciosStatusAtual = document.getElementById("anuncioStatus").value
+            anunciosPosicaoAtual = document.getElementById("anuncioPosicao").value
+            anunciosPaginaAtual = 1
+            carregarAnunciosAdmin()
+        }
+
+        function limparBuscaAnunciosAdmin() {
+            anunciosBuscaAtual = ""
+            anunciosStatusAtual = "todos"
+            anunciosPosicaoAtual = "todos"
+            anunciosPaginaAtual = 1
+
+            document.getElementById("anuncioBusca").value = ""
+            document.getElementById("anuncioStatus").value = "todos"
+            document.getElementById("anuncioPosicao").value = "todos"
+
+            carregarAnunciosAdmin()
+        }
+
+        function alterarLimiteAnuncios() {
+            anunciosPorPagina = Number(document.getElementById("anunciosPorPagina").value)
+            anunciosPaginaAtual = 1
+            renderizarAnunciosAdmin(anunciosCache)
+        }
+
+        function mudarPaginaAnuncios(delta) {
+            anunciosPaginaAtual += delta
+            renderizarAnunciosAdmin(anunciosCache)
+        }
+
+        function renderizarMidiaAnuncio(a, largura = 78, altura = 78) {
+            const src = midiaAnuncio(a)
+
+            if ((a.tipoMidia || "imagem") === "video") {
+                return `
+                    <video src="${src}" muted loop playsinline style="width:${largura}px; height:${altura}px; object-fit:cover; border-radius:14px; border:2px solid #e3f2fd;"></video>
+                `
+            }
+
+            return `
+                <img src="${src}" style="width:${largura}px; height:${altura}px; object-fit:cover; border-radius:14px; border:2px solid #e3f2fd;">
+            `
+        }
+
+        function renderizarAnunciosAdmin(anuncios) {
+            if (!Array.isArray(anuncios) || anuncios.length === 0) {
+                document.getElementById("adminAnuncios").innerHTML = "Nenhum anúncio encontrado."
+                return
+            }
+
+            const total = anuncios.length
+            const totalPaginas = Math.max(1, Math.ceil(total / anunciosPorPagina))
+
+            if (anunciosPaginaAtual > totalPaginas) anunciosPaginaAtual = totalPaginas
+            if (anunciosPaginaAtual < 1) anunciosPaginaAtual = 1
+
+            const inicio = (anunciosPaginaAtual - 1) * anunciosPorPagina
+            const fim = Math.min(inicio + anunciosPorPagina, total)
+            const anunciosPagina = anuncios.slice(inicio, fim)
+
+            let html = `
+                <div class="admin-toolbar-info">
+                    <span>Mostrando ${inicio + 1}-${fim} de ${total} anúncio(s)</span>
+
+                    <label>
+                        Exibir:
+                        <select id="anunciosPorPagina" class="admin-select" onchange="alterarLimiteAnuncios()">
+                            <option value="10" ${anunciosPorPagina === 10 ? "selected" : ""}>10</option>
+                            <option value="25" ${anunciosPorPagina === 25 ? "selected" : ""}>25</option>
+                            <option value="50" ${anunciosPorPagina === 50 ? "selected" : ""}>50</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div style="overflow:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Anúncio</th>
+                                <th>Patrocinador</th>
+                                <th>Posição</th>
+                                <th>Tamanho</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `
+
+            anunciosPagina.forEach(a => {
+                const patrocinadorNome = a.patrocinador && a.patrocinador.empresaNome ? a.patrocinador.empresaNome : "-"
+
+                html += `
+                    <tr>
+                        <td style="min-width:260px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${renderizarMidiaAnuncio(a)}
+                                <div>
+                                    <b>${escapeHTML(a.nome || "-")}</b><br>
+                                    <small style="color:#666;">${(a.tipoMidia || "imagem") === "video" ? "Vídeo" : "Imagem"} • ${escapeHTML(a.descricao || "Sem descrição")}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${escapeHTML(patrocinadorNome)}</td>
+                        <td>${posicaoAnuncioTexto(a.posicao)}</td>
+                        <td>${Number(a.larguraPx) || 0}x${Number(a.alturaPx) || 0}px<br><small style="color:#666;">${tamanhoPresetTexto(a.tamanhoPreset)}</small></td>
+                        <td>${statusAnuncioBadge(a.status)}</td>
+                        <td>
+                            <div class="admin-actions">
+                                <button class="admin-btn btn-blue" onclick="verDadosAnuncio('${a._id}')">Ver dados</button>
+                                <button class="admin-btn btn-gray" onclick="abrirFormularioAnuncio('${a._id}')">Editar</button>
+                                <button class="admin-btn btn-green" onclick="alterarStatusAnuncio('${a._id}', 'ativo')">Ativar</button>
+                                <button class="admin-btn btn-orange" onclick="alterarStatusAnuncio('${a._id}', 'pausado')">Pausar</button>
+                                <button class="admin-btn btn-red" onclick="alterarStatusAnuncio('${a._id}', 'expirado')">Expirar</button>
+                                <button class="admin-btn btn-red" onclick="removerAnuncio('${a._id}')">Remover</button>
+                            </div>
+                        </td>
+                    </tr>
+                `
+            })
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination">
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaAnuncios(-1)" ${anunciosPaginaAtual === 1 ? "disabled" : ""}>Anterior</button>
+                    <span>Página ${anunciosPaginaAtual} de ${totalPaginas}</span>
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaAnuncios(1)" ${anunciosPaginaAtual === totalPaginas ? "disabled" : ""}>Próxima</button>
+                </div>
+            `
+
+            document.getElementById("adminAnuncios").innerHTML = html
+        }
+
+        async function garantirPatrocinadoresCarregados() {
+            if (Array.isArray(patrocinadoresCache) && patrocinadoresCache.length > 0) return
+
+            const token = localStorage.getItem("token")
+
+            const res = await fetch(`${API}/patrocinadores`, {
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                patrocinadoresCache = data
+            }
+        }
+
+        async function verDadosAnuncio(id) {
+            const token = localStorage.getItem("token")
+
+            const res = await fetch(`${API}/anuncios/${id}`, {
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const a = await res.json()
+
+            if (!res.ok) {
+                return alert(a.erro || "Erro ao carregar anúncio")
+            }
+
+            const patrocinadorNome = a.patrocinador && a.patrocinador.empresaNome ? a.patrocinador.empresaNome : "-"
+            const midiaHTML = (a.tipoMidia || "imagem") === "video"
+                ? `<video src="${midiaAnuncio(a)}" controls muted loop playsinline style="width:100%; max-height:360px; object-fit:contain; background:#111; border-radius:18px;"></video>`
+                : `<img src="${midiaAnuncio(a)}" style="width:100%; max-height:360px; object-fit:contain; background:#f4f6f9; border-radius:18px;">`
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Dados do anúncio</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <div style="margin-top:18px;">
+                    ${midiaHTML}
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:24px;">
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Nome</b><br>${escapeHTML(a.nome || "-")}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Patrocinador</b><br>${escapeHTML(patrocinadorNome)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Posição</b><br>${posicaoAnuncioTexto(a.posicao)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Tipo</b><br>${a.tipoMidia || "-"}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Tamanho</b><br>${Number(a.larguraPx) || 0}x${Number(a.alturaPx) || 0}px</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Status</b><br>${statusAnuncioBadge(a.status)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Início</b><br>${formatarData(a.dataInicio)}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Fim</b><br>${formatarData(a.dataFim)}</div>
+                </div>
+
+                <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
+                    <b>Link de destino</b><br>
+                    ${a.linkDestino ? `<a href="${escapeHTML(a.linkDestino)}" target="_blank">${escapeHTML(a.linkDestino)}</a>` : "-"}
+                </div>
+
+                <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
+                    <b>Descrição</b><br>
+                    ${escapeHTML(a.descricao || "-")}
+                </div>
+            `)
+        }
+
+        async function garantirAreasAdsCarregadasParaAnuncio() {
+            const token = localStorage.getItem("token")
+
+            try {
+                const res = await fetch(`${API}/areas-ads`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                const data = await res.json()
+
+                if (res.ok && Array.isArray(data)) {
+                    areasAdsCache = data
+                    return areasAdsCache
+                }
+            } catch (err) {
+                console.warn("Erro ao carregar áreas para anúncio:", err)
+            }
+
+            return areasAdsCache || []
+        }
+
+        function idsAnunciosDaArea(area) {
+            if (!area) return []
+
+            if (Array.isArray(area.anunciosAtuais) && area.anunciosAtuais.length > 0) {
+                return area.anunciosAtuais
+                    .filter(Boolean)
+                    .map(a => String(a._id || a))
+            }
+
+            if (area.anuncioAtual) return [String(area.anuncioAtual._id || area.anuncioAtual)]
+
+            return []
+        }
+
+        function areaContemAnuncio(area, anuncioId) {
+            if (!anuncioId) return false
+            return idsAnunciosDaArea(area).includes(String(anuncioId))
+        }
+
+        function renderizarChecksAreasAnuncio(anuncioId = "") {
+            const areas = (areasAdsCache || [])
+                .filter(area => Number(area.numero) >= 1 && Number(area.numero) <= 17)
+                .sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0))
+
+            if (areas.length === 0) {
+                return `<div class="ads-info-box">As áreas de publicidade ainda não carregaram. Abra a aba Áreas de ADS uma vez ou reinicie o backend.</div>`
+            }
+
+            return `
+                <div class="ads-check-list-slots">
+                    ${areas.map(area => {
+                const numero = Number(area.numero || 0)
+                const posicao = numero <= 4 ? "Esquerda" : numero <= 8 ? "Direita" : numero <= 10 ? "Rodapé" : numero <= 15 ? "Card" : numero === 16 ? "Detalhes" : "Banner"
+                const checked = areaContemAnuncio(area, anuncioId) ? "checked" : ""
+
+                return `
+                            <label class="ads-check-slot-item">
+                                <input type="checkbox" class="anuncioAreaCheck" value="${area._id}" ${checked}>
+                                <span>${numero}</span>
+                                <small style="color:#666; font-weight:700;">${posicao}</small>
+                            </label>
+                        `
+            }).join("")}
+                </div>
+            `
+        }
+
+
+        function obterPosicaoAnuncioPorAreas(areasSelecionadas) {
+            const primeiraArea = (areasAdsCache || []).find(area =>
+                areasSelecionadas && areasSelecionadas.some(id => String(id) === String(area._id))
+            )
+
+            const numero = Number(primeiraArea?.numero || 0)
+
+            if (numero >= 1 && numero <= 4) return "lateral_esquerda"
+            if (numero >= 5 && numero <= 8) return "lateral_direita"
+            if (numero >= 9 && numero <= 10) return "rodape"
+            if (numero >= 11 && numero <= 15) return "card"
+            if (numero === 16) return "detalhe"
+            if (numero === 17) return "banner_inferior"
+
+            return "mobile"
+        }
+
+
+
+        async function sincronizarAnuncioComAreas(anuncioId, areasSelecionadas) {
+            if (!anuncioId) return
+
+            const token = localStorage.getItem("token")
+            const selecionadas = new Set((areasSelecionadas || []).map(String))
+            const areas = await garantirAreasAdsCarregadasParaAnuncio()
+
+            for (const area of areas) {
+                if (!(Number(area.numero) >= 1 && Number(area.numero) <= 17)) continue
+
+                const atuais = idsAnunciosDaArea(area)
+                const temAnuncio = atuais.includes(String(anuncioId))
+                const deveTer = selecionadas.has(String(area._id))
+
+                let novaLista = [...atuais]
+
+                if (deveTer && !temAnuncio) {
+                    novaLista.push(String(anuncioId))
+                }
+
+                if (!deveTer && temAnuncio) {
+                    novaLista = novaLista.filter(id => String(id) !== String(anuncioId))
+                }
+
+                const mudou = novaLista.join(",") !== atuais.join(",")
+
+                if (!mudou) continue
+
+                await fetch(`${API}/areas-ads/${area._id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: token
+                    },
+                    body: JSON.stringify({
+                        nome: area.nome,
+                        anunciosAtuais: novaLista,
+                        larguraPx: Number(area.larguraPx) || 240,
+                        alturaPx: Number(area.alturaPx) || 235,
+                        status: area.status || "ativo",
+                        rotacionar: area.rotacionar !== false,
+                        tempoTrocaSegundos: Number(area.tempoTrocaSegundos) || 6
+                    })
+                })
+            }
+
+            await garantirAreasAdsCarregadasParaAnuncio()
+        }
+
+        async function abrirFormularioAnuncio(id = "") {
+            const token = localStorage.getItem("token")
+
+            await garantirPatrocinadoresCarregados()
+            await garantirAreasAdsCarregadasParaAnuncio()
+
+            if (!Array.isArray(patrocinadoresCache) || patrocinadoresCache.length === 0) {
+                return alert("Cadastre pelo menos um patrocinador antes de criar um anúncio.")
+            }
+
+            let a = null
+            let titulo = "Cadastrar anúncio/ADS"
+            let textoBotao = "Cadastrar anúncio"
+
+            if (id) {
+                const res = await fetch(`${API}/anuncios/${id}`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                a = await res.json()
+
+                if (!res.ok) {
+                    return alert(a.erro || "Erro ao carregar anúncio")
+                }
+
+                titulo = "Editar anúncio/ADS"
+                textoBotao = "Salvar alterações"
+            }
+
+            const patrocinadorSelecionado = a && a.patrocinador ? (a.patrocinador._id || a.patrocinador) : ""
+
+            const opcoesPatrocinadores = patrocinadoresCache.map(p => {
+                return `<option value="${p._id}" ${String(p._id) === String(patrocinadorSelecionado) ? "selected" : ""}>${escapeHTML(p.empresaNome || p.responsavelNome || "Patrocinador")}</option>`
+            }).join("")
+
+            const anuncioIdAtual = id || (a ? a._id : "")
+            const checksAreas = renderizarChecksAreasAnuncio(anuncioIdAtual)
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">${titulo}</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:18px;">
+                    <div class="campo-admin">
+                        <label>Patrocinador</label>
+                        <select id="anuncioPatrocinador" class="admin-select" style="width:100%;">
+                            <option value="">Selecione</option>
+                            ${opcoesPatrocinadores}
+                        </select>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Nome do anúncio</label>
+                        <input id="anuncioNome" class="admin-input" style="width:100%; min-width:0;" value="${escapeHTML(a ? (a.nome || "") : "")}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Data inicial</label>
+                        <input id="anuncioDataInicio" class="admin-input" style="width:100%; min-width:0;" type="date" value="${a && a.dataInicio ? String(a.dataInicio).slice(0, 10) : ""}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Data final</label>
+                        <input id="anuncioDataFim" class="admin-input" style="width:100%; min-width:0;" type="date" value="${a && a.dataFim ? String(a.dataFim).slice(0, 10) : ""}">
+                    </div>
+
+                    <div class="campo-admin" style="grid-column:1 / -1;">
+                        <label>Status</label>
+                        <select id="anuncioStatusForm" class="admin-select" style="width:100%;">
+                            <option value="ativo" ${!a || a.status === "ativo" ? "selected" : ""}>Ativo</option>
+                            <option value="pausado" ${a && a.status === "pausado" ? "selected" : ""}>Pausado</option>
+                            <option value="expirado" ${a && a.status === "expirado" ? "selected" : ""}>Expirado</option>
+                        </select>
+                    </div>
+
+                    <div class="campo-admin" style="grid-column:1 / -1;">
+                        <label>Tempo de exibição em segundos</label>
+                        <input id="anuncioTempoExibicao" class="admin-input" style="width:100%; min-width:0;" type="number" min="2" inputmode="numeric" value="${a && a.tempoExibicaoSegundos ? a.tempoExibicaoSegundos : 6}" oninput="manterSomenteNumeroInput('anuncioTempoExibicao')">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Link de destino</label>
+                        <input id="anuncioLink" class="admin-input" style="width:100%; min-width:0;" value="${escapeHTML(a ? (a.linkDestino || "") : "")}">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>URL da imagem ou vídeo</label>
+                        <input id="anuncioMidiaUrl" class="admin-input" style="width:100%; min-width:0;" value="${escapeHTML(a && String(a.midia || "").startsWith("http") ? a.midia : "")}">
+                    </div>
+                </div>
+
+                <div class="campo-admin" style="margin-top:14px;">
+                    <label>Quadros onde este anúncio vai aparecer</label>
+                    ${checksAreas}
+                    <small style="color:#666; font-weight:700;">Você pode marcar o mesmo anúncio no quadro 3, no 7, em um card, no detalhe 16 ou no banner 17, por exemplo.</small>
+                </div>
+
+                <div class="campo-admin" style="margin-top:14px;">
+                    <label>Descrição interna</label>
+                    <textarea id="anuncioDescricao" class="admin-input" style="width:100%; min-width:0; min-height:90px;">${escapeHTML(a ? (a.descricao || "") : "")}</textarea>
+                </div>
+
+                <div style="margin-top:14px; background:#f4f6f9; padding:16px; border-radius:16px;">
+                    <b>Mídia do anúncio</b><br>
+                    <small style="color:#666;">Aceita JPG, JPEG, PNG, WEBP, MP4 ou WEBM. Limite de 30 MB.</small><br><br>
+                    <input type="file" id="anuncioMidiaFile" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm">
+                    ${a ? `<p style="font-size:13px; color:#555; margin-bottom:0;">Mídia atual: ${escapeHTML(a.midia || "-")}</p>` : ""}
+                </div>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
+                    <button class="admin-btn btn-green" style="padding:13px 18px;" onclick="salvarAnuncio('${id}')">${textoBotao}</button>
+                    <button class="admin-btn btn-gray" style="padding:13px 18px;" onclick="fecharModalAdmin()">Cancelar</button>
+                </div>
+            `)
+        }
+
+        async function salvarAnuncio(id = "") {
+            const token = localStorage.getItem("token")
+
+            const patrocinador = document.getElementById("anuncioPatrocinador").value
+            const nome = document.getElementById("anuncioNome").value.trim()
+            const status = document.getElementById("anuncioStatusForm").value
+            const tempoExibicaoSegundos = Number(document.getElementById("anuncioTempoExibicao")?.value || 6)
+            const dataInicio = document.getElementById("anuncioDataInicio").value
+            const dataFim = document.getElementById("anuncioDataFim").value
+            const linkDestino = document.getElementById("anuncioLink").value.trim()
+            const midiaUrl = document.getElementById("anuncioMidiaUrl").value.trim()
+            const descricao = document.getElementById("anuncioDescricao").value.trim()
+            const midiaFile = document.getElementById("anuncioMidiaFile").files[0]
+            const areasSelecionadas = Array.from(document.querySelectorAll(".anuncioAreaCheck:checked")).map(input => input.value)
+            const posicao = obterPosicaoAnuncioPorAreas(areasSelecionadas)
+
+            if (!patrocinador || !nome) {
+                return alert("Informe patrocinador e nome do anúncio.")
+            }
+
+            if (!id && !midiaFile && !midiaUrl) {
+                return alert("Envie uma imagem/vídeo ou informe uma URL de mídia.")
+            }
+
+            if (dataInicio && dataFim && new Date(dataFim) < new Date(dataInicio)) {
+                return alert("A data final não pode ser menor que a data inicial.")
+            }
+
+            if (!tempoExibicaoSegundos || tempoExibicaoSegundos < 2) {
+                return alert("Informe um tempo de exibição válido. Mínimo: 2 segundos.")
+            }
+
+            const formData = new FormData()
+            formData.append("patrocinador", patrocinador)
+            formData.append("nome", nome)
+            formData.append("descricao", descricao)
+            formData.append("posicao", posicao)
+            formData.append("status", status)
+            formData.append("tempoExibicaoSegundos", tempoExibicaoSegundos)
+            formData.append("dataInicio", dataInicio)
+            formData.append("dataFim", dataFim)
+            formData.append("linkDestino", linkDestino)
+
+            if (midiaFile) {
+                formData.append("midia", midiaFile)
+            } else if (midiaUrl) {
+                formData.append("midiaUrl", midiaUrl)
+            }
+
+            const url = id ? `${API}/anuncios/${id}` : `${API}/anuncios`
+            const method = id ? "PUT" : "POST"
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    Authorization: token
+                },
+                body: formData
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                const anuncioIdSalvo = data.anuncio ? data.anuncio._id : (id || data._id)
+
+                await sincronizarAnuncioComAreas(anuncioIdSalvo, areasSelecionadas)
+
+                alert(id ? "Anúncio atualizado com sucesso!" : "Anúncio cadastrado com sucesso!")
+                fecharModalAdmin()
+                await carregarAnunciosAdmin()
+                await carregarAreasAdsAdmin()
+                await carregarLogsAdmin()
+                await carregarDados()
+            } else {
+                alert(data.erro || "Erro ao salvar anúncio")
+            }
+        }
+
+        async function alterarStatusAnuncio(id, status) {
+            const token = localStorage.getItem("token")
+
+            if (!confirm(`Deseja alterar o status deste anúncio para "${status}"?`)) return
+
+            const res = await fetch(`${API}/anuncios/${id}/status`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token
+                },
+                body: JSON.stringify({ status })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert("Status do anúncio atualizado com sucesso!")
+                await carregarAnunciosAdmin()
+                await carregarLogsAdmin()
+            } else {
+                alert(data.erro || "Erro ao alterar status")
+            }
+        }
+
+        async function removerAnuncio(id) {
+            const token = localStorage.getItem("token")
+
+            if (!confirm("Deseja remover este anúncio? Ele sairá da lista principal e deixará de aparecer no site.")) return
+
+            const res = await fetch(`${API}/anuncios/${id}/remover`, {
+                method: "PUT",
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert("Anúncio removido com sucesso!")
+                await carregarAnunciosAdmin()
+                await carregarAreasAdsAdmin()
+                await carregarLogsAdmin()
+                await carregarDados()
+            } else {
+                alert(data.erro || "Erro ao remover anúncio")
+            }
+        }
+
+
+
+        function statusAreaAdsBadge(status) {
+            const s = status || "ativo"
+
+            if (s === "ativo") {
+                return `<span class="badge-status status-ativo">ativo</span>`
+            }
+
+            return `<span class="badge-status status-removido">inativo</span>`
+        }
+
+        function anunciosSelecionadosArea(area) {
+            if (!area) return []
+
+            if (Array.isArray(area.anunciosAtuais) && area.anunciosAtuais.length > 0) {
+                return area.anunciosAtuais.filter(Boolean)
+            }
+
+            if (area.anuncioAtual) return [area.anuncioAtual]
+
+            return []
+        }
+
+        function nomeAnuncioArea(area) {
+            const anuncios = anunciosSelecionadosArea(area)
+
+            if (anuncios.length === 0) return "Nenhum anúncio selecionado"
+
+            return anuncios.map(a => {
+                const patrocinador = a.patrocinador && a.patrocinador.empresaNome ? a.patrocinador.empresaNome : "Sem patrocinador"
+                return `${a.nome || "Anúncio sem nome"} — ${patrocinador}`
+            }).join("<br>")
+        }
+
+        function previewAreaAds(area) {
+            const largura = Number(area.larguraPx || 220)
+            const altura = Number(area.alturaPx || 500)
+            const larguraPreview = Math.min(largura, 260)
+            const alturaPreview = Math.max(90, Math.min(altura, 170))
+
+            const anuncios = anunciosSelecionadosArea(area)
+            const anuncio = anuncios[0]
+
+            if (!anuncio) {
+                return `
+                    <div class="ads-area-preview" style="width:${larguraPreview}px; height:${alturaPreview}px;">
+                        ${area.numero || "-"}<br>${largura} x ${altura}px<br>Sem anúncio
+                    </div>
+                `
+            }
+
+            const src = midiaAnuncio(anuncio)
+
+            if (anuncio.tipoMidia === "video") {
+                return `
+                    <div class="ads-area-preview" style="width:${larguraPreview}px; height:${alturaPreview}px;">
+                        <video src="${src}" autoplay muted loop playsinline></video>
+                    </div>
+                `
+            }
+
+            return `
+                <div class="ads-area-preview" style="width:${larguraPreview}px; height:${alturaPreview}px;">
+                    <img src="${src}" alt="Prévia do anúncio">
+                </div>
+            `
+        }
+
+        async function carregarAreasAdsAdmin() {
+            const token = localStorage.getItem("token")
+
+            try {
+                const res = await fetch(`${API}/areas-ads`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById("adminAreasAds").innerHTML = data.erro || "Erro ao carregar áreas de ADS"
+                    return
+                }
+
+                areasAdsCache = data
+                renderizarAreasAdsAdmin(areasAdsCache)
+
+            } catch {
+                document.getElementById("adminAreasAds").innerHTML = "Erro ao conectar com o backend."
+            }
+        }
+
+        function renderizarAreasAdsAdmin(areas) {
+            if (!Array.isArray(areas) || areas.length === 0) {
+                document.getElementById("adminAreasAds").innerHTML = "Nenhuma área de ADS encontrada."
+                return
+            }
+
+            let html = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;">
+            `
+
+            areas.forEach(area => {
+                html += `
+                    <div class="ads-area-card">
+                        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:14px;">
+                            <div>
+                                <h3 style="margin:0 0 6px 0; color:#0d47a1;">${area.numero || area.nome || "-"}</h3>
+                                <div style="font-size:13px; color:#666; font-weight:700;">${posicaoAnuncioTexto(area.posicao)}</div>
+                            </div>
+
+                            ${statusAreaAdsBadge(area.status)}
+                        </div>
+
+                        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                            ${previewAreaAds(area)}
+
+                            <div style="flex:1; min-width:180px;">
+                                <p style="margin:0 0 8px 0; font-size:13px; color:#555;">
+                                    <b>Anúncio(s):</b><br>${nomeAnuncioArea(area)}
+                                </p>
+
+                                <p style="margin:0 0 8px 0; font-size:13px; color:#555;">
+                                    <b>Tamanho:</b> ${area.larguraPx || 0} x ${area.alturaPx || 0}px
+                                </p>
+
+                                <p style="margin:0 0 8px 0; font-size:13px; color:#555;">
+                                    <b>Rotação:</b> ${area.rotacionar === false ? "Não" : "Sim"} — ${area.tempoTrocaSegundos || 6}s
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="admin-actions" style="margin-top:16px;">
+                            <button class="admin-btn btn-blue" onclick="abrirFormularioAreaAds('${area._id}')">Editar área</button>
+                            <button class="admin-btn btn-gray" onclick="abrirPreviewAreaAds('${area._id}')">Ver prévia</button>
+                        </div>
+                    </div>
+                `
+            })
+
+            html += `</div>`
+
+            document.getElementById("adminAreasAds").innerHTML = html
+        }
+
+        async function buscarTodosAnunciosParaArea() {
+            const token = localStorage.getItem("token")
+
+            const res = await fetch(`${API}/anuncios`, {
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.erro || "Erro ao carregar anúncios")
+            }
+
+            return data
+        }
+
+        async function abrirFormularioAreaAds(id) {
+            const token = localStorage.getItem("token")
+
+            const resArea = await fetch(`${API}/areas-ads/${id}`, {
+                headers: {
+                    Authorization: token
+                }
+            })
+
+            const area = await resArea.json()
+
+            if (!resArea.ok) {
+                return alert(area.erro || "Erro ao carregar área de ADS")
+            }
+
+            let anuncios = []
+
+            try {
+                anuncios = await buscarTodosAnunciosParaArea()
+            } catch (err) {
+                return alert(err.message || "Erro ao carregar anúncios")
+            }
+
+            const selecionados = anunciosSelecionadosArea(area).map(a => String(a._id || a))
+
+            const checkboxes = anuncios.map(a => {
+                const patrocinador = a.patrocinador && a.patrocinador.empresaNome ? a.patrocinador.empresaNome : "Sem patrocinador"
+                const marcado = selecionados.includes(String(a._id)) ? "checked" : ""
+
+                return `
+                    <label class="ads-check-item">
+                        <input type="checkbox" class="areaAdsAnuncioCheck" value="${a._id}" ${marcado}>
+                        <span>
+                            <b>${escapeHTML(a.nome || "Anúncio sem nome")}</b><br>
+                            ${escapeHTML(patrocinador)} — ${posicaoAnuncioTexto(a.posicao)} — ${a.larguraPx || 0}x${a.alturaPx || 0}px
+                        </span>
+                    </label>
+                `
+            }).join("")
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Editar área ${area.numero || area.nome || ""}</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <p style="color:#555;">
+                    Selecione um ou mais anúncios para este número. O mesmo anúncio pode ser usado em outros números também.
+                </p>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:18px;">
+                    <div class="campo-admin">
+                        <label>Número da área</label>
+                        <input id="areaAdsNome" class="admin-input" style="width:100%; min-width:0; background:#f1f3f6; color:#777;" value="${escapeHTML(String(area.numero || area.nome || ""))}" readonly>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Posição no site</label>
+                        <input class="admin-input" style="width:100%; min-width:0; background:#f1f3f6; color:#777;" value="${posicaoAnuncioTexto(area.posicao)}" readonly>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Largura em px</label>
+                        <input id="areaAdsLargura" class="admin-input" type="number" min="50" inputmode="numeric" style="width:100%; min-width:0;" value="${area.larguraPx || 220}" oninput="manterSomenteNumeroInput('areaAdsLargura'); atualizarPreviewAreaAdsForm()">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Altura em px</label>
+                        <input id="areaAdsAltura" class="admin-input" type="number" min="50" inputmode="numeric" style="width:100%; min-width:0;" value="${area.alturaPx || 500}" oninput="manterSomenteNumeroInput('areaAdsAltura'); atualizarPreviewAreaAdsForm()">
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Status da área</label>
+                        <select id="areaAdsStatus" class="admin-select" style="width:100%;">
+                            <option value="ativo" ${(area.status || "ativo") === "ativo" ? "selected" : ""}>Ativo</option>
+                            <option value="inativo" ${area.status === "inativo" ? "selected" : ""}>Inativo</option>
+                        </select>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Rotacionar anúncios?</label>
+                        <select id="areaAdsRotacionar" class="admin-select" style="width:100%;">
+                            <option value="true" ${area.rotacionar === false ? "" : "selected"}>Sim</option>
+                            <option value="false" ${area.rotacionar === false ? "selected" : ""}>Não</option>
+                        </select>
+                    </div>
+
+                    <div class="campo-admin">
+                        <label>Tempo de troca em segundos</label>
+                        <input id="areaAdsTempo" class="admin-input" type="number" min="2" inputmode="numeric" style="width:100%; min-width:0;" value="${area.tempoTrocaSegundos || 6}" oninput="manterSomenteNumeroInput('areaAdsTempo')">
+                    </div>
+                </div>
+
+                <div class="campo-admin" style="margin-top:14px;">
+                    <label>Anúncios deste número</label>
+                    <div class="ads-check-list">
+                        ${checkboxes || "Nenhum anúncio cadastrado ainda."}
+                    </div>
+                </div>
+
+                <div id="previewAreaAdsForm" style="margin-top:16px; background:#f4f6f9; border-radius:16px; padding:16px; font-weight:800; color:#0d47a1;">
+                    Prévia do tamanho: ${area.larguraPx || 0} x ${area.alturaPx || 0}px
+                </div>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+                    <button class="admin-btn btn-blue" onclick="salvarAreaAds('${area._id}')">Salvar área</button>
+                    <button class="admin-btn btn-gray" onclick="fecharModalAdmin()">Cancelar</button>
+                </div>
+            `)
+
+            atualizarPreviewAreaAdsForm()
+        }
+
+        function atualizarPreviewAreaAdsForm() {
+            const largura = Number(document.getElementById("areaAdsLargura")?.value || 0)
+            const altura = Number(document.getElementById("areaAdsAltura")?.value || 0)
+            const preview = document.getElementById("previewAreaAdsForm")
+
+            if (!preview) return
+
+            preview.innerHTML = `Prévia do tamanho: <b>${largura || 0} x ${altura || 0}px</b>`
+        }
+
+        async function salvarAreaAds(id) {
+            const token = localStorage.getItem("token")
+
+            const nome = document.getElementById("areaAdsNome").value.trim()
+            const larguraPx = Number(document.getElementById("areaAdsLargura").value)
+            const alturaPx = Number(document.getElementById("areaAdsAltura").value)
+            const status = document.getElementById("areaAdsStatus").value
+            const rotacionar = document.getElementById("areaAdsRotacionar").value === "true"
+            const tempoTrocaSegundos = Number(document.getElementById("areaAdsTempo").value) || 6
+            const anunciosAtuais = Array.from(document.querySelectorAll(".areaAdsAnuncioCheck:checked")).map(input => input.value)
+
+            if (!nome) {
+                return alert("Informe o número da área")
+            }
+
+            if (!larguraPx || larguraPx < 50 || !alturaPx || alturaPx < 50) {
+                return alert("Informe largura e altura válidas em pixels")
+            }
+
+            if (!tempoTrocaSegundos || tempoTrocaSegundos < 2) {
+                return alert("Informe um tempo de troca válido. Mínimo: 2 segundos")
+            }
+
+            const res = await fetch(`${API}/areas-ads/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token
+                },
+                body: JSON.stringify({
+                    nome,
+                    anunciosAtuais,
+                    larguraPx,
+                    alturaPx,
+                    status,
+                    rotacionar,
+                    tempoTrocaSegundos
+                })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                alert("Área de ADS atualizada com sucesso!")
+                fecharModalAdmin()
+                await carregarAreasAdsAdmin()
+                await carregarAreasAdsPublicas()
+                carregarLista()
+                await carregarLogsAdmin()
+            } else {
+                alert(data.erro || "Erro ao salvar área de ADS")
+            }
+        }
+
+        function abrirPreviewAreaAds(id) {
+            const area = areasAdsCache.find(a => String(a._id) === String(id))
+
+            if (!area) {
+                return alert("Área não encontrada")
+            }
+
+            abrirModalAdmin(`
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+                    <h2 style="margin:0; color:#0d47a1;">Prévia da área ${area.numero || ""}</h2>
+                    <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
+                </div>
+
+                <p style="color:#555;">
+                    ${area.numero || area.nome || "-"} — ${posicaoAnuncioTexto(area.posicao)} — ${area.larguraPx || 0} x ${area.alturaPx || 0}px
+                </p>
+
+                <div style="display:flex; justify-content:center; margin-top:18px;">
+                    ${previewAreaAds(area)}
+                </div>
+            `)
+        }
+
+        async function carregarLogsAdmin() {
+            const token = localStorage.getItem("token")
+
+            try {
+                const res = await fetch(`${API}/admin/logs`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+
+                const logs = await res.json()
+
+                if (!res.ok) {
+                    document.getElementById("adminLogs").innerHTML = logs.erro || "Erro ao carregar logs"
+                    return
+                }
+
+                logsAdminCache = logs
+                logsFiltradosCache = logs
+                renderizarLogsAdmin(logsFiltradosCache)
+
+            } catch {
+                document.getElementById("adminLogs").innerHTML = "Erro ao conectar com o backend."
+            }
+        }
+
+        function alterarLimiteLogs() {
+            logsPorPagina = Number(document.getElementById("logsPorPagina").value)
+            logsPaginaAtual = 1
+            renderizarLogsAdmin(logsFiltradosCache)
+        }
+
+        function mudarPaginaLogs(delta) {
+            logsPaginaAtual += delta
+            renderizarLogsAdmin(logsFiltradosCache)
+        }
+
+        function renderizarLogsAdmin(logs) {
+            if (!Array.isArray(logs) || logs.length === 0) {
+                document.getElementById("adminLogs").innerHTML = "Nenhum log encontrado."
+                return
+            }
+
+            const total = logs.length
+            const totalPaginas = Math.max(1, Math.ceil(total / logsPorPagina))
+
+            if (logsPaginaAtual > totalPaginas) logsPaginaAtual = totalPaginas
+            if (logsPaginaAtual < 1) logsPaginaAtual = 1
+
+            const inicio = (logsPaginaAtual - 1) * logsPorPagina
+            const fim = Math.min(inicio + logsPorPagina, total)
+            const logsPagina = logs.slice(inicio, fim)
+
+            let html = `
+                <div class="admin-toolbar-info">
+                    <span>Mostrando ${inicio + 1}-${fim} de ${total} alteração(ões)</span>
+
+                    <label>
+                        Exibir:
+                        <select id="logsPorPagina" class="admin-select" onchange="alterarLimiteLogs()">
+                            <option value="10" ${logsPorPagina === 10 ? "selected" : ""}>10</option>
+                            <option value="25" ${logsPorPagina === 25 ? "selected" : ""}>25</option>
+                            <option value="50" ${logsPorPagina === 50 ? "selected" : ""}>50</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div style="overflow:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Usuário</th>
+                                <th>Ação</th>
+                                <th>Alvo</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `
+
+            logsPagina.forEach(log => {
+                html += `
+                    <tr>
+                        <td>${formatarData(log.data)}</td>
+                        <td>${log.usuarioNome || "-"}</td>
+                        <td>${log.acao || "-"}</td>
+                        <td>${log.alvo || "-"}</td>
+                        <td>${log.detalhes || "-"}</td>
+                    </tr>
+                `
+            })
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination">
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaLogs(-1)" ${logsPaginaAtual === 1 ? "disabled" : ""}>Anterior</button>
+                    <span>Página ${logsPaginaAtual} de ${totalPaginas}</span>
+                    <button class="admin-btn btn-gray" onclick="mudarPaginaLogs(1)" ${logsPaginaAtual === totalPaginas ? "disabled" : ""}>Próxima</button>
+                </div>
+            `
+
+            document.getElementById("adminLogs").innerHTML = html
+        }
+
+        function filtrarLogsAdmin() {
+            const campo = document.getElementById("buscaLogsAdmin")
+
+            if (!campo) return
+
+            const termo = campo.value.toLowerCase().trim()
+
+            logsPaginaAtual = 1
+
+            if (!termo) {
+                logsFiltradosCache = logsAdminCache
+                renderizarLogsAdmin(logsFiltradosCache)
+                return
+            }
+
+            logsFiltradosCache = logsAdminCache.filter(log => {
+                const data = formatarData(log.data).toLowerCase()
+                const usuario = String(log.usuarioNome || "").toLowerCase()
+                const acao = String(log.acao || "").toLowerCase()
+                const alvo = String(log.alvo || "").toLowerCase()
+                const detalhes = String(log.detalhes || "").toLowerCase()
+
+                return (
+                    data.includes(termo) ||
+                    usuario.includes(termo) ||
+                    acao.includes(termo) ||
+                    alvo.includes(termo) ||
+                    detalhes.includes(termo)
+                )
+            })
+
+            renderizarLogsAdmin(logsFiltradosCache)
+        }
+
+        function abrirModalAdmin(html) {
+            document.getElementById("modalAdminConteudo").innerHTML = html
+            document.getElementById("modalAdmin").style.display = "flex"
+        }
+
+        function fecharModalAdmin() {
+            document.getElementById("modalAdmin").style.display = "none"
+            document.getElementById("modalAdminConteudo").innerHTML = ""
+        }
+
+        document.getElementById("modalAdmin").addEventListener("click", e => {
+            if (e.target.id === "modalAdmin") fecharModalAdmin()
+        })
+
+        async function cadastrar() {
+            const token = localStorage.getItem("token")
+            if (!token) return alert("Você precisa estar logado")
+
+            const id = document.getElementById("upa").value
+            const tempo = document.getElementById("tempo").value
+            if (!id || !tempo) return alert("Selecione a UPA e informe o tempo")
+
+            const minutos = Number(String(tempo).replace(/\D/g, ""))
+            const status = statusPorTempoMinutos(minutos)
+            const medicosPlantao = montarMedicosPlantao()
+
+            if (medicosPlantao.length === 0) {
+                return alert("Adicione pelo menos um médico de plantão ou informe a especialidade.")
+            }
+
+            let formData = new FormData()
+            formData.append("tempo_espera", formatarTempo(minutos))
+            formData.append("tempo_minutos", minutos)
+            formData.append("status", status)
+            formData.append("medicosPlantao", JSON.stringify(medicosPlantao))
+            formData.append("medico", medicosPlantao.map(m => m.nome).filter(Boolean).join(", "))
+            formData.append("especialidade", medicosPlantao.map(m => m.especialidade).filter(Boolean).join(", "))
+
+            if (fotoFile.files[0]) formData.append("foto", fotoFile.files[0])
+            else if (fotoUrl.value) formData.append("foto", fotoUrl.value)
+
+            const res = await fetch(`${API}/atendimento/${id}`, { method: "PUT", headers: { Authorization: token }, body: formData })
+            const data = await res.json()
+            if (!res.ok) return alert(data.erro || "Erro ao atualizar")
+
+            alert("Atualizado com sucesso!")
+            fotoUrl.value = ""
+            fotoFile.value = ""
+            await carregarDados()
+            mostrarLista()
+        }
+
+        function formatarTempo(valor) {
+            let minutos = String(valor).replace(/\D/g, "")
+            minutos = Number(minutos)
+            if (!minutos) return "-"
+            const horas = Math.floor(minutos / 60)
+            const resto = minutos % 60
+            if (horas > 0) return resto > 0 ? `${horas}h ${resto}min` : `${horas}h`
+            return `${minutos} min`
+        }
+
+        function formatarCPF(cpf) {
+            let v = String(cpf).replace(/\D/g, "")
+            if (v.length !== 11) return cpf || "-"
+            return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+        }
+
+        function formatarData(data) {
+            if (!data) return "-"
+            return new Date(data).toLocaleString("pt-BR")
+        }
+
+        function formatarDataCurta(data) {
+            if (!data) return "-"
+            return new Date(data).toLocaleDateString("pt-BR")
+        }
+
+        function validarSenhaVisual(inputId, msgId, opcional = false) {
+            const input = document.getElementById(inputId)
+            const msg = document.getElementById(msgId)
+
+            if (!input || !msg) return false
+
+            const valor = input.value.trim()
+
+            input.classList.remove("input-error", "input-ok")
+            msg.classList.remove("erro", "ok")
+
+            if (opcional && valor.length === 0) {
+                msg.innerText = "Para alterar a senha, digite no mínimo 8 caracteres."
+                return true
+            }
+
+            if (valor.length === 0) {
+                msg.innerText = "A senha precisa ter no mínimo 8 caracteres."
+                return false
+            }
+
+            if (valor.length < 8) {
+                input.classList.add("input-error")
+                msg.classList.add("erro")
+                msg.innerText = `Senha muito curta: ${valor.length}/8 caracteres.`
+                return false
+            }
+
+            input.classList.add("input-ok")
+            msg.classList.add("ok")
+            msg.innerText = "Senha válida."
+            return true
+        }
+
+        function senhaTemMinimo8(senha) {
+            return String(senha || "").trim().length >= 8
+        }
+
+        document.getElementById("tempo").addEventListener("input", atualizarStatusPreviewTempo)
+
+        document.getElementById("cpfCadastro").addEventListener("input", e => {
+            let v = e.target.value.replace(/\D/g, "")
+            if (v.length > 11) v = v.slice(0, 11)
+            v = v.replace(/(\d{3})(\d)/, "$1.$2")
+            v = v.replace(/(\d{3})(\d)/, "$1.$2")
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+            e.target.value = v
+        })
+
+        document.getElementById("cpfRedefinir").addEventListener("input", e => {
+            let v = e.target.value.replace(/\D/g, "")
+
+            if (v.length > 11) {
+                v = v.slice(0, 11)
+            }
+
+            v = v.replace(/(\d{3})(\d)/, "$1.$2")
+            v = v.replace(/(\d{3})(\d)/, "$1.$2")
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+
+            e.target.value = v
+        })
+
+        document.getElementById("fotoPerfil").addEventListener("change", () => {
+            const arquivo = document.getElementById("fotoPerfil").files[0]
+            if (arquivo) document.getElementById("fotoPreview").src = URL.createObjectURL(arquivo)
+        })
+
+        document.addEventListener("click", function (event) {
+            const menuArea = document.getElementById("menuUsuarioArea")
+            const menu = document.getElementById("menuUsuario")
+            if (!menuArea || !menu) return
+            if (!menuArea.contains(event.target)) menu.style.display = "none"
+        })
+
+        async function registrar() {
+            const nome = nomeCadastro.value.trim()
+            const email = emailCadastro.value.trim()
+            const senha = senhaCadastro.value.trim()
+            const cpf = cpfCadastro.value.replace(/\D/g, "")
+
+            if (!nome || !email || !senha || !cpf) return alert("Preencha todos os campos")
+            if (cpf.length !== 11) return alert("CPF precisa ter 11 números")
+            if (!senhaTemMinimo8(senha)) {
+                validarSenhaVisual("senhaCadastro", "msgSenhaCadastro")
+                return alert("A senha precisa ter no mínimo 8 caracteres.")
+            }
+
+            const res = await fetch(`${API}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, email, senha, cpf })
+            })
+
+            const data = await res.json()
+            if (res.ok) { alert("Conta criada!"); voltarLogin() }
+            else alert(data.erro || "Erro ao criar conta")
+        }
+
+        function mostrarCadastro() {
+            loginBox.style.display = "none"
+            cadastroBox.style.display = "block"
+
+            if (document.getElementById("redefinirBox")) {
+                redefinirBox.style.display = "none"
+            }
+        }
+
+        function mostrarRedefinirSenha() {
+            loginBox.style.display = "none"
+            cadastroBox.style.display = "none"
+            redefinirBox.style.display = "block"
+        }
+
+        function voltarLogin() {
+            loginBox.style.display = "block"
+            cadastroBox.style.display = "none"
+
+            if (document.getElementById("redefinirBox")) {
+                redefinirBox.style.display = "none"
+            }
+        }
+
+        async function redefinirSenha() {
+
+            const email = emailRedefinir.value.trim()
+            const cpf = cpfRedefinir.value.replace(/\D/g, "")
+            const novaSenha = novaSenhaRedefinir.value.trim()
+
+            if (!email || !cpf || !novaSenha) {
+                alert("Preencha email, CPF e nova senha")
+                return
+            }
+
+            if (cpf.length !== 11) {
+                alert("CPF precisa ter 11 números")
+                return
+            }
+
+            if (!senhaTemMinimo8(novaSenha)) {
+                validarSenhaVisual("novaSenhaRedefinir", "msgNovaSenhaRedefinir")
+                alert("A nova senha precisa ter no mínimo 8 caracteres.")
+                return
+            }
+
+            const res = await fetch(`${API}/auth/redefinir-senha`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email,
+                    cpf,
+                    novaSenha
+                })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+
+                alert("Senha redefinida com sucesso!")
+
+                emailRedefinir.value = ""
+                cpfRedefinir.value = ""
+                novaSenhaRedefinir.value = ""
+
+                voltarLogin()
+
+            } else {
+
+                alert(data.erro || "Erro ao redefinir senha")
+            }
+        }
+
+        function mostrarLista() {
+            fecharMenuUsuario()
+            document.getElementById("lista").style.display = "block"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+            carregarLista()
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+
+        function mostrarMapa() {
+            fecharMenuUsuario()
+            document.getElementById("lista").style.display = "none"
+            document.getElementById("map").style.display = "block"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+            carregarMapa()
+        }
+
+        function mostrarForm() {
+            fecharMenuUsuario()
+            document.getElementById("lista").style.display = "none"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "block"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+        }
+
+        function mostrarLogin() {
+            fecharMenuUsuario()
+            document.getElementById("lista").style.display = "none"
+            document.getElementById("map").style.display = "none"
+            document.getElementById("formulario").style.display = "none"
+            document.getElementById("perfil").style.display = "none"
+            document.getElementById("adminPanel").style.display = "none"
+            document.getElementById("login").style.display = "block"
+            loginBox.style.display = "block"
+            cadastroBox.style.display = "none"
+
+            if (document.getElementById("redefinirBox")) {
+                redefinirBox.style.display = "none"
+            }
+        }
+
+        carregarDados()
+        atualizarInterfaceUsuario()
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js")
+                .then(() => console.log("PWA ativo"))
+                .catch(err => console.log("Erro PWA:", err))
+        }
+    </script>
+</body>
+
+</html>
