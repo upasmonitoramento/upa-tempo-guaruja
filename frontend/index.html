@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Portal saúde Guarujá</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Saúde</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -1172,6 +1173,189 @@
                 border-radius: 18px;
             }
         }
+
+
+        /* ==========================================
+           AJUSTE MOBILE PUBLICADO - PORTAL SAÚDE
+           ========================================== */
+        @media (max-width: 900px) {
+
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden !important;
+            }
+
+            body {
+                padding-top: 78px !important;
+            }
+
+            .topbar {
+                flex-direction: row !important;
+                gap: 8px !important;
+                padding: 12px 14px !important;
+                min-height: 66px;
+            }
+
+            .logo-area {
+                font-size: 17px !important;
+                line-height: 1.1;
+                white-space: nowrap;
+            }
+
+            .topbar-buttons {
+                gap: 6px !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .topbar-buttons button {
+                padding: 8px 10px !important;
+                border-radius: 10px !important;
+                font-size: 11px !important;
+            }
+
+            .menu {
+                margin: 8px 12px !important;
+            }
+
+            .container {
+                padding: 12px !important;
+            }
+
+            .layout-lista-upas {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+            }
+
+            .ads-lateral-coluna,
+            #adLateralEsquerda1,
+            #adLateralEsquerda2,
+            #adLateralEsquerda3,
+            #adLateralEsquerda4,
+            #adLateralDireita1,
+            #adLateralDireita2,
+            #adLateralDireita3,
+            #adLateralDireita4 {
+                display: none !important;
+            }
+
+            .hero-mobile-ajuste {
+                padding: 24px !important;
+                border-radius: 24px !important;
+                margin: 8px 0 18px !important;
+            }
+
+            .hero-mobile-ajuste h1 {
+                font-size: 28px !important;
+            }
+
+            .hero-mobile-ajuste p {
+                font-size: 14px !important;
+            }
+
+            .filtro-status-area {
+                gap: 10px !important;
+                margin-top: 18px !important;
+            }
+
+            .filtro-bolinha {
+                width: 38px !important;
+                height: 38px !important;
+            }
+
+            .cards-container-mobile,
+            #cardsContainer {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+                width: 100% !important;
+            }
+
+            .card-upa-mobile {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 22px !important;
+            }
+
+            .card-upa-mobile h2 {
+                font-size: 18px !important;
+                min-height: auto !important;
+            }
+
+            .ads-slot-card {
+                height: 70px !important;
+                min-height: 70px !important;
+                border-radius: 14px !important;
+            }
+
+            .ads-slot-mobile {
+                display: flex !important;
+                height: 105px !important;
+                min-height: 105px !important;
+                border-radius: 18px !important;
+            }
+
+            .ads-slot-banner {
+                height: 120px !important;
+                min-height: 120px !important;
+                border-radius: 18px !important;
+            }
+
+            .ads-footer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+                margin-top: 22px !important;
+            }
+
+            .ads-slot-footer {
+                height: 110px !important;
+                border-radius: 16px !important;
+            }
+
+            .site-footer {
+                margin-top: 34px !important;
+                padding: 30px 16px 22px !important;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr !important;
+                gap: 22px !important;
+            }
+
+            .footer-bottom {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+            .whatsapp-float {
+                right: 16px !important;
+                bottom: 18px !important;
+                width: 52px !important;
+                height: 52px !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .logo-area {
+                font-size: 15px !important;
+            }
+
+            .topbar-buttons button {
+                padding: 7px 8px !important;
+                font-size: 10px !important;
+            }
+
+            .hero-mobile-ajuste {
+                padding: 22px !important;
+            }
+
+            .hero-mobile-ajuste h1 {
+                font-size: 25px !important;
+            }
+        }
     </style>
 </head>
 
@@ -1180,7 +1364,7 @@
     <div class="site-soft-glow"></div>
 
     <header class="topbar">
-        <div class="logo-area" onclick="mostrarLista()">UPA Tempo Guarujá</div>
+        <div class="logo-area" onclick="mostrarLista()">Portal Saúde</div>
 
         <div class="topbar-buttons">
             <button onclick="mostrarLista()">Início</button>
@@ -1344,7 +1528,7 @@
     <footer id="siteFooter" class="site-footer">
         <div class="footer-content">
             <div>
-                <div class="footer-logo">UPA Tempo Guarujá</div>
+                <div class="footer-logo">Portal Saúde</div>
 
                 <p class="footer-text">
                     Plataforma criada para facilitar o acompanhamento dos tempos de espera,
@@ -1395,7 +1579,7 @@
         </div>
 
         <div class="footer-bottom">
-            <span>© 2026 UPA Tempo Guarujá. Todos os direitos reservados.</span>
+            <span>© 2026 Portal Saúde. Todos os direitos reservados.</span>
             <span>Projeto independente em desenvolvimento.</span>
         </div>
     </footer>
@@ -2092,7 +2276,7 @@
                 : unidades.filter(u => statusDaUnidade(u) === filtroAtendimentoAtual)
 
             lista.innerHTML = `
-                <div style="max-width: min(1320px, calc(100vw - 36px)); margin: auto; display:grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap:16px; align-items:start;">
+                <div class="layout-lista-upas" style="max-width: min(1320px, calc(100vw - 36px)); margin: auto; display:grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap:16px; align-items:start;">
                     <div class="ads-lateral-coluna">
                         <div id="adLateralEsquerda1" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">1</div></div></div>
                         <div id="adLateralEsquerda2" class="ads-slot ads-slot-lateral-pequeno vazio"><div class="ads-placeholder"><div class="ads-numero-slot">2</div></div></div>
@@ -2101,7 +2285,7 @@
                     </div>
 
                     <div>
-                        <div style="background: linear-gradient(135deg,#0d47a1,#1565c0); padding:34px; border-radius:26px; margin-bottom:26px; color:white; box-shadow:0 15px 40px rgba(0,0,0,0.18); position:relative; overflow:hidden;">
+                        <div class="hero-mobile-ajuste" style="background: linear-gradient(135deg,#0d47a1,#1565c0); padding:34px; border-radius:26px; margin-bottom:26px; color:white; box-shadow:0 15px 40px rgba(0,0,0,0.18); position:relative; overflow:hidden;">
                             <div style="position:absolute; width:250px; height:250px; background:rgba(255,255,255,0.08); border-radius:50%; top:-100px; right:-60px;"></div>
                             <div style="position:relative; z-index:2;">
                                 <div style="font-size:14px; font-weight:700; opacity:.85; margin-bottom:10px; letter-spacing:.5px;">Atualizado em tempo real</div>
@@ -2117,7 +2301,7 @@
                             </div>
                         </div>
 
-                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:18px;" id="cardsContainer"></div>
+                        <div class="cards-container-mobile" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:18px;" id="cardsContainer"></div>
                     </div>
 
                     <div class="ads-lateral-coluna">
@@ -2147,7 +2331,7 @@
                 const slotCardNumero = 11 + indiceOriginal
 
                 cardsContainer.innerHTML += `
-                    <div style="background:white; border-radius:24px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08); transition:.3s; border:1px solid #ececec;" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 18px 40px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)';">
+                    <div class="card-upa-mobile" style="background:white; border-radius:24px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08); transition:.3s; border:1px solid #ececec;" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 18px 40px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)';">
                         <div style="position:relative; height:180px; overflow:hidden; background:#dfefff;">
                             <img src="${fotoUnidade(u)}" style="width:100%; height:100%; object-fit:cover;">
                             <span class="status-dot-card status-dot-${statusClasse}" title="${textoStatusTempo(statusClasse)}"></span>
@@ -4688,4 +4872,4 @@
     </script>
 </body>
 
-</html> 
+</html>
