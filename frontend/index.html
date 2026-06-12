@@ -1356,6 +1356,29 @@
                 font-size: 25px !important;
             }
         }
+
+
+
+        /* Ajustes finais apenas para celular */
+        @media (max-width: 700px) {
+            .titulo-upa-card {
+                color: #0d47a1 !important;
+                font-size: 22px !important;
+                font-weight: 900 !important;
+                line-height: 1.12 !important;
+                letter-spacing: -0.7px !important;
+                min-height: auto !important;
+                margin-bottom: 4px !important;
+            }
+
+            #adMobileEntreUpas {
+                display: none !important;
+            }
+
+            .ads-slot-mobile {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -1403,7 +1426,7 @@
                 </div>
             </div>
 
-            <button id="btnLoginTopo" onclick="mostrarLogin()">Logar</button>
+            <button id="btnLoginTopo" onclick="mostrarLogin()">Login</button>
         </div>
     </header>
 
@@ -2176,6 +2199,51 @@
             return "Endereço ainda não cadastrado"
         }
 
+
+        function telefoneDaUnidade(u) {
+            const nome = normalizarTextoChave(u ? u.upa : "")
+
+            if (nome.includes("enseada") || nome.includes("paulo flavio")) {
+                return ["(13) 3351-3661", "(13) 3351-3629", "(13) 3383-6495"]
+            }
+
+            if (nome.includes("pereque")) {
+                return ["(13) 3353-6717"]
+            }
+
+            if (nome.includes("rodoviaria") || nome.includes("santamaria") || nome.includes("matheus")) {
+                return ["(13) 97410-5813"]
+            }
+
+            if (nome.includes("vicente") || nome.includes("pae cara") || nome.includes("pae-cara")) {
+                return ["(13) 3342-5458", "(13) 3342-6176", "(13) 3341-1997"]
+            }
+
+            if (nome.includes("santa cruz") || nome.includes("navegantes")) {
+                return ["(13) 3354-2802"]
+            }
+
+            return []
+        }
+
+        function htmlTelefoneDetalhe(u) {
+            const telefones = telefoneDaUnidade(u)
+
+            if (!telefones.length) return ""
+
+            return `
+                <div class="detalhe-telefone-box" style="background:#eef4ff; padding:20px; border-radius:18px;">
+                    <div style="font-size:12px; color:#0d47a1; margin-bottom:8px; font-weight:900; text-transform:uppercase; letter-spacing:.3px;">TELEFONE</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${telefones.map(tel => {
+                const numeroLink = somenteNumeros(tel)
+                return `<a href="tel:+55${numeroLink}" style="font-size:20px; font-weight:900; color:#0d47a1; text-decoration:none;">${tel}</a>`
+            }).join("")}
+                    </div>
+                </div>
+            `
+        }
+
         function filtrarAtendimentos(status) {
             filtroAtendimentoAtual = status || "todos"
             carregarLista()
@@ -2338,7 +2406,7 @@
                         </div>
 
                         <div style="padding:18px;">
-                            <h2 style="margin:0; font-size:20px; color:#111; line-height:1.2; min-height:52px; display:flex; align-items:flex-start;">${u.upa || "Unidade sem nome"}</h2>
+                            <h2 class="titulo-upa-card" style="margin:0; font-size:20px; color:#111; line-height:1.2; min-height:52px; display:flex; align-items:flex-start;">${u.upa || "Unidade sem nome"}</h2>
                             <div id="adCard${slotCardNumero}" class="ads-slot ads-slot-card vazio"><div class="ads-placeholder"><div class="ads-numero-slot">${slotCardNumero}</div></div></div>
                             <button onclick="verDetalhesPorIndice(${indiceOriginal})" style="width:100%; border:none; background:#0d47a1; color:white; padding:14px; border-radius:14px; cursor:pointer; font-weight:800; transition:.2s;" onmouseover="this.style.background='#1565c0'" onmouseout="this.style.background='#0d47a1'">Detalhes</button>
                         </div>
@@ -2404,6 +2472,8 @@
                                     <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:800;">TEMPO DE ESPERA</div>
                                     <div style="font-size:28px; font-weight:800; color:#0d47a1;">${u.tempo_espera || formatarTempo(minutosDaUnidade(u))}</div>
                                 </div>
+
+                                ${htmlTelefoneDetalhe(u)}
 
                                 <div class="detalhe-medicos-box">
                                     <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:800;">MÉDICOS DE PLANTÃO</div>
