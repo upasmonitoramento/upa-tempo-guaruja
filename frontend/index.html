@@ -369,7 +369,7 @@
         }
 
         .lotado {
-            background: linear-gradient(135deg, #ff9800, #ffb300) !important;
+            background: linear-gradient(135deg, #facc15, #fde047) !important;
         }
 
         .critico {
@@ -1021,7 +1021,7 @@
         }
 
         .status-dot-lotado {
-            background: #ff9800;
+            background: #facc15;
         }
 
         .status-dot-critico {
@@ -1379,6 +1379,68 @@
                 display: none !important;
             }
         }
+
+
+        /* Barra rápida de UPAs - somente celular */
+        .barra-upas-mobile {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding-top: 128px !important;
+            }
+
+            .barra-upas-mobile {
+                position: fixed;
+                top: 66px;
+                left: 0;
+                right: 0;
+                z-index: 9998;
+                display: flex;
+                gap: 8px;
+                overflow-x: auto;
+                padding: 9px 12px 11px;
+                background: rgba(255, 255, 255, 0.92);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid rgba(13, 71, 161, .08);
+                box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
+                scrollbar-width: none;
+            }
+
+            .barra-upas-mobile::-webkit-scrollbar {
+                display: none;
+            }
+
+            .barra-upas-mobile button {
+                flex: 0 0 auto;
+                border: 1px solid rgba(13, 71, 161, .16);
+                background: #eef4ff;
+                color: #0d47a1;
+                border-radius: 999px;
+                padding: 9px 12px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+                cursor: pointer;
+                box-shadow: 0 6px 14px rgba(13, 71, 161, .08);
+            }
+
+            .barra-upas-mobile button:active {
+                transform: scale(.97);
+            }
+
+            .titulo-upa-card {
+                color: #0d47a1 !important;
+                font-size: 21px !important;
+                font-weight: 900 !important;
+                line-height: 1.08 !important;
+                letter-spacing: -0.6px !important;
+                min-height: auto !important;
+                margin-bottom: 4px !important;
+            }
+        }
     </style>
 </head>
 
@@ -1426,9 +1488,11 @@
                 </div>
             </div>
 
-            <button id="btnLoginTopo" onclick="mostrarLogin()">Login</button>
+            <button id="btnLoginTopo" onclick="mostrarLogin()">Entrar</button>
         </div>
     </header>
+
+    <nav id="barraUpasMobile" class="barra-upas-mobile" aria-label="Atalho para UPAs"></nav>
 
     <div class="menu">
         <button id="btnCadastrar" class="btn-cadastrar-premium" onclick="mostrarForm()" style="display:none;">Atualizar
@@ -2138,7 +2202,7 @@
         function preencherSelectUPA() {
             const select = document.getElementById("upa")
             select.innerHTML = ""
-            unidades.forEach(u => { select.innerHTML += `<option value="${u._id}">${u.upa}</option>` })
+            ordenarUnidades(unidades).forEach(u => { select.innerHTML += `<option value="${u._id}">${nomeCurtoUPA(u)}</option>` })
         }
 
 
@@ -2183,6 +2247,70 @@
                 .toLowerCase()
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
+        }
+
+
+        function nomeCurtoUPA(u) {
+            const nome = normalizarTextoChave(u ? u.upa : "")
+
+            if (nome.includes("enseada") || nome.includes("paulo flavio")) return "UPA Enseada"
+            if (nome.includes("pereque")) return "UPA Perequê"
+            if (nome.includes("rodoviaria") || nome.includes("santamaria") || nome.includes("matheus")) return "UPA Rodoviária"
+            if (nome.includes("vicente") || nome.includes("pae cara") || nome.includes("pae-cara")) return "UPA Vicente de Carvalho"
+            if (nome.includes("santa cruz") || nome.includes("navegantes")) return "UPA Santa Cruz dos Navegantes"
+
+            return u && u.upa ? u.upa : "Unidade sem nome"
+        }
+
+        function ordemUPA(u) {
+            const nome = normalizarTextoChave(u ? u.upa : "")
+
+            if (nome.includes("enseada") || nome.includes("paulo flavio")) return 1
+            if (nome.includes("pereque")) return 2
+            if (nome.includes("rodoviaria") || nome.includes("santamaria") || nome.includes("matheus")) return 3
+            if (nome.includes("vicente") || nome.includes("pae cara") || nome.includes("pae-cara")) return 4
+            if (nome.includes("santa cruz") || nome.includes("navegantes")) return 5
+
+            return 99
+        }
+
+        function ordenarUnidades(lista) {
+            return [...(lista || [])].sort((a, b) => {
+                const ordemA = ordemUPA(a)
+                const ordemB = ordemUPA(b)
+
+                if (ordemA !== ordemB) return ordemA - ordemB
+
+                return nomeCurtoUPA(a).localeCompare(nomeCurtoUPA(b), "pt-BR")
+            })
+        }
+
+        function renderizarBarraUpasMobile() {
+            const barra = document.getElementById("barraUpasMobile")
+            if (!barra) return
+
+            const ordenadas = ordenarUnidades(unidades)
+
+            barra.innerHTML = ordenadas.map(u => `
+                <button type="button" onclick="irParaUnidade('${u._id}')">${escapeHTML(nomeCurtoUPA(u).replace("UPA ", ""))}</button>
+            `).join("")
+        }
+
+        function irParaUnidade(id) {
+            mostrarLista()
+
+            setTimeout(() => {
+                const card = document.getElementById(`card-upa-${id}`)
+                if (card) {
+                    card.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+            }, 350)
+        }
+
+        function verDetalhesPorId(id) {
+            const unidade = unidades.find(u => String(u._id) === String(id))
+            if (!unidade) return alert("Unidade não encontrada")
+            verDetalhes(unidade)
         }
 
         function enderecoDaUnidade(u) {
@@ -2339,9 +2467,12 @@
         function carregarLista() {
             const lista = document.getElementById("lista")
 
-            const unidadesFiltradas = filtroAtendimentoAtual === "todos"
+            const unidadesFiltradasBase = filtroAtendimentoAtual === "todos"
                 ? unidades
                 : unidades.filter(u => statusDaUnidade(u) === filtroAtendimentoAtual)
+
+            const unidadesFiltradas = ordenarUnidades(unidadesFiltradasBase)
+            renderizarBarraUpasMobile()
 
             lista.innerHTML = `
                 <div class="layout-lista-upas" style="max-width: min(1320px, calc(100vw - 36px)); margin: auto; display:grid; grid-template-columns: 230px minmax(0, 1fr) 230px; gap:16px; align-items:start;">
@@ -2362,7 +2493,7 @@
 
                                 <div class="filtro-status-area">
                                     <button onclick="filtrarAtendimentos('normal')" title="Até 25 minutos" class="filtro-bolinha ${filtroAtendimentoAtual === 'normal' ? 'ativo' : ''}" style="background:#00c853;"></button>
-                                    <button onclick="filtrarAtendimentos('lotado')" title="De 26 minutos até 1h09min" class="filtro-bolinha ${filtroAtendimentoAtual === 'lotado' ? 'ativo' : ''}" style="background:#ff9800;"></button>
+                                    <button onclick="filtrarAtendimentos('lotado')" title="De 26 minutos até 1h09min" class="filtro-bolinha ${filtroAtendimentoAtual === 'lotado' ? 'ativo' : ''}" style="background:#facc15;"></button>
                                     <button onclick="filtrarAtendimentos('critico')" title="1h10min ou mais" class="filtro-bolinha ${filtroAtendimentoAtual === 'critico' ? 'ativo' : ''}" style="background:#ff1744;"></button>
                                     ${filtroAtendimentoAtual !== "todos" ? `<button class="btn-filtro-todos" onclick="filtrarAtendimentos('todos')">Voltar para todas</button>` : ""}
                                 </div>
@@ -2395,31 +2526,22 @@
 
             unidadesFiltradas.forEach((u, index) => {
                 const statusClasse = statusDaUnidade(u)
-                const indiceOriginal = unidades.indexOf(u)
-                const slotCardNumero = 11 + indiceOriginal
+                const slotCardNumero = 11 + index
 
                 cardsContainer.innerHTML += `
-                    <div class="card-upa-mobile" style="background:white; border-radius:24px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08); transition:.3s; border:1px solid #ececec;" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 18px 40px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)';">
+                    <div id="card-upa-${u._id}" class="card-upa-mobile" style="background:white; border-radius:24px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08); transition:.3s; border:1px solid #ececec;" onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 18px 40px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)';">
                         <div style="position:relative; height:180px; overflow:hidden; background:#dfefff;">
                             <img src="${fotoUnidade(u)}" style="width:100%; height:100%; object-fit:cover;">
                             <span class="status-dot-card status-dot-${statusClasse}" title="${textoStatusTempo(statusClasse)}"></span>
                         </div>
 
                         <div style="padding:18px;">
-                            <h2 class="titulo-upa-card" style="margin:0; font-size:20px; color:#111; line-height:1.2; min-height:52px; display:flex; align-items:flex-start;">${u.upa || "Unidade sem nome"}</h2>
+                            <h2 class="titulo-upa-card" style="margin:0; font-size:20px; color:#111; line-height:1.2; min-height:52px; display:flex; align-items:flex-start;">${nomeCurtoUPA(u)}</h2>
                             <div id="adCard${slotCardNumero}" class="ads-slot ads-slot-card vazio"><div class="ads-placeholder"><div class="ads-numero-slot">${slotCardNumero}</div></div></div>
-                            <button onclick="verDetalhesPorIndice(${indiceOriginal})" style="width:100%; border:none; background:#0d47a1; color:white; padding:14px; border-radius:14px; cursor:pointer; font-weight:800; transition:.2s;" onmouseover="this.style.background='#1565c0'" onmouseout="this.style.background='#0d47a1'">Detalhes</button>
+                            <button onclick="verDetalhesPorId('${u._id}')" style="width:100%; border:none; background:#0d47a1; color:white; padding:14px; border-radius:14px; cursor:pointer; font-weight:800; transition:.2s;" onmouseover="this.style.background='#1565c0'" onmouseout="this.style.background='#0d47a1'">Detalhes</button>
                         </div>
                     </div>
                 `
-
-                if (index === 0) {
-                    cardsContainer.innerHTML += `
-                        <div id="adMobileEntreUpas" class="ads-slot ads-slot-mobile vazio">
-                            <div class="ads-placeholder">PUBLICIDADE</div>
-                        </div>
-                    `
-                }
             })
 
             cardsContainer.innerHTML += `
@@ -2442,7 +2564,7 @@
             fecharMenuUsuario()
             const statusClasse = statusDaUnidade(u)
             let corStatus = "#00c853"
-            if (statusClasse === "lotado") corStatus = "#ff9800"
+            if (statusClasse === "lotado") corStatus = "#facc15"
             if (statusClasse === "critico") corStatus = "#ff1744"
 
             document.getElementById("lista").style.display = "block"
@@ -2464,7 +2586,7 @@
                         </div>
 
                         <div style="padding:35px;">
-                            <h1 style="margin:0 0 15px 0; font-size:34px; color:#111; line-height:1.2;">${u.upa || "Unidade sem nome"}</h1>
+                            <h1 style="margin:0 0 15px 0; font-size:34px; color:#111; line-height:1.2;">${nomeCurtoUPA(u)}</h1>
                             <p style="color:#666; margin-bottom:30px; font-size:16px;">${enderecoDaUnidade(u)}</p>
 
                             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px;">
@@ -2527,7 +2649,7 @@
             markersLayer.clearLayers()
             unidades.forEach(u => {
                 if (!u.lat || !u.lng) return
-                L.marker([u.lat, u.lng]).addTo(markersLayer).bindPopup(`<b>${u.upa}</b><br>${u.tempo_espera}<br><br><a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${u.lat},${u.lng}">Abrir rota</a>`)
+                L.marker([u.lat, u.lng]).addTo(markersLayer).bindPopup(`<b>${nomeCurtoUPA(u)}</b><br>${u.tempo_espera}<br><br><a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${u.lat},${u.lng}">Abrir rota</a>`)
             })
         }
 
