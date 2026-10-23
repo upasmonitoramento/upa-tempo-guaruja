@@ -1,14 +1,6 @@
-const CACHE_NAME = "saude-guaruja-v4";
+const CACHE_NAME = "saude-guaruja-v5";
 
-const urlsToCache = [
-    "/",
-    "/index.html",
-    "/manifest.json",
-    "/icon-192.png",
-    "/icon-512.png"
-    "https://unpkg.com/leaflet/dist/leaflet.css",
-    "https://unpkg.com/leaflet/dist/leaflet.js"
-];
+const urlsToCache = ["/", "/index.html", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 
 // 🔥 INSTALAÇÃO
 self.addEventListener("install", event => {
