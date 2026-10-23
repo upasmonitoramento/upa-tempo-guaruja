@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Saúde</title>
+    <title>Saúde em Tempo Real | Guarujá</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -12,6 +12,14 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d47a1">
+    <meta name="description" content="Acompanhe os tempos de espera e a situação das UPAs e prontos-socorros do Guarujá.">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=1">
+    <link rel="shortcut icon" href="/favicon.ico?v=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Saúde Guarujá">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <style>
         * {
@@ -1442,6 +1450,8 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/brand.css?v=1">
+    <script src="/pwa.js?v=1" defer></script>
 </head>
 
 <body>
@@ -1449,7 +1459,7 @@
     <div class="site-soft-glow"></div>
 
     <header class="topbar">
-        <div class="logo-area" onclick="mostrarLista()">Portal Saúde</div>
+        <a class="logo-area" href="/" aria-label="Saúde em Tempo Real — início"><img class="brand-icon" src="/logo-saude.png" alt="" width="38" height="38"><span class="brand-name">Portal Saúde<small>em tempo real · Guarujá</small></span></a>
 
         <div class="topbar-buttons">
             <button onclick="mostrarLista()">Início</button>
@@ -1612,10 +1622,18 @@
     </div>
 
 
+    <dialog id="instrucoesApp" class="install-dialog" aria-labelledby="instrucoesAppTitulo">
+        <img src="/logo-saude.png" alt="Logo Saúde em Tempo Real" width="64" height="64">
+        <h2 id="instrucoesAppTitulo">Saúde na sua tela inicial</h2>
+        <p id="instrucoesAppTexto"></p>
+        <p>Instale gratuitamente para abrir o portal como um aplicativo. Os dados de atendimento precisam de internet.</p>
+        <button type="button" id="fecharInstrucoesApp">Entendi</button>
+    </dialog>
     <footer id="siteFooter" class="site-footer">
         <div class="footer-content">
             <div>
-                <div class="footer-logo">Portal Saúde</div>
+                <div class="footer-logo"><img class="brand-icon" src="/logo-saude.png" alt="" width="38" height="38">Portal Saúde</div>
+                <button type="button" class="install-app" id="instalarApp">Instalar no celular</button>
 
                 <p class="footer-text">
                     Plataforma criada para facilitar o acompanhamento dos tempos de espera,

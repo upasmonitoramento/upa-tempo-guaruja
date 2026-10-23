@@ -1,0 +1,18 @@
+.logo-area { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.brand-icon { display: block; width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; }
+.brand-name { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-name small { font-size: 10px; font-weight: 500; letter-spacing: .2px; margin-top: 3px; }
+.footer-logo { display: flex; gap: 10px; align-items: center; }
+.install-app { margin-top: 16px; padding: 11px 16px; background: #fff; color: #0d47a1; border: 0; border-radius: 10px; font: 600 13px 'Poppins', sans-serif; cursor: pointer; }
+.install-app[hidden] { display: none; }
+.install-dialog { width: min(440px, calc(100% - 32px)); border: 0; border-radius: 20px; padding: 28px; color: #18324d; font-family: 'Poppins', sans-serif; }
+.install-dialog::backdrop { background: rgba(9, 30, 55, .55); }
+.install-dialog img { width: 64px; height: 64px; border-radius: 16px; }
+.install-dialog h2 { font-size: 22px; margin: 16px 0 10px; }
+.install-dialog p { font-size: 14px; line-height: 1.7; }
+.install-dialog button { border: 0; border-radius: 10px; padding: 12px 20px; background: #0d47a1; color: #fff; cursor: pointer; font: inherit; }
+@media (max-width: 600px) {
+    .brand-icon { width: 29px; height: 29px; border-radius: 8px; }
+    .logo-area { gap: 6px; }
+    .brand-name small { font-size: 8px; }
+}

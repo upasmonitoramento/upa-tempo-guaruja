@@ -1,6 +1,6 @@
-const CACHE_NAME = "saude-guaruja-v5";
+const CACHE_NAME = "saude-guaruja-v6";
 
-const urlsToCache = ["/", "/index.html", "/manifest.json", "/icon-192.png", "/icon-512.png"];
+const urlsToCache = ["/", "/index.html", "/manifest.json", "/icon-192.png", "/icon-512.png", "/logo-saude.png", "/apple-touch-icon.png", "/icon-192-v2.png", "/icon-512-v2.png", "/icon-maskable-512.png", "/brand.css?v=1", "/pwa.js?v=1"];
 
 // 🔥 INSTALAÇÃO
 self.addEventListener("install", event => {
