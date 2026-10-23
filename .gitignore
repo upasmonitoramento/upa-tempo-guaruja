@@ -1,4 +1,6 @@
 node_modules/
+public/
+.vercel/
 backend/node_modules/
 frontend/node_modules/
 

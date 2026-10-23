@@ -1,0 +1,10 @@
+.git
+.vs
+node_modules
+backend/node_modules
+backend/node
+backend/.env
+.env*
+backend/.env*
+uploads
+backend/uploads

@@ -1,16 +1,17 @@
-const dns = require("dns")
 const mongoose = require("mongoose")
-
-// 🔥 Força o Node a usar DNS confiáveis para resolver o MongoDB Atlas
-dns.setServers([
-    "8.8.8.8",
-    "1.1.1.1"
-])
-
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("MongoDB conectado 🚀")
-    })
-    .catch(err => {
-        console.log("❌ Erro MongoDB:", err)
-    })
+let conexaoPendente
+module.exports = async function conectarBanco() {
+    if (mongoose.connection.readyState === 1) return mongoose
+    if (!process.env.MONGO_URI) throw new Error("MONGO_URI não configurada")
+    if (!conexaoPendente) {
+        conexaoPendente = mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 10000,
+            maxPoolSize: 5,
+            autoIndex: false
+        }).catch(erro => {
+            conexaoPendente = null
+            throw erro
+        })
+    }
+    return conexaoPendente
+}

@@ -1,7 +1,24 @@
 {
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1067.0",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemon": "^3.1.14"
+    "mongodb": "^7.2.0",
+    "mongoose": "^9.6.3",
+    "multer": "^2.1.1"
+  },
+  "name": "saude-em-tempo-real",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node backend/server.js"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "saude-guaruja-v1";
+const CACHE_NAME = "saude-guaruja-v2";
 
 const urlsToCache = [
     "/",

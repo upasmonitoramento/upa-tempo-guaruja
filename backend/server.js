@@ -1,5 +1,5 @@
-require("dotenv").config()
-require("./db")
+require("dotenv").config({ path: require("path").join(__dirname, ".env") })
+const conectarBanco = require("./db")
 
 const express = require("express")
 const cors = require("cors")
@@ -41,6 +41,16 @@ app.use(limiter)
 // ==========================================
 app.use(express.json())
 
+app.use(async (req, res, next) => {
+    try {
+        await conectarBanco()
+        next()
+    } catch (erro) {
+        console.error("Falha de conexão com MongoDB:", erro.name)
+        res.status(503).json({ erro: "Banco de dados temporariamente indisponível." })
+    }
+})
+
 // liberar acesso às imagens/vídeos da pasta uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
@@ -77,6 +87,10 @@ app.get("/", (req, res) => {
 // ==========================================
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`)
-})
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`)
+    })
+}
+
+module.exports = app
