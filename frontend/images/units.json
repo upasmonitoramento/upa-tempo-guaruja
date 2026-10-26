@@ -1,0 +1,132 @@
+[
+  {
+    "id": "69bc1c931d88092c22b1e6e9",
+    "name": "UPA Enseada (Paulo Flávio Afonso Piasenti)",
+    "originalURL": "https://pub-3ba1ebe5aa764081ae6d6a0fbae92b76.r2.dev/atendimentos/1781225140271-atendimento-07a48cf10c417ba62c322cba8c34aa15.png",
+    "original": {
+      "width": 1376,
+      "height": 918,
+      "bytes": 1937546
+    },
+    "variants": [
+      {
+        "width": 480,
+        "height": 320,
+        "bytes": 26232,
+        "file": "unit-69bc1c931d88092c22b1e6e9-480.webp",
+        "url": "/images/unit-69bc1c931d88092c22b1e6e9-480.webp"
+      },
+      {
+        "width": 960,
+        "height": 640,
+        "bytes": 85686,
+        "file": "unit-69bc1c931d88092c22b1e6e9-960.webp",
+        "url": "/images/unit-69bc1c931d88092c22b1e6e9-960.webp"
+      }
+    ]
+  },
+  {
+    "id": "69bc1d171d88092c22b1e6ed",
+    "name": "UPA Pereque",
+    "originalURL": "https://www.guaruja.sp.gov.br/plataforma/wp-content/uploads/2025/05/UPA-Enseada-2.jpg",
+    "original": {
+      "width": 799,
+      "height": 533,
+      "bytes": 149186
+    },
+    "variants": [
+      {
+        "width": 480,
+        "height": 320,
+        "bytes": 20864,
+        "file": "unit-69bc1d171d88092c22b1e6ed-480.webp",
+        "url": "/images/unit-69bc1d171d88092c22b1e6ed-480.webp"
+      },
+      {
+        "width": 799,
+        "height": 533,
+        "bytes": 62824,
+        "file": "unit-69bc1d171d88092c22b1e6ed-960.webp",
+        "url": "/images/unit-69bc1d171d88092c22b1e6ed-960.webp"
+      }
+    ]
+  },
+  {
+    "id": "69bc11061d88092c22b1e6e3",
+    "name": "UPA Rodoviária (Dr. Matheus Santamaria)",
+    "originalURL": "https://www.guaruja.sp.gov.br/plataforma/wp-content/uploads/2021/03/51024846373_7752d89088_5k.jpg",
+    "original": {
+      "width": 5120,
+      "height": 3413,
+      "bytes": 1576413
+    },
+    "variants": [
+      {
+        "width": 480,
+        "height": 320,
+        "bytes": 19232,
+        "file": "unit-69bc11061d88092c22b1e6e3-480.webp",
+        "url": "/images/unit-69bc11061d88092c22b1e6e3-480.webp"
+      },
+      {
+        "width": 960,
+        "height": 640,
+        "bytes": 54996,
+        "file": "unit-69bc11061d88092c22b1e6e3-960.webp",
+        "url": "/images/unit-69bc11061d88092c22b1e6e3-960.webp"
+      }
+    ]
+  },
+  {
+    "id": "69bc1d011d88092c22b1e6eb",
+    "name": "UPA Santa Cruz dos Navegantes",
+    "originalURL": "https://www.guaruja.sp.gov.br/plataforma/wp-content/uploads/2024/07/53818385128_6640928734_k.jpg",
+    "original": {
+      "width": 2048,
+      "height": 1365,
+      "bytes": 664898
+    },
+    "variants": [
+      {
+        "width": 480,
+        "height": 320,
+        "bytes": 17418,
+        "file": "unit-69bc1d011d88092c22b1e6eb-480.webp",
+        "url": "/images/unit-69bc1d011d88092c22b1e6eb-480.webp"
+      },
+      {
+        "width": 960,
+        "height": 640,
+        "bytes": 45938,
+        "file": "unit-69bc1d011d88092c22b1e6eb-960.webp",
+        "url": "/images/unit-69bc1d011d88092c22b1e6eb-960.webp"
+      }
+    ]
+  },
+  {
+    "id": "69bc1bd31d88092c22b1e6e6",
+    "name": "UPA Vicente de Carvalho (Pae Cará)",
+    "originalURL": "https://s2-g1.glbimg.com/VtkDbMOrXqSJPEyl7M8-MmhRukk=/0x0:1023x682/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2023/Y/X/ym1A9bQau0LAaBCb6xCg/50222121777-69acc0cd20-b.jpg",
+    "original": {
+      "width": 984,
+      "height": 656,
+      "bytes": 167799
+    },
+    "variants": [
+      {
+        "width": 480,
+        "height": 320,
+        "bytes": 27122,
+        "file": "unit-69bc1bd31d88092c22b1e6e6-480.webp",
+        "url": "/images/unit-69bc1bd31d88092c22b1e6e6-480.webp"
+      },
+      {
+        "width": 960,
+        "height": 640,
+        "bytes": 72132,
+        "file": "unit-69bc1bd31d88092c22b1e6e6-960.webp",
+        "url": "/images/unit-69bc1bd31d88092c22b1e6e6-960.webp"
+      }
+    ]
+  }
+]
