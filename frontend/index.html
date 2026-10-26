@@ -2205,14 +2205,15 @@
         }
 
         function irParaUnidade(id) {
+            filtroAtendimentoAtual = "todos"
             mostrarLista()
 
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const card = document.getElementById(`card-upa-${id}`)
                 if (card) {
-                    card.scrollIntoView({ behavior: "smooth", block: "start" })
+                    card.scrollIntoView({ behavior: portalReducedMotion.matches ? "instant" : "smooth", block: "start" })
                 }
-            }, 350)
+            })
         }
 
         function verDetalhesPorId(id) {
@@ -2283,7 +2284,8 @@
         function filtrarAtendimentos(status) {
             filtroAtendimentoAtual = status || "todos"
             carregarLista()
-            document.querySelector('.wait-filter[aria-pressed="true"]')?.focus({preventScroll:true})
+            const alvo = document.querySelector('.wait-filter[aria-pressed="true"]') || document.getElementById('unidadesTitulo')
+            alvo?.focus({preventScroll:true})
             document.querySelector('.wait-filters')?.scrollIntoView({block:"nearest",behavior:"instant"})
         }
 
@@ -4742,7 +4744,7 @@
             document.getElementById("perfil").style.display = "none"
             document.getElementById("adminPanel").style.display = "none"
             carregarLista()
-            window.scrollTo({ top: 0, behavior: "smooth" })
+            portalScrollTop()
         }
 
         function mostrarForm() {

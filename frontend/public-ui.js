@@ -73,15 +73,21 @@ function carregarLista() {
     const selected = filtroAtendimentoAtual || 'todos'
     const filtered = ordenarUnidades(selected === 'todos' ? unidades : unidades.filter(u => statusDaUnidade(u) === selected))
     renderizarBarraUpasMobile()
-    const filters = [['todos', 'Todas'], ['normal', 'Até 25 min'], ['lotado', '26–69 min'], ['critico', '70 min ou mais']]
+    const filters = [['normal', 'Até 25 minutos'], ['lotado', 'De 26 minutos até 1h09min'], ['critico', '1h10min ou mais']]
     document.getElementById('lista').innerHTML = `
         <div class="page-shell">
-            <div class="demo-notice" role="note"><span class="demo-dot"></span><div><strong>Projeto em demonstração</strong><span>Tempos e equipes são exemplos. Não representam o atendimento atual.</span></div></div>
             <div class="health-layout">
                 <aside class="ads-side ads-lateral-coluna" aria-label="Publicidade lateral esquerda">${[1,2,3,4].map((n,i) => portalAdSlot(`adLateralEsquerda${i+1}`, n, 'ads-slot-lateral-pequeno')).join('')}</aside>
                 <section class="health-main" aria-labelledby="unidadesTitulo">
-                    <div class="section-heading"><div><p class="section-kicker">EXPLORE A REDE</p><h1 id="unidadesTitulo" class="section-title" tabindex="-1">Encontre uma unidade</h1><p class="section-copy">Informações essenciais. Detalhes a um toque.</p></div><span class="section-count">${filtered.length} ${filtered.length === 1 ? 'unidade' : 'unidades'}</span></div>
-                    <div class="wait-filters" aria-label="Filtrar por tempo de exemplo">${filters.map(([value,label]) => `<button class="wait-filter ${value === selected ? 'active' : ''}" aria-pressed="${value === selected}" onclick="filtrarAtendimentos('${value}')">${value === 'todos' ? '' : `<span class="filter-dot status-dot-${value}"></span>`}${label}</button>`).join('')}</div>
+                    <section class="classic-health-hero" aria-labelledby="unidadesTitulo">
+                        <p class="classic-hero-eyebrow">Demonstração · tempos e equipes de exemplo</p>
+                        <h1 id="unidadesTitulo" tabindex="-1">Saúde de Guarujá ao vivo</h1>
+                        <p class="classic-hero-copy">Veja a situação das UPAs e prontos-socorros da cidade por cor de tempo de espera.</p>
+                        <div class="wait-filters classic-wait-filters" role="group" aria-label="Filtrar por tempo de espera de exemplo">
+                            ${filters.map(([value,label]) => `<button type="button" class="wait-filter filtro-bolinha status-filter-${value} ${value === selected ? 'active' : ''}" aria-label="${label}" title="${label}" aria-pressed="${value === selected}" onclick="filtrarAtendimentos('${value}')"><span class="sr-only">${label}</span></button>`).join('')}
+                            ${selected !== 'todos' ? '<button type="button" class="classic-filter-reset" onclick="filtrarAtendimentos(\'todos\')">Voltar para todas</button>' : ''}
+                        </div>
+                    </section>
                     <div id="cardsContainer" class="unit-grid">${filtered.length ? filtered.map((u,i) => {
                         const count = portalMedicos(u).length
                         const status = statusDaUnidade(u)
