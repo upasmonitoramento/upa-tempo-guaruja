@@ -76,21 +76,11 @@ function carregarLista() {
     const filters = [['todos', 'Todas'], ['normal', 'Até 25 min'], ['lotado', '26–69 min'], ['critico', '70 min ou mais']]
     document.getElementById('lista').innerHTML = `
         <div class="page-shell">
-            <section class="health-hero" aria-labelledby="hero-title">
-                <div class="hero-content">
-                    <p class="hero-eyebrow"><span></span> GUARUJÁ · PORTAL INDEPENDENTE</p>
-                    <h1 id="hero-title" class="hero-title">Cuidar começa<br>com <em>informação.</em></h1>
-                    <p class="hero-copy">Conheça as unidades de saúde da cidade, consulte as equipes e encontre seu caminho.</p>
-                    <div class="hero-actions"><button class="button-primary" onclick="document.getElementById('unidadesTitulo').scrollIntoView({behavior:portalReducedMotion.matches?'instant':'smooth',block:'start'})">Explorar unidades ${portalIcon('arrow')}</button><button class="button-secondary" onclick="mostrarMapa()">${portalIcon('map')} Ver no mapa</button></div>
-                    <p class="hero-note">${portalIcon('pin')} 5 unidades · Guarujá e Vicente de Carvalho</p>
-                </div>
-                <div class="hero-orbit" aria-hidden="true"><div class="hero-symbol">${portalIcon('heart')}<span>SAÚDE MAIS PERTO</span></div></div>
-            </section>
             <div class="demo-notice" role="note"><span class="demo-dot"></span><div><strong>Projeto em demonstração</strong><span>Tempos e equipes são exemplos. Não representam o atendimento atual.</span></div></div>
             <div class="health-layout">
                 <aside class="ads-side ads-lateral-coluna" aria-label="Publicidade lateral esquerda">${[1,2,3,4].map((n,i) => portalAdSlot(`adLateralEsquerda${i+1}`, n, 'ads-slot-lateral-pequeno')).join('')}</aside>
                 <section class="health-main" aria-labelledby="unidadesTitulo">
-                    <div class="section-heading"><div><p class="section-kicker">EXPLORE A REDE</p><h2 id="unidadesTitulo" class="section-title" tabindex="-1">Encontre uma unidade</h2><p class="section-copy">Informações essenciais. Detalhes a um toque.</p></div><span class="section-count">${filtered.length} ${filtered.length === 1 ? 'unidade' : 'unidades'}</span></div>
+                    <div class="section-heading"><div><p class="section-kicker">EXPLORE A REDE</p><h1 id="unidadesTitulo" class="section-title" tabindex="-1">Encontre uma unidade</h1><p class="section-copy">Informações essenciais. Detalhes a um toque.</p></div><span class="section-count">${filtered.length} ${filtered.length === 1 ? 'unidade' : 'unidades'}</span></div>
                     <div class="wait-filters" aria-label="Filtrar por tempo de exemplo">${filters.map(([value,label]) => `<button class="wait-filter ${value === selected ? 'active' : ''}" aria-pressed="${value === selected}" onclick="filtrarAtendimentos('${value}')">${value === 'todos' ? '' : `<span class="filter-dot status-dot-${value}"></span>`}${label}</button>`).join('')}</div>
                     <div id="cardsContainer" class="unit-grid">${filtered.length ? filtered.map((u,i) => {
                         const count = portalMedicos(u).length
@@ -98,7 +88,7 @@ function carregarLista() {
                         const slot = 11 + ordenarUnidades(unidades).findIndex(item => item._id === u._id)
                         return `<article id="card-upa-${escapeHTML(u._id)}" class="unit-card">
                             <div class="unit-card-media">${portalPhoto(u,i === 0)}<span class="unit-card-status status-${status}"><i class="status-dot-${status}"></i>${escapeHTML(textoStatusTempo(status))}</span></div>
-                            <div class="unit-card-content"><p class="unit-card-kicker">UNIDADE DE ATENDIMENTO</p><h3 class="unit-card-title">${escapeHTML(nomeCurtoUPA(u))}</h3>
+                            <div class="unit-card-content"><p class="unit-card-kicker">UNIDADE DE ATENDIMENTO</p><h2 class="unit-card-title">${escapeHTML(nomeCurtoUPA(u))}</h2>
                             <div class="unit-card-metrics"><div class="unit-card-metric">${portalIcon('clock')}<span><small>Espera de exemplo</small><strong>${escapeHTML(portalTempo(u))}</strong></span></div><div class="unit-card-metric">${portalIcon('team')}<span><small>Equipe cadastrada</small><strong>${count ? `${count} ${count === 1 ? 'médico' : 'médicos'}` : 'Não informada'}</strong></span></div></div>
                             <p class="unit-card-updated">Cadastro de exemplo · ${escapeHTML(portalAtualizacao(u))}</p>
                             <button class="unit-card-action" aria-label="Ver detalhes de ${escapeHTML(nomeCurtoUPA(u))}" onclick="verDetalhesPorId('${escapeHTML(u._id)}')">Ver detalhes ${portalIcon('arrow')}</button>
