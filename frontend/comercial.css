@@ -1,0 +1,26 @@
+.commercial { color:#132b47; background:#f3f7fc; padding:20px; box-sizing:border-box; }
+.commercial-dialog { width:min(1120px,calc(100% - 24px)); max-height:calc(100dvh - 36px); border:1px solid #cfdded; border-radius:18px; overflow:auto; padding:0; }
+.commercial-dialog::backdrop { background:#092442aa; }
+.commercial-top { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.commercial-top h1 { margin:0; font-size:clamp(20px,4vw,30px); }
+.commercial-layout { display:grid; grid-template-columns:180px minmax(0,1fr); gap:18px; margin-top:16px; }
+.commercial nav { display:flex; flex-direction:column; gap:6px; }
+.commercial button { min-height:44px; border:1px solid #c7d7ed; border-radius:9px; background:#fff; color:#0d47a1; padding:8px 12px; font:inherit; font-weight:650; cursor:pointer; }
+.commercial button[aria-current], .commercial button[type=submit] { background:#0d47a1; color:#fff; }
+.commercial button:disabled { opacity:.55; cursor:wait; }
+.commercial-card { background:white; border:1px solid #d6e1ef; border-radius:13px; padding:14px; margin-bottom:10px; overflow-wrap:anywhere; }
+.commercial-card h2, .commercial-card h3 { margin:0 0 8px; }
+.commercial-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.commercial-form label { display:grid; gap:5px; min-width:0; }
+.commercial-form input:not([type=checkbox]) { font:inherit; min-height:44px; width:100%; border:1px solid #acbed6; padding:8px; border-radius:8px; box-sizing:border-box; }
+.commercial-form fieldset { min-width:0; border:1px solid #cfdded; border-radius:9px; }
+.commercial-form fieldset label, .commercial-form .commercial-check { display:flex; align-items:center; min-height:44px; gap:8px; }
+.commercial-wide { grid-column:1/-1; }
+.commercial-page { max-width:680px; margin:20px auto; font:16px/1.5 system-ui,sans-serif; }
+.commercial-status { min-height:1.4em; }
+@media(max-width:620px) {
+    .commercial { padding:12px; }
+    .commercial-layout, .commercial-form { grid-template-columns:minmax(0,1fr); }
+    .commercial nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .commercial nav button { padding-inline:4px; font-size:13px; }
+}

@@ -44,7 +44,7 @@ for (const unit of units) {
         fs.copyFileSync(path.join(frontend, 'images', file), path.join(output, 'images', file))
     }
 }
-for (const file of ['brand.css', 'experience.css', 'icon-192-v2.png', 'favicon.ico',
+for (const file of ['brand.css', 'experience.css', 'comercial.css', 'comercial.js', 'icon-192-v2.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
 }

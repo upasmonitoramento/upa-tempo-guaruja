@@ -41,6 +41,10 @@ app.use(limiter)
 // ==========================================
 app.use(express.json())
 
+if (require.main === module && process.env.PORTAL_COMERCIAL_TESTE === "1") {
+    app.use(express.static(path.join(__dirname, "..", "frontend")))
+}
+
 app.use(async (req, res, next) => {
     try {
         await conectarBanco()
@@ -74,6 +78,7 @@ app.use("/anuncios", anunciosRoutes)
 
 const areasAdsRoutes = require("./routes/areasAds")
 app.use("/areas-ads", areasAdsRoutes)
+app.use("/comercial", require("./routes/comercial"))
 
 // ==========================================
 // ROTA TESTE

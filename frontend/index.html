@@ -1448,6 +1448,8 @@
     <link rel="stylesheet" href="/brand.css?v=1">
     <link rel="stylesheet" href="/experience.css?v=1">
     <script src="/public-ui.js?v=1" defer></script>
+    <link rel="stylesheet" href="/comercial.css">
+    <script src="/comercial.js" defer></script>
     <script src="/pwa.js?v=1" defer></script>
 </head>
 
@@ -1490,6 +1492,7 @@
                     <button id="btnPainelAdmin" onclick="abrirPainelAdmin()"
                         style="width:100%; border:none; background:white; color:#111; padding:14px; text-align:left; cursor:pointer; border-radius:0; display:none;">Painel
                         Admin</button>
+                    <button id="btnComercial" onclick="abrirComercial()" style="display:none;">Publicidade</button>
                     <button onclick="logout()"
                         style="width:100%; border:none; background:#ffebee; color:#d50000; padding:14px; text-align:left; cursor:pointer; font-weight:800; border-radius:0;">Sair</button>
                 </div>
@@ -2410,6 +2413,7 @@
             const btnLoginTopo = document.getElementById("btnLoginTopo")
             const nomeUsuarioMenu = document.getElementById("nomeUsuarioMenu")
             const btnPainelAdmin = document.getElementById("btnPainelAdmin")
+            document.getElementById("btnComercial").style.display = user?.tipo === "admin" ? "block" : "none"
 
             if (user) {
                 menuArea.style.display = "block"
