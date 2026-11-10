@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": { "apps-mobile": false } },
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "public",

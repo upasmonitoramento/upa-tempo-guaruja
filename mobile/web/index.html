@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#0d47a1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src __API_ORIGIN__; base-uri 'none'; form-action 'none'">
+    <title>Saúde Guarujá</title>
+    <link rel="icon" href="app-icon.png">
+    <link rel="stylesheet" href="app.css">
+    <script src="config.js" defer></script>
+    <script type="module" src="app.js"></script>
+</head>
+<body>
+    <a class="skip" href="#main">Ir ao conteúdo</a>
+    <header class="topbar">
+        <a class="brand" href="#" aria-label="Portal Saúde, início"><img src="app-icon.png" width="36" height="36" alt=""><strong>Portal Saúde</strong></a>
+        <nav class="top-actions" aria-label="Navegação principal">
+            <button id="home" type="button" aria-pressed="true">UPAs</button>
+            <button id="favorites" type="button" aria-pressed="false">Favoritas</button>
+        </nav>
+    </header>
+    <nav class="chips" id="chips" aria-label="Atalhos das UPAs"></nav>
+    <main id="main" tabindex="-1">
+        <section id="overview" class="hero" aria-labelledby="title">
+            <p class="eyebrow">Demonstração · tempos e equipes de exemplo</p>
+            <h1 id="title">Saúde de Guarujá ao vivo</h1>
+            <p>Veja a situação das UPAs e prontos-socorros da cidade por cor de tempo de espera.</p>
+            <div class="filters" role="group" aria-label="Filtrar por tempo de espera de exemplo">
+                <button type="button" class="dot dot-normal" data-filter="normal" title="Até 25 minutos" aria-label="Até 25 minutos" aria-pressed="false"></button>
+                <button type="button" class="dot dot-lotado" data-filter="lotado" title="De 26 a 69 minutos" aria-label="De 26 a 69 minutos" aria-pressed="false"></button>
+                <button type="button" class="dot dot-critico" data-filter="critico" title="70 minutos ou mais" aria-label="70 minutos ou mais" aria-pressed="false"></button>
+                <button id="reset" type="button" hidden>Voltar para todas</button>
+            </div>
+            <p class="active-filter" id="active-filter" hidden></p>
+        </section>
+        <div class="connection" id="connection" hidden>
+            <p id="connection-text" role="status"></p>
+            <button type="button" id="retry">Tentar novamente</button>
+        </div>
+        <p class="sr-only" id="announcement" role="status"></p>
+        <div id="cards" class="unit-grid"></div>
+    </main>
+    <footer>
+        <p><strong>Saúde em Tempo Real</strong> · Projeto independente.</p>
+        <p>Os dados de espera e de equipe são exemplos. O aplicativo não oferece atendimento, diagnóstico ou orientação clínica.</p>
+        <nav id="information" aria-label="Informações do aplicativo"></nav>
+        <details id="preview-note">
+            <summary>Privacidade e suporte · versão de teste</summary>
+            <p>Não há conta de usuário neste app. As favoritas e o diretório público já carregado ficam neste aparelho. O app consulta o servidor do projeto. Abrir uma rota envia o destino ao serviço de mapas escolhido pelo link.</p>
+            <p>Os endereços definitivos de privacidade e suporte serão incluídos antes do lançamento.</p>
+        </details>
+    </footer>
+</body>
+</html>

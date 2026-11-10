@@ -1,0 +1,21 @@
+{
+  "name": "saude-guaruja-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node build.cjs",
+    "sync": "npm run build && cap sync",
+    "preview": "npm run build && node tools/preview.cjs",
+    "assets:stores": "node tools/stage-store-assets.cjs",
+    "check:api": "node tools/check-service.cjs",
+    "check:release": "node tools/check-service.cjs --release"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.6.0",
+    "@capacitor/android": "8.6.0",
+    "@capacitor/ios": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}
