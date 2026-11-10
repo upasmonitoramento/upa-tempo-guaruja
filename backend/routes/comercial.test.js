@@ -42,11 +42,22 @@ test("protege o piloto comercial e exige aceite antes de cobrar", async () => {
     }
 })
 
-test("proposta, aceite e Pix confirmado pelo provedor simulado", async t => {
+for (const production of [false, true]) test(`proposta, aceite e Pix simulado em ${production ? "produção" : "sandbox"}`, async t => {
     process.env.PORTAL_COMERCIAL_TESTE = "1"
     process.env.JWT_SECRET = "segredo-local-do-teste"
     process.env.ASAAS_SANDBOX_API_KEY = "chave-de-teste"
     process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN = "token-de-teste"
+    if (production) {
+        process.env.VERCEL_ENV = "production"
+        process.env.ASAAS_API_KEY = "chave-producao-ficticia"
+        process.env.ASAAS_WEBHOOK_TOKEN = "token-producao-ficticio"
+        t.after(() => {
+            delete process.env.VERCEL_ENV
+            delete process.env.ASAAS_API_KEY
+            delete process.env.ASAAS_WEBHOOK_TOKEN
+            delete process.env.PORTAL_COMERCIAL_PRODUCAO
+        })
+    }
     const id = "692000000000000000000002"
     const model = mongoose.model("CommercialPartnership")
     let row
@@ -72,11 +83,12 @@ test("proposta, aceite e Pix confirmado pelo provedor simulado", async t => {
     const payment = () => ({
         id: "pay_simulado", customer: "cus_simulado", externalReference: id,
         billingType: "PIX", value: 250, status: providerStatus,
-        invoiceUrl: "https://sandbox.asaas.com/i/simulado"
+        invoiceUrl: production ? "https://www.asaas.com/i/simulado" : "https://sandbox.asaas.com/i/simulado"
     })
     const localFetch = fetch
     t.mock.method(global, "fetch", async (url, options) => {
-        assert.equal(new URL(url).origin, "https://api-sandbox.asaas.com")
+        assert.equal(new URL(url).origin, production ? "https://api.asaas.com" : "https://api-sandbox.asaas.com")
+        assert.equal(options.headers.access_token, production ? process.env.ASAAS_API_KEY : process.env.ASAAS_SANDBOX_API_KEY)
         if (url.endsWith("/customers")) return Response.json({ id: "cus_simulado" })
         if (url.endsWith("/payments") && options.method === "POST") {
             charges++
@@ -97,9 +109,14 @@ test("proposta, aceite e Pix confirmado pelo provedor simulado", async t => {
         method: "POST", headers: requestHeaders, body: JSON.stringify(body)
     })
     const date = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+    if (production) {
+        assert.equal((await localFetch(url + "/painel")).status, 404)
+        process.env.PORTAL_COMERCIAL_PRODUCAO = "1"
+    }
     const created = await post("/propostas", { company: "Empresa fictícia", email: "teste@example.test",
         packageName: "Regional", cities: ["Guarujá"], positions: ["card"], start: date, end: date, due: date, cents: 25000 })
     assert.equal(created.status, 201)
+    assert.equal(created.headers.get("X-Portal-Commercial-Mode"), production ? "production" : "sandbox")
     const token = (await created.json()).path.split("#")[1]
     const agreement = { email: "teste@example.test", representative: "Representante fictício", document: "00000000000", accepted: true }
     assert.equal((await post("/propostas/" + id + "/pix", {})).status, 409)
@@ -108,8 +125,9 @@ test("proposta, aceite e Pix confirmado pelo provedor simulado", async t => {
     assert.equal((await post("/aceite/" + token, agreement)).status, 409)
     assert.equal((await post("/propostas/" + id + "/pix", {})).status, 200)
     assert.equal(row.paymentStatus, "PENDING")
+    assert.equal(row.paymentUrl, payment().invoiceUrl)
     const webhook = () => post("/asaas/webhook", { payment: { id: row.paymentId, status: "RECEIVED" } }, {
-        "Content-Type": "application/json", "asaas-access-token": process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN
+        "Content-Type": "application/json", "asaas-access-token": production ? process.env.ASAAS_WEBHOOK_TOKEN : process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN
     })
     assert.equal((await webhook()).status, 200)
     assert.equal(row.paymentStatus, "PENDING")

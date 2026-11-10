@@ -4,6 +4,8 @@
     const money = cents => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100)
     const slots = { card: "Card da unidade", detalhe: "Detalhes da unidade", rodape: "Rodapé", banner: "Banner" }
     const paymentStatus = { PENDING: "Aguardando Pix", RECEIVED: "Recebida", OVERDUE: "Vencida", REFUNDED: "Estornada", REFUND_REQUESTED: "Estorno solicitado" }
+    let sandbox = true
+    const testLabel = () => sandbox ? " de teste" : ""
 
     async function request(path, { admin = false, method = "GET", body } = {}) {
         const headers = {}
@@ -17,6 +19,7 @@
             404: "Área indisponível neste ambiente ou link expirado.",
             409: "A operação já está em andamento. Atualize a lista."
         })[response.status] || "Não foi possível concluir. Tente novamente.")
+        sandbox = response.headers.get("X-Portal-Commercial-Mode") !== "production"
         return data
     }
 
@@ -56,11 +59,11 @@
             const item = await request("/aceite/" + token)
             root.insertAdjacentHTML("beforeend", `<article class="commercial-card">${summary(item)}<p>${escape(item.terms)}</p></article>`)
             if (item.accepted) { status.textContent = "Proposta aceita."; return }
-            status.textContent = "Ambiente de teste. Use dados fictícios."
+            status.textContent = sandbox ? "Ambiente de teste. Use dados fictícios." : ""
             root.insertAdjacentHTML("beforeend", `<form class="commercial-form">
                 <label>Nome do representante<input name="representative" required maxlength="160" autocomplete="off"></label>
                 <label>E-mail da proposta<input name="email" type="email" required autocomplete="off"></label>
-                <label>CPF ou CNPJ de teste<input name="document" required maxlength="25" autocomplete="off"></label>
+                <label>CPF ou CNPJ${testLabel()}<input name="document" required maxlength="25" autocomplete="off"></label>
                 <label class="commercial-check commercial-wide"><input type="checkbox" name="accepted" required> Li e aceito os termos e as condições desta proposta.</label>
                 <button type="submit">Aceitar proposta</button>
             </form>`)
@@ -68,7 +71,7 @@
             handleForm(form, status, async fields => {
                 await request("/aceite/" + token, { method: "POST", body: { ...Object.fromEntries(fields), accepted: fields.has("accepted") } })
                 form.remove()
-                status.textContent = "Aceite registrado. A equipe pode emitir a cobrança de teste."
+                status.textContent = "Aceite registrado. A equipe pode emitir a cobrança" + testLabel() + "."
             })
         } catch (error) { status.textContent = error.message }
     }
@@ -92,7 +95,7 @@
         let selected = "resumo"
         const load = async () => {
             items = await request("/painel", { admin: true })
-            status.textContent = "Ambiente de teste. Use dados fictícios."
+            status.textContent = sandbox ? "Ambiente de teste. Use dados fictícios." : ""
         }
         async function render(tab) {
             selected = tab
@@ -123,8 +126,8 @@
                 <fieldset class="commercial-wide"><legend>Posições</legend>${Object.entries(slots).map(([key, value]) => `<label><input type="checkbox" name="positions" value="${key}">${value}</label>`).join("")}</fieldset>
                 <button type="submit">Criar proposta</button></form><div data-result></div></div>
                 ${items.map(item => `<article class="commercial-card">${summary(item)}<p>${item.accepted ? "Aceita" : "Aguardando aceite"} · ${escape(paymentStatus[item.paymentStatus] || item.paymentStatus || "Sem cobrança")}</p>
-                  ${item.paymentUrl && !window.Capacitor?.isNativePlatform() ? `<p><a href="${escape(item.paymentUrl)}" target="_blank" rel="noopener">Abrir Pix de teste</a></p>` : ""}
-                  ${item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix de teste"}</button>` : ""}</article>`).join("")}`
+                  ${item.paymentUrl && !window.Capacitor?.isNativePlatform() ? `<p><a href="${escape(item.paymentUrl)}" target="_blank" rel="noopener">Abrir Pix${testLabel()}</a></p>` : ""}
+                  ${item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix" + testLabel()}</button>` : ""}</article>`).join("")}`
             const form = section.querySelector("form")
             handleForm(form, status, async fields => {
                 const data = await request("/propostas", { admin: true, method: "POST", body: {
@@ -146,7 +149,7 @@
                 input.setAttribute("aria-label", "Link privado da proposta")
                 input.value = link.href
                 result.append(link, document.createElement("br"), input)
-                status.textContent = "Proposta criada. Guarde o link privado para testar o aceite."
+                status.textContent = "Proposta criada. Guarde o link privado para o aceite."
             })
             section.querySelectorAll("[data-pix]").forEach(button => {
                 button.onclick = async () => {

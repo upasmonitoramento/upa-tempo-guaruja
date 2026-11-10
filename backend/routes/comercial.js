@@ -21,10 +21,17 @@ const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
 const today = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date())
 const positions = ["card", "detalhe", "rodape", "banner"]
 const adminView = "-tokenHash -document -customerId"
+const production = () => process.env.VERCEL_ENV === "production"
+const apiKey = () => production() ? process.env.ASAAS_API_KEY : process.env.ASAAS_SANDBOX_API_KEY
+const webhookToken = () => production() ? process.env.ASAAS_WEBHOOK_TOKEN : process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN
 
 router.use((req, res, next) => {
     res.set("Cache-Control", "no-store")
-    if (process.env.PORTAL_COMERCIAL_TESTE !== "1" || process.env.VERCEL_ENV === "production") return res.sendStatus(404)
+    const enabled = production()
+        ? process.env.PORTAL_COMERCIAL_PRODUCAO === "1" && apiKey() && webhookToken()
+        : process.env.PORTAL_COMERCIAL_TESTE === "1"
+    if (!enabled) return res.sendStatus(404)
+    res.set("X-Portal-Commercial-Mode", production() ? "production" : "sandbox")
     next()
 })
 
@@ -43,13 +50,14 @@ async function requireAdmin(req, res, next) {
 }
 
 async function asaas(path, method = "GET", body) {
-    if (!process.env.ASAAS_SANDBOX_API_KEY) throw Object.assign(new Error("Configure a chave do Asaas Sandbox."), { status: 503 })
-    const response = await fetch("https://api-sandbox.asaas.com/v3" + path, {
+    if (!apiKey()) throw Object.assign(new Error("Configure a chave do Asaas."), { status: 503 })
+    const base = production() ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3"
+    const response = await fetch(base + path, {
         method, redirect: "error", signal: AbortSignal.timeout(7000),
-        headers: { access_token: process.env.ASAAS_SANDBOX_API_KEY, "Content-Type": "application/json", "User-Agent": "PortalSaude/1.0" },
+        headers: { access_token: apiKey(), "Content-Type": "application/json", "User-Agent": "PortalSaude/1.0" },
         body: body ? JSON.stringify(body) : undefined
     })
-    if (!response.ok) throw Object.assign(new Error("O Asaas recusou a operação de teste. Confira a configuração e os dados."), { status: 502 })
+    if (!response.ok) throw Object.assign(new Error("O Asaas recusou a operação. Confira a configuração e os dados."), { status: 502 })
     return response.json()
 }
 
@@ -60,10 +68,11 @@ async function refresh(partnership, payment) {
         throw Object.assign(new Error("A cobrança retornada não corresponde à proposta."), { status: 409 })
     }
     const invoice = payment.invoiceUrl ? new URL(payment.invoiceUrl) : null
+    const hosts = production() ? ["asaas.com", "www.asaas.com"] : ["sandbox.asaas.com"]
     await Partnership.updateOne({ _id: partnership.id }, { $set: {
         paymentId: payment.id,
         paymentStatus: payment.status,
-        paymentUrl: invoice?.protocol === "https:" && invoice.hostname === "sandbox.asaas.com" ? invoice.href : undefined
+        paymentUrl: invoice?.protocol === "https:" && hosts.includes(invoice.hostname) ? invoice.href : undefined
     } })
 }
 
@@ -84,7 +93,8 @@ router.post("/propostas", requireAdmin, async (req, res) => {
         return res.status(400).json({ erro: "Confira o contato, valor, datas, cidades e posições da proposta." })
     }
     const token = randomBytes(32).toString("hex")
-    await Partnership.create({ company, email, packageName, cities, positions: slots, start, end, due, cents, terms,
+    await Partnership.create({ company, email, packageName, cities, positions: slots, start, end, due, cents,
+        terms: production() ? terms.replace("Piloto do Portal Saúde.", "Proposta de publicidade do Portal Saúde.") : terms,
         expires: new Date(Date.now() + 7 * 86400000), tokenHash: digest(token) })
     res.status(201).json({ path: "/proposta.html#" + token })
 })
@@ -112,7 +122,7 @@ router.post("/aceite/:token", async (req, res) => {
 
 router.post("/propostas/:id/pix", requireAdmin, async (req, res) => {
     if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.sendStatus(404)
-    if (!process.env.ASAAS_SANDBOX_API_KEY) return res.status(503).json({ erro: "Configure a chave do Asaas Sandbox." })
+    if (!apiKey()) return res.status(503).json({ erro: "Configure a chave do Asaas." })
     const p = await Partnership.findOne({ _id: req.params.id, accepted: { $ne: null } })
     if (!p) return res.status(409).json({ erro: "A proposta precisa ser aceita antes da cobrança." })
     if (p.paymentId) {
@@ -126,21 +136,29 @@ router.post("/propostas/:id/pix", requireAdmin, async (req, res) => {
         return res.json({ ok: true })
     }
     if (p.due < today()) return res.status(409).json({ erro: "A data de vencimento já passou." })
-    const claimed = await Partnership.updateOne({ _id: p.id, paymentAttempt: null }, { $set: { paymentAttempt: new Date() } })
+    const attempt = new Date()
+    const claimed = await Partnership.updateOne({ _id: p.id, paymentAttempt: null }, { $set: { paymentAttempt: attempt } })
     if (!claimed.modifiedCount) return res.sendStatus(409)
     if (!p.customerId) {
-        const customer = await asaas("/customers", "POST", { name: p.company, cpfCnpj: p.document, notificationDisabled: true })
-        p.customerId = customer.id
-        await Partnership.updateOne({ _id: p.id }, { $set: { customerId: p.customerId } })
+        try {
+            const customer = await asaas("/customers", "POST", { name: p.company, cpfCnpj: p.document, notificationDisabled: true })
+            p.customerId = customer.id
+            await Partnership.updateOne({ _id: p.id }, { $set: { customerId: p.customerId } })
+        } catch (error) {
+            // No payment request has been sent, so retrying cannot create a second charge.
+            await Partnership.updateOne({ _id: p.id, paymentAttempt: attempt }, { $unset: { paymentAttempt: 1 } })
+            throw error
+        }
     }
     const payment = await asaas("/payments", "POST", { customer: p.customerId, billingType: "PIX",
-        value: p.cents / 100, dueDate: p.due, externalReference: String(p.id), description: "Portal Saúde - cobrança de teste" })
+        value: p.cents / 100, dueDate: p.due, externalReference: String(p.id),
+        description: production() ? "Portal Saúde - publicidade" : "Portal Saúde - cobrança de teste" })
     await refresh(p, payment)
     res.json({ ok: true })
 })
 
 router.post("/asaas/webhook", async (req, res) => {
-    const expected = process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN
+    const expected = webhookToken()
     const token = req.get("asaas-access-token") || ""
     if (!expected || !timingSafeEqual(Buffer.from(digest(expected)), Buffer.from(digest(token)))) return res.sendStatus(401)
     const id = req.body.payment?.id
