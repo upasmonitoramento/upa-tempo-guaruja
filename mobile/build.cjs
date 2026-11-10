@@ -117,6 +117,7 @@ replace(/                <div class="footer-links">[\s\S]*?                <\/di
                     <button type="button" data-portal-info="privacy">Política de Privacidade</button>
                     <button type="button" data-portal-info="terms">Termos de Uso</button>
                     <button type="button" data-portal-info="sponsors">Patrocinadores</button>
+                    <button type="button" data-portal-info="support">Ajuda e contato</button>
                 </div>`)
 const contactIcon = whatsappUrl ? html.match(/<a href="https:\/\/wa\.me\/5513999999999[\s\S]*?(<svg[\s\S]*?<\/svg>)/)?.[1]
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="native-help-icon" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .65-1.5 1.1-1.5 2.5m0 3h.01"/></svg>'

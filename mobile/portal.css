@@ -129,6 +129,8 @@
 .portal-native body:has(:is(#login, #perfil, #formulario, #adminPanel)[style*="display: block"]) :is(.native-contact, .site-footer) {
     display: none;
 }
+.portal-native body:has(#lista[style*="display: block"] .unit-detail) .native-contact,
+.portal-native body:has(#formulario[style*="display: block"]) > .menu { display: none; }
 .portal-native #instalarApp, .portal-native [hidden] { display: none !important; }
 .portal-native .footer-links > button {
     min-height: var(--native-touch);
