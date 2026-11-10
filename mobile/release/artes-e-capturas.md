@@ -13,6 +13,6 @@ Arquivos de arte preparados: [ícone Google Play](google-play/icone-512.png), [i
 | App Store | Capturas iPhone | Planejar pelo menos uma na classe Dynamic Island média, por exemplo **1179 × 2556 px** ou **1206 × 2622 px** em retrato. A Apple permite até 10 por tamanho. Confirmar os tamanhos exigidos no cadastro. |
 | App Store | Capturas iPad | Se o build suportar iPad, planejar captura de 13 polegadas, por exemplo **2064 × 2752 px** em retrato. |
 
-Ordem sugerida das capturas: (1) lista das UPAs; (2) detalhes com endereço e rota; (3) favoritas. Somente incluir a terceira se o fluxo estiver funcionando no build testado. Não usar selo de Prefeitura ou SUS sem autorização.
+Ordem sugerida das capturas: (1) lista das UPAs; (2) mapa; (3) detalhes com endereço e rota; (4) favoritas, somente se estiverem funcionando no build testado. As capturas públicas não precisam mostrar a administração; não omitir funções restritas nas instruções de revisão. Usar dados fictícios nos fluxos internos. Não usar selo de Prefeitura ou SUS sem autorização.
 
 Fontes: [Artes da Google Play](https://support.google.com/googleplay/android-developer/answer/9866151) · [Capturas da App Store](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) · [Ícones da Apple](https://developer.apple.com/help/app-store-connect/manage-app-information/add-an-app-icon/).

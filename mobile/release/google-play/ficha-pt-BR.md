@@ -4,15 +4,15 @@ Material para colar na Play Console depois de testar o build. Preencher URLs e c
 
 **Nome:** Saúde em Tempo Real
 
-**Descrição breve:** Consulte UPAs do Guarujá, salve favoritas e abra rotas para as unidades.
+**Descrição breve:** Consulte UPAs do Guarujá, veja o mapa e abra rotas para as unidades.
 
 **Descrição completa:**
 
-O Saúde em Tempo Real reúne informações sobre unidades de pronto atendimento do Guarujá em um só lugar. Consulte as unidades cadastradas, veja os dados disponíveis e abra rotas para os endereços.
+O Saúde em Tempo Real reúne informações sobre unidades de pronto atendimento do Guarujá. Consulte as unidades cadastradas, explore o mapa, veja os detalhes e abra rotas para os endereços.
 
-Salve suas UPAs favoritas para encontrá-las mais rápido. A consulta pública não exige cadastro.
+A consulta pública não exige login. A área restrita atende administradores e funcionários com conta previamente criada. O portal exibe publicidade contextual.
 
-Quando os dados de espera forem de demonstração, serão identificados na tela. Para informações oficiais e atuais, consulte os canais da Prefeitura ou confirme com a unidade.
+Os tempos de espera e as equipes exibidos nesta versão são dados de demonstração, identificados na tela. Não incluem informações de pacientes. Para informações oficiais e atuais, consulte os canais da Prefeitura ou confirme com a unidade.
 
 Projeto independente, sem vínculo oficial com a Prefeitura do Guarujá ou com o SUS. Este aplicativo é informativo: não é um dispositivo médico, não diagnostica, trata, cura ou previne condições de saúde e não substitui a orientação de um profissional ou os canais de emergência.
 
@@ -24,4 +24,4 @@ Consulte o [roteiro de conferência das fontes municipais](../fontes-das-unidade
 
 **Privacidade:** URL pública HTTPS da política, a confirmar.
 
-**Categoria e público-alvo:** definir na Play Console a partir da versão final; não usar a categoria como atalho para dispensar declarações ou verificação.
+**Categoria e público-alvo:** definir na Play Console a partir da versão final; não usar a categoria como atalho para dispensar declarações ou verificação. Acrescentar favoritos locais à ficha somente depois de implementar e testar o recurso no binário enviado.

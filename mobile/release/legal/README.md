@@ -1,10 +1,12 @@
 # Política e suporte
 
-Estes HTML são modelos para a versão pública sem conta, ainda não publicados. A política do site atual é separada: o site mantém fluxos de cadastro e administração.
+Estes HTML são **rascunhos de trabalho, não publicáveis sem aprovação do titular**. A versão em preparação empacota o portal, com consulta sem login, mapa, publicidade contextual e acesso restrito para contas previamente criadas. A política do site deve continuar refletindo os fluxos próprios da versão web, inclusive cadastro quando disponível.
 
-1. Copie `config.example.json` para um arquivo local fora do Git. Preencha com o titular real, canais monitorados, vigência e levantamento validado de logs, fornecedores, transferências, retenção e bases legais. Revise a descrição fixa contra a versão final do app (links, permissões, favoritos e diretório offline).
-2. Depois da revisão, marque `revisaoConcluida` como verdadeiro e execute `node prepare.cjs <caminho-do-config>`. A saída será criada em `mobile/release/out/site/`.
-3. Publique os HTML revisados no domínio público, sem login. Verifique HTTPS, links recíprocos e o envio de e-mail. Use as URLs públicas no app e nas fichas das lojas.
+1. Copie `config.example.json` para um arquivo local fora do Git. Identifique titular, canais monitorados e vigência. Com o binário final em mãos, confirme os dados transmitidos, finalidades, bases legais, provedores, transferências e retenção. Registre separadamente consulta pública e uso com conta.
+2. Audite autenticação (campos de login, perfil/recuperação, sessão e logs), permissões, mapa e tiles, rotas externas, mídia, anúncios, links, diagnósticos, armazenamento e favoritos. Confirme os dados realmente enviados a cada provedor e se existe rastreamento ou publicidade personalizada. Revise o HTML para refletir os fluxos finais; não prometa recurso futuro.
+3. Confirme se qualquer fluxo acessível do app, incluindo o painel restrito e links externos, permite criar conta. Sem esse fluxo, documente como o titular trata solicitações relativas a contas existentes. Se houver criação, implemente o fluxo de exclusão aplicável antes de enviar: [Apple](https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion/) · [Google Play](https://support.google.com/googleplay/android-developer/answer/13327111). Não confunda sair do app ou limpar dados locais com excluir conta no servidor.
+4. Somente após **validação e aprovação expressa do titular** da política, das informações do suporte e da versão testada, marque `revisaoConcluida` como verdadeiro e execute `node prepare.cjs <caminho-do-config>`. A saída será criada em `mobile/release/out/site/`. A geração do arquivo não valida as declarações nem autoriza a publicação.
+5. Com autorização do titular, publique os HTML revisados no domínio público, sem login. Verifique HTTPS, links recíprocos e o envio de e-mail. Use as URLs públicas no app e nas fichas das lojas. Não publique exemplos, campos pendentes ou dados de contas de revisão.
 
 Não declarar “nenhum dado coletado” até verificar logs da API, hospedagem e os serviços realmente usados na compilação. Se o escopo mudar, atualizar política e formulários juntos.
 

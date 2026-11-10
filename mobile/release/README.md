@@ -4,10 +4,10 @@ Plano de execução para Android e iPhone. Este diretório contém materiais edi
 
 ## Atualização de 10/11/2026
 
-- **Concluído:** interface pública sem conta e sem anúncios no app, layout móvel preservado, favoritos locais, fallback do diretório sem conexão, fotos e ícones da marca, sincronização Android/iOS e fichas, declarações e artes separadas.
-- **Validado:** prévia responsiva com dados simulados em 320, 390 e 688 px; filtros, favoritos persistentes, detalhes e comportamento quando a API falha. O build do site e os nove testes do cache PWA passaram.
-- **Pendente antes da primeira beta:** Android SDK/JDK ou Mac/Xcode para compilar; HTTPS/CORS da API real; conferência das unidades; aprovação dos dados da política e dos contatos de suporte. Depois, capturas dos aparelhos e teste nativo.
-- **Pendente antes da publicação:** titular e tipo de conta, assinatura, verificação das lojas, URLs públicas finais e submissão.
+- **Escopo em preparação:** portal aprovado empacotado localmente com navegação, mapa, detalhes e anúncios contextuais. A consulta é pública. O login é para contas já provisionadas de administradores e funcionários. Não oferecer criação de conta no app nem encaminhar para esse fluxo fora dele. Favoritos locais estão planejados.
+- **Validado:** a API pública respondeu em HTTPS com cinco unidades para as origens Android e iOS no teste em rede CAASP. As fichas, declarações e artes estão preparadas como rascunhos. Testes da interface pública anterior não validam o novo pacote com portal e login.
+- **Pendente antes da primeira beta:** validar a compilação em aparelho, conferência das unidades, comportamento sem rede, login e permissões, mapa, anúncios, bloqueio de cadastro e links públicos de política e suporte. Usar apenas dados fictícios nos testes de escrita.
+- **Pendente antes da publicação:** aprovação da política pelo titular, conferência de dados e provedores do build, acesso de revisão para áreas restritas, assinatura, verificação das contas, URLs finais e submissão.
 
 Referências de interface: [Apple — navegação](https://developer.apple.com/design/human-interface-guidelines/tab-bars), [Material — barra superior e atalhos](https://m3.material.io/components/app-bars/), [NHS — cards](https://service-manual.nhs.uk/design-system/components/card) e [W3C — telas estreitas](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html). Foram usadas para refinar hierarquia, navegação, alvos de toque e layout, preservando o painel azul do portal.
 
@@ -15,12 +15,12 @@ Referências de interface: [Apple — navegação](https://developer.apple.com/d
 
 | Etapa | O que fazer | Quando podemos considerar concluída |
 |---|---|---|
-| 1. Versão pública | Empacotar consulta de unidades, detalhes, rotas e favoritos locais; manter cadastro e administração no site. | Teste em aparelho confirma consulta sem login, ausência dos fluxos de conta e identificação dos dados de demonstração. |
-| 2. Privacidade e suporte | Confirmar titular, e-mail, fontes das informações, provedores, dados que saem do aparelho e retenção. | Política e suporte publicados em HTTPS, abertos pelo app e acessíveis sem login. Declarações batem com o binário. |
+| 1. Versão do portal | Empacotar navegação, unidades, mapa, detalhes, publicidade contextual e login para contas existentes; implementar e validar favoritos locais. | Aparelho confirma consulta sem login, ausência de criação de conta, rotas e anúncios funcionando, dados de demonstração identificados e acesso restrito conforme o papel. |
+| 2. Privacidade e suporte | Confirmar titular, e-mail, fontes, provedores, dados enviados e retenção. Revisar login, mapa, anúncios, armazenamento e links. | Titular aprovou o texto e as declarações do binário. Política e suporte publicados em HTTPS, abertos pelo app e acessíveis sem login. |
 | 3. Compilação e materiais | Validar SDKs e identidade do pacote, preparar ícone, capturas da versão real e textos. | Builds instaláveis e capturas conferidos; lista de dados e permissões revisada. |
 | 4. Contas e assinatura | Confirmar elegibilidade e tipo de conta antes de pagar. O titular verifica identidade, aceita termos, paga e concede acesso por convite, se necessário. | Titular e cadastros verificados; chaves e credenciais guardadas fora do Git. |
-| 5. Beta | Android: teste interno e depois fechado se aplicável. iPhone: TestFlight. | Instalação, atualização, consulta, favoritos e ausência de conexão testadas em aparelhos. |
-| 6. Revisão e publicação | Enviar os binários assinados, fichas e declarações. Revisar a divulgação de dados antes de enviar. | Aprovado por cada loja, com links públicos confirmados. |
+| 5. Beta | Android: teste interno e depois fechado se aplicável. iPhone: TestFlight. | Instalação, atualização, navegação, favoritos, ausência de conexão e perfis de acesso testados em aparelhos. |
+| 6. Revisão e publicação | Enviar os binários assinados, fichas, declarações e instruções de acesso às funções restritas com ambiente fictício. Revisar os dados e a funcionalidade mínima da Apple. | Aprovado por cada loja, com links públicos confirmados. |
 | 7. Atualizações | Versionar, testar e enviar novos builds no mesmo cadastro. | Atualização instala sobre a anterior e preserva favoritos. |
 
 Não comprar uma conta pessoal só para acelerar. O Google exige conta de organização para apps enquadrados em serviços de saúde, como apps médicos, e pede D-U-N-S para organizações. O aplicativo é um guia independente de unidades; confirme o enquadramento antes de escolher a conta. A Apple pede que serviços de saúde regulados ou apps que exigem informações sensíveis sejam submetidos pela entidade que presta o serviço. Isso não classifica automaticamente um guia informativo como serviço clínico. [Google: tipo de conta](https://support.google.com/googleplay/android-developer/answer/13634885) · [Apple: diretrizes, seção 5.1.1(ix)](https://developer.apple.com/app-store/review/guidelines/#privacy) · [Apple: inscrição](https://developer.apple.com/help/account/membership/program-enrollment/).

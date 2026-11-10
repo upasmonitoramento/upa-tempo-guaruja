@@ -4,7 +4,7 @@ Roteiro de preparação em 10/11/2026. Nenhum serviço foi contratado ou modific
 
 ## Caminho mais rápido para lançar
 
-**Manter Vercel + Express + MongoDB + R2 para o primeiro lançamento**, desde que os testes de disponibilidade, privacidade, restauração e capacidade passem. O app público consulta a API HTTPS de leitura existente. Ter o app nas lojas não exige migrar o banco nem contratar um domínio para o Supabase. Se optarmos por PostgreSQL, fazer a migração separadamente, atrás do mesmo contrato HTTPS; assim os apps não dependem de detalhes do banco.
+**Manter Vercel + Express + MongoDB + R2 para o primeiro lançamento**, desde que os testes de disponibilidade, privacidade, restauração e capacidade passem. O portal empacotado consulta a API HTTPS existente: leitura pública e acesso autenticado apenas nas áreas restritas. Ter o app nas lojas não exige migrar o banco nem contratar um domínio para o Supabase. Se optarmos por PostgreSQL, fazer a migração separadamente, atrás do mesmo contrato HTTPS; assim os apps não dependem de detalhes do banco.
 
 | Componente atual | Onde fica | O que preservar |
 |---|---|---|
@@ -12,7 +12,9 @@ Roteiro de preparação em 10/11/2026. Nenhum serviço foi contratado ou modific
 | API Express | Vercel; `api/index.js`, `backend/server.js` | Resposta pública de `GET /atendimento`; manter outros caminhos usados pelo site e pelo painel |
 | Banco | MongoDB via Mongoose; `backend/db.js`, `backend/models/` | IDs, relacionamentos, horários, estados, ordenação, integridade e permissões |
 | Mídia | R2; `backend/config/r2.js` | URLs que já funcionam, tipos de arquivo e separação entre mídia pública e arquivos privados |
-| App das lojas | `mobile/`; interface embutida no binário | Favoritos locais, origem HTTPS estável da API e links públicos de privacidade/suporte |
+| App das lojas | `mobile/`; portal embutido no binário | Consulta sem login, mapa, mídia, publicidade contextual, sessão dos papéis restritos, origem HTTPS da API, links públicos de privacidade/suporte e favoritos locais. |
+
+Antes de disponibilizar o acesso restrito nas lojas, revisar a recuperação de conta com prova de titularidade, invalidar sessões ao suspender ou alterar permissões e conferir que as rotas de anúncios públicos retornam apenas dados necessários à exibição. Validar com contas fictícias em ambiente isolado; o APK de teste não modifica o backend publicado.
 
 ## Domínio e publicação do backend
 
@@ -27,10 +29,10 @@ Roteiro de preparação em 10/11/2026. Nenhum serviço foi contratado ou modific
 
 ## Verificações antes de produção
 
-1. **Privacidade nas respostas públicas.** Manter uma lista explícita dos campos públicos. O código analisado de `GET /areas-ads/publicas` popula o nome e o e-mail do responsável do patrocinador. Esses campos não precisam sair na API pública; separar a projeção pública da administrativa e verificar que toda resposta aninhada exclui esses campos, CPF, dados de usuários e outros campos internos. Manter essa rota fora do app até resolver. Revisar também quais nomes e escalas de profissionais podem ser exibidos e qual é a fonte. Não receber prontuários, nomes de pacientes ou entradas de fila individuais.
-2. **Disponibilidade e dados corretos.** Testar cinco unidades, imagens, filtros, telefone/rota, exemplos identificados e estado sem rede. Publicar dados reais somente após validar fonte, data de observação e forma de atualização. Medir retorno da API em aparelho, inclusive em rede móvel. Testar painel, edição e publicação de mídia com dados fictícios em prévia separada.
+1. **Privacidade nas respostas públicas.** Manter uma lista explícita dos campos públicos. O código analisado de `GET /areas-ads/publicas` popula o nome e o e-mail do responsável do patrocinador. Esses campos não precisam sair na API pública; antes de publicar o app com publicidade, separar a projeção pública da administrativa e verificar que toda resposta aninhada exclui esses campos, CPF, dados de usuários e outros campos internos. Revisar recursos de mapa e mídia efetivamente chamados pelo binário e registrar seus fornecedores. A equipe e os tempos desta versão são demonstrativos; não receber prontuários, nomes de pacientes ou entradas de fila individuais.
+2. **Disponibilidade e dados corretos.** Testar cinco unidades, imagens, mapa, publicidade contextual, filtros, telefone/rota, exemplos identificados e estado sem rede. Medir retorno da API em aparelho, inclusive em rede móvel. Testar login, expiração de sessão, logout, permissões de funcionário e administrador, painel, edição e mídia com contas e dados fictícios em prévia separada. Não usar contas reais nas revisões das lojas.
 3. **Mídia e tráfego.** Confirmar os limites reais de upload. A Vercel documenta [4,5 MB no corpo de requisição de Functions](https://vercel.com/docs/functions/limitations#request-body-size); multipart tem overhead, então limite da tela de 30 MB não vale para essa rota na Vercel. Para arquivos maiores, planejar upload direto ao storage com autorização curta, validação do objeto e confirmação antes de publicar. Para mídia de produção no R2, revisar domínio próprio, cache e limites; `r2.dev` é indicado para desenvolvimento. [Documentação de buckets públicos do R2](https://developers.cloudflare.com/r2/buckets/public-buckets/). Não copiar arquivos privados para bucket público; conservar backup separado das mídias e conferir reprodução/range dos vídeos.
-4. **Backup e capacidade.** Testar restauração do banco e uma amostra de mídia em ambiente isolado. Verificar plano contratado, backup e retenção disponíveis, limites de conexões e CPU, funções, armazenamento, transferências e custo de vídeo. Definir alertas de erro/latência, orçamento e responsáveis. Franquia de usuários mensais do Auth é cobrança; o app público sem conta nem precisa usá-la para consultar UPAs.
+4. **Backup e capacidade.** Testar restauração do banco e uma amostra de mídia em ambiente isolado. Verificar plano contratado, backup e retenção disponíveis, limites de conexões e CPU, funções, armazenamento, transferências e custo de vídeo. Definir alertas de erro/latência, orçamento e responsáveis. A consulta pública não usa autenticação; o login restrito usa o fluxo do portal. Uma futura franquia de usuários mensais do Supabase Auth é cobrança e não mede capacidade simultânea.
 
 ### Ensaio de capacidade
 

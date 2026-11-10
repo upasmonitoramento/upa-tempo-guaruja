@@ -2,9 +2,9 @@
 
 ## 1.0.0 — rascunho da primeira publicação
 
-> Primeira versão do Saúde em Tempo Real para consultar UPAs do Guarujá, ver detalhes e rotas e salvar unidades favoritas no aparelho. Os dados de demonstração aparecem identificados no aplicativo.
+> Primeira versão do Saúde em Tempo Real para consultar UPAs do Guarujá, explorar o mapa e ver detalhes e rotas sem precisar de conta. Os dados de demonstração aparecem identificados no aplicativo.
 
-Validar o texto contra o build testado antes de copiar para as lojas. Registrar data, revisão Git, versão Android, número de build iOS e links das versões publicadas aqui após o lançamento.
+Validar o texto contra o build testado antes de copiar para as lojas. Acrescentar favoritos no aparelho somente se o recurso estiver concluído e testado. Registrar data, revisão Git, versão Android, número de build iOS e links das versões publicadas aqui após o lançamento.
 
 ## Rotina de atualização
 

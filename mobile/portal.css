@@ -1,0 +1,263 @@
+/* Native shell only. The approved site's colors and content remain in the shared styles. */
+.portal-native {
+    --native-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --native-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+    --native-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --native-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+    --native-gutter-left: max(12px, var(--native-left));
+    --native-gutter-right: max(12px, var(--native-right));
+    --native-header: 66px;
+    --native-shortcuts: 61px;
+    --native-touch: 48px;
+    --native-offset: calc(var(--native-top) + var(--native-header) + var(--native-shortcuts));
+    background: #f5f8fc;
+    scroll-padding-top: calc(var(--native-offset) + 12px);
+    scroll-padding-bottom: calc(var(--native-bottom) + 12px);
+}
+
+.portal-native body { padding-top: calc(var(--native-offset) + 16px) !important; }
+.portal-native .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 7px !important;
+    min-height: calc(var(--native-top) + var(--native-header));
+    padding: calc(var(--native-top) + 8px) var(--native-gutter-right) 8px var(--native-gutter-left) !important;
+}
+.portal-native .logo-area {
+    justify-self: start;
+    min-width: 0;
+    min-height: var(--native-touch);
+    gap: 7px;
+    white-space: normal;
+}
+.portal-native .topbar .brand-icon { width: 34px; height: 34px; }
+.portal-native .brand-name { min-width: 0; }
+.portal-native .topbar-buttons { gap: 4px !important; justify-content: end; flex-wrap: nowrap; }
+.portal-native .topbar-buttons > button,
+.portal-native .topbar-buttons #menuUsuarioArea > button {
+    min-width: var(--native-touch);
+    min-height: var(--native-touch);
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+}
+.portal-native #menuUsuario {
+    top: calc(var(--native-touch) + 6px) !important;
+    width: min(230px, calc(100vw - var(--native-left) - var(--native-right) - 24px)) !important;
+}
+.portal-native #menuUsuario button { min-height: var(--native-touch); font-size: 14px !important; }
+.portal-native #nomeUsuarioMenu { overflow-wrap: anywhere; }
+
+.portal-native .barra-upas-mobile {
+    display: flex !important;
+    position: fixed;
+    inset: calc(var(--native-top) + var(--native-header)) 0 auto;
+    z-index: 9998;
+    align-items: center;
+    gap: 8px;
+    height: var(--native-shortcuts);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px var(--native-gutter-right) 6px var(--native-gutter-left);
+    scroll-padding-inline: var(--native-gutter-left) var(--native-gutter-right);
+    background: #fcfdff;
+    border-bottom: 1px solid #dce5ee;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.portal-native .barra-upas-mobile button {
+    flex: 0 0 auto;
+    min-width: var(--native-touch);
+    min-height: var(--native-touch);
+    max-width: calc(100vw - var(--native-gutter-left) - var(--native-gutter-right));
+    padding-inline: 12px;
+    white-space: nowrap;
+}
+.portal-native .barra-upas-mobile button:focus-visible { outline-offset: -3px; }
+.portal-native #lista.container,
+.portal-native #adminPanel {
+    padding-left: var(--native-gutter-left) !important;
+    padding-right: var(--native-gutter-right) !important;
+}
+.portal-native .menu { margin-left: var(--native-gutter-left) !important; margin-right: var(--native-gutter-right) !important; }
+.portal-native #btnCadastrar { min-height: var(--native-touch); margin-top: 0; }
+.portal-native .classic-health-hero .classic-wait-filters .filtro-bolinha {
+    flex-basis: var(--native-touch);
+    width: var(--native-touch) !important;
+    min-width: var(--native-touch);
+    height: var(--native-touch) !important;
+    min-height: var(--native-touch);
+}
+.portal-native .classic-filter-reset,
+.portal-native .unit-card-action,
+.portal-native .detail-back,
+.portal-native .detail-actions > :is(a, button),
+.portal-native .empty-state button,
+.portal-native .footer-links a,
+.portal-native .leaflet-control-zoom a { min-height: var(--native-touch); }
+.portal-native .leaflet-control-zoom a { min-width: var(--native-touch); line-height: var(--native-touch) !important; }
+.portal-native .detail-contact a[href^="tel:"] { display: inline-flex; align-items: center; min-height: var(--native-touch); }
+.portal-native .detail-info-grid, .portal-native .unit-card-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.portal-native .detail-title,
+.portal-native .detail-address,
+.portal-native .detail-info,
+.portal-native .staff-item > div,
+.portal-native .unit-card-title,
+.portal-native .unit-card-metric strong { overflow-wrap: anywhere; }
+.portal-native .staff-item > div { min-width: 0; }
+.portal-native #map {
+    min-height: 220px;
+    height: calc(100vh - var(--native-offset) - var(--native-bottom) - 30px);
+    height: calc(100dvh - var(--native-offset) - var(--native-bottom) - 30px);
+    margin-left: var(--native-gutter-left);
+    margin-right: var(--native-gutter-right);
+}
+.portal-native .site-footer {
+    padding-left: max(20px, var(--native-left)) !important;
+    padding-right: max(20px, var(--native-right)) !important;
+    padding-bottom: calc(24px + var(--native-bottom)) !important;
+}
+.portal-native .whatsapp-float {
+    width: var(--native-touch) !important;
+    height: var(--native-touch) !important;
+    right: calc(16px + var(--native-right)) !important;
+    bottom: calc(16px + var(--native-bottom)) !important;
+}
+.portal-native .native-contact { border: 0; padding: 0; }
+.portal-native .native-contact .native-help-icon { fill: none; }
+.portal-native body:has(:is(#login, #perfil, #formulario, #adminPanel)[style*="display: block"]) :is(.native-contact, .site-footer) {
+    display: none;
+}
+.portal-native #instalarApp, .portal-native [hidden] { display: none !important; }
+.portal-native .footer-links > button {
+    min-height: var(--native-touch);
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: #c0cedc;
+    text-align: left;
+    font-size: 12px;
+    cursor: pointer;
+}
+.portal-native .footer-links > button:is(:hover, :focus-visible) { color: #fff; text-decoration: underline; }
+.portal-native .native-info { max-height: calc(100dvh - var(--native-top) - var(--native-bottom) - 32px); overflow-y: auto; }
+.portal-native .native-info :is(a, button) { min-height: var(--native-touch); }
+.portal-native .native-info > a { display: flex; align-items: center; color: var(--health-blue); }
+.portal-native .native-info > button { margin-top: 6px; }
+.portal-native .native-favorite-toolbar { display: flex; align-items: flex-start; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.portal-native .native-favorite-toolbar > button { align-self: flex-end; }
+.portal-native .native-favorite-toolbar button,
+.portal-native .native-offline button {
+    min-height: var(--native-touch);
+    padding: 8px 13px;
+    border: 1px solid #d3dfeb;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--health-blue);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.portal-native .native-favorite-toolbar button[aria-pressed="true"],
+.portal-native .detail-actions .native-favorite[aria-pressed="true"] { background: #edf4ff; border-color: #a8bfdc; }
+.portal-native .native-offline { display: grid; justify-items: start; gap: 8px; margin: 0; }
+.portal-native .unit-detail > .native-offline { margin-bottom: 12px; }
+
+/* Existing account, staff and admin screens keep their behavior and native inputs. */
+.portal-native .auth-box,
+.portal-native #formulario {
+    width: calc(100% - var(--native-gutter-left) - var(--native-gutter-right));
+    margin-left: var(--native-gutter-left);
+    margin-right: var(--native-gutter-right);
+}
+.portal-native .auth-box { max-width: 440px; }
+.portal-native form.auth-box { text-align: left; }
+.portal-native form.auth-box h2 { line-height: 1.2; margin-bottom: 10px; }
+.portal-native form.auth-box p:not(.section-kicker) { font-size: 13px; color: var(--health-muted); }
+.portal-native form.auth-box label { display: block; margin: 12px 0 0; color: var(--health-ink); font-size: 13px; font-weight: 650; }
+.portal-native form.auth-box input { margin-top: 5px; }
+.portal-native form.auth-box button { width: 100%; }
+.portal-native #nativeLoginStatus:empty { display: none; }
+.portal-native form.auth-box .native-login-help { color: var(--health-blue); background: #edf4ff; box-shadow: none; }
+.portal-native form.auth-box button:disabled { opacity: .7; cursor: wait; }
+.portal-native :is(.auth-box, #formulario, #adminPanel, #modalAdminConteudo) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-width: 0;
+    max-width: 100%;
+    min-height: var(--native-touch);
+    font-size: 16px;
+    scroll-margin-block: 12px;
+}
+.portal-native :is(.auth-box, #formulario) input[type="file"],
+.portal-native #modalAdminConteudo input[type="file"] { width: 100%; overflow: hidden; }
+.portal-native .auth-box :is(button, .link-btn),
+.portal-native #formulario button,
+.portal-native :is(#adminPanel, #modalAdminConteudo) .admin-btn,
+.portal-native .admin-tab-btn { min-height: var(--native-touch); }
+.portal-native .medico-row { grid-template-columns: minmax(0, 1fr) max-content; }
+.portal-native .medico-row button { min-width: var(--native-touch); }
+.portal-native .admin-card,
+.portal-native :is(#adminUsuarios, #adminPatrocinadores, #adminAnuncios, #adminLogs, #adminAreasAds) { min-width: 0; }
+.portal-native :is(#adminUsuarios, #adminPatrocinadores, #adminAnuncios, #adminLogs) > div:has(> .admin-table) {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+.portal-native .admin-table { min-width: 620px; }
+.portal-native .admin-table td { overflow-wrap: anywhere; }
+.portal-native .admin-actions :is(button, select) { min-height: var(--native-touch); }
+.portal-native .admin-pagination { justify-content: space-between; }
+.portal-native .admin-modal-bg {
+    padding: calc(12px + var(--native-top)) var(--native-gutter-right) calc(12px + var(--native-bottom)) var(--native-gutter-left);
+}
+.portal-native .admin-modal {
+    width: 100%;
+    max-width: 720px;
+    max-height: calc(100vh - var(--native-top) - var(--native-bottom) - 24px);
+    max-height: calc(100dvh - var(--native-top) - var(--native-bottom) - 24px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+}
+.portal-native .admin-modal > div:first-child:has(> h2):has(> button) {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+    padding-block: 4px 8px;
+}
+.portal-native .admin-modal > div:first-child > h2 { min-width: 0; }
+.portal-native .admin-modal > div:first-child > button { flex-shrink: 0; }
+.portal-native .ads-area-preview { max-width: 100%; }
+.portal-native .ads-check-slot-item,
+.portal-native .ads-check-item { min-height: var(--native-touch); }
+
+.portal-native .detail-actions .native-favorite { grid-column: 1 / -1; }
+.portal-native .native-login-help { margin-top: 8px; }
+
+@media (min-width: 520px) {
+    .portal-native .auth-box, .portal-native #formulario { margin-inline: auto; }
+}
+@media (min-width: 651px) {
+    .portal-native .medico-row { grid-template-columns: minmax(0, 1fr) minmax(130px, .8fr) max-content; }
+}
+@media (min-width: 1181px) {
+    .portal-native { --native-shortcuts: 0px; }
+    .portal-native .barra-upas-mobile { display: none !important; }
+    .portal-native #map { margin-inline: auto; }
+}
+@media (max-width: 520px) {
+    .portal-native .admin-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .portal-native .admin-tab-btn { min-width: 0; padding-inline: 8px; }
+    .portal-native .admin-modal > div[style*="grid-template-columns"]:has(> .campo-admin) { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@media (max-width: 359px) {
+    .portal-native .topbar { gap: 5px !important; }
+    .portal-native .topbar .brand-icon { width: 30px; height: 30px; }
+    .portal-native .topbar .logo-area { font-size: 14px !important; gap: 6px; }
+    .portal-native .brand-name small { font-size: 8px; }
+    .portal-native .topbar-buttons > button,
+    .portal-native .topbar-buttons #menuUsuarioArea > button { padding-inline: 7px !important; }
+    .portal-native .classic-health-hero { padding-inline: 19px; }
+    .portal-native .detail-info { padding: 10px; }
+}
