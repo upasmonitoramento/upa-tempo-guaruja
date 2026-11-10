@@ -1,4 +1,6 @@
-require("dotenv").config({ path: require("path").join(__dirname, ".env") })
+if (process.env.PORTAL_COMERCIAL_LOCAL !== "1") {
+    require("dotenv").config({ path: require("path").join(__dirname, ".env") })
+}
 const conectarBanco = require("./db")
 
 const express = require("express")
@@ -41,7 +43,7 @@ app.use(limiter)
 // ==========================================
 app.use(express.json())
 
-if (require.main === module && process.env.PORTAL_COMERCIAL_TESTE === "1") {
+if ((require.main === module || process.env.PORTAL_COMERCIAL_LOCAL === "1") && process.env.PORTAL_COMERCIAL_TESTE === "1") {
     app.use(express.static(path.join(__dirname, "..", "frontend")))
 }
 
