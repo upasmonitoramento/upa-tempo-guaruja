@@ -244,5 +244,19 @@ async function mostrarMapa() {
     try{await carregarMapa()}catch{document.getElementById('map').innerHTML='<div class="empty-state"><h2>Mapa indisponível</h2><p>Você pode consultar endereços e rotas nos detalhes das unidades.</p><button class="button-primary" onclick="mostrarLista()">Ver unidades</button></div>'}
 }
 
+async function sincronizarPerfilSessao() {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    try {
+        const response = await fetch(`${API}/auth/perfil`, { headers: { Authorization: token } })
+        if (!response.ok || token !== localStorage.getItem('token')) return
+        const user = await response.json()
+        if (token !== localStorage.getItem('token')) return
+        localStorage.setItem('user', JSON.stringify({ id:user._id || user.id, nome:user.nome, email:user.email, cpf:user.cpf, tipo:user.tipo, foto:user.foto, status:user.status, suspensoAte:user.suspensoAte }))
+        atualizarInterfaceUsuario()
+    } catch { /* Keep the existing session view while offline. */ }
+}
+
+sincronizarPerfilSessao()
 carregarDados()
 atualizarInterfaceUsuario()

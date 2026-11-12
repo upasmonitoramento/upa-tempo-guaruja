@@ -2470,6 +2470,8 @@
                 }
             } catch (err) { console.log("Perfil usando dados locais") }
 
+            atualizarInterfaceUsuario()
+
             document.getElementById("perfilNome").value = user.nome || ""
             document.getElementById("perfilEmail").value = user.email || ""
             document.getElementById("perfilCpf").value = formatarCPF(user.cpf || "")
@@ -2810,6 +2812,7 @@
             `
 
             usuariosPagina.forEach(u => {
+                const administradorPermanente = String(u._id) === "6a1b0014d6afea9736eb1925"
                 html += `
                     <tr>
                         <td style="min-width:220px;">
@@ -2825,12 +2828,12 @@
                         <td>
                             <div class="admin-actions">
                                 <button class="admin-btn btn-blue" onclick="verDadosUsuario('${u._id}')">Ver dados</button>
-                                <select onchange="alterarTipoUsuario('${u._id}', this.value)" class="admin-select">
+                                <select ${administradorPermanente ? 'disabled aria-label="Administrador permanente"' : ''} onchange="alterarTipoUsuario('${u._id}', this.value)" class="admin-select">
                                     <option value="usuario" ${u.tipo === "usuario" ? "selected" : ""}>Usuário</option>
                                     <option value="funcionario" ${u.tipo === "funcionario" ? "selected" : ""}>Funcionário</option>
                                     <option value="admin" ${u.tipo === "admin" ? "selected" : ""}>Admin</option>
                                 </select>
-                                ${u.status === "removido" ? `<span class="badge-status status-removido">removido</span>` : `<button class="admin-btn btn-red" onclick="removerUsuario('${u._id}')">Remover</button>`}
+                                ${administradorPermanente ? '<span class="badge-status">Administrador permanente</span>' : u.status === "removido" ? `<span class="badge-status status-removido">removido</span>` : `<button class="admin-btn btn-red" onclick="removerUsuario('${u._id}')">Remover</button>`}
                             </div>
                         </td>
                     </tr>

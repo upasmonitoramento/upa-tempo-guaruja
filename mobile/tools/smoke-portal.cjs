@@ -131,6 +131,13 @@ async function checkRole(browser, role, device) {
         await page.getByLabel('E-mail', { exact: true }).fill(user.email)
         await page.getByLabel('Senha', { exact: true }).fill('senha-de-teste')
         await page.locator('#login').getByRole('button', { name: 'Entrar', exact: true }).click()
+        await page.getByRole('button', { name: 'Conta', exact: true }).waitFor()
+        await page.evaluate(async () => {
+            const cached = getUser()
+            portalSession.set('user', JSON.stringify({ ...cached, tipo: 'usuario' }))
+            await sincronizarPerfilSessao()
+        })
+        await page.waitForFunction(expected => getUser().tipo === expected, role)
         await page.getByRole('button', { name: 'Conta', exact: true }).click()
         const admin = page.locator('#btnPainelAdmin')
         const edit = page.locator('#btnCadastrar')

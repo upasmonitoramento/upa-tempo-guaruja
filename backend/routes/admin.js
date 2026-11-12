@@ -6,6 +6,15 @@ const Log = require("../models/Log")
 
 const auth = require("../middlewares/auth")
 const verificarTipo = require("../middlewares/role")
+const { isOwner } = require("../config/owner")
+
+router.use("/usuarios/:id", auth, verificarTipo("admin"), (req, res, next) => {
+    if (req.method === "PUT" && isOwner(req.params.id) &&
+        /^\/(tipo|suspender|banir|remover)\/?$/i.test(req.path)) {
+        return res.status(403).json({ erro: "Esta é a conta proprietária. Seu acesso de administrador não pode ser removido ou bloqueado." })
+    }
+    next()
+})
 
 // ==========================================
 // FUNÇÃO AUXILIAR PARA PEGAR ADMIN LOGADO

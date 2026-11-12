@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken")
+const { isOwner } = require("../config/owner")
 
 module.exports = (req, res, next) => {
+
+    if (!process.env.JWT_SECRET) return res.status(503).json({ erro: "Autenticação indisponível." })
 
     const token = req.headers.authorization
 
@@ -14,9 +17,11 @@ module.exports = (req, res, next) => {
 
         const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET || "SEGREDO"
+            process.env.JWT_SECRET,
+            { algorithms: ["HS256"] }
         )
 
+        if (isOwner(decoded.id)) decoded.tipo = "admin"
         req.user = decoded
 
         next()

@@ -44,7 +44,12 @@ for (const unit of units) {
         fs.copyFileSync(path.join(frontend, 'images', file), path.join(output, 'images', file))
     }
 }
-for (const file of ['brand.css', 'experience.css', 'comercial.css', 'comercial.js', 'icon-192-v2.png', 'favicon.ico',
+function nativeSession(source) {
+    return source.replace(/\blocalStorage\.(getItem|setItem|removeItem)\((['"])(token|user)\2/g, (_, method, quote, key) =>
+        `portalSession.${({ getItem: 'get', setItem: 'set', removeItem: 'delete' })[method]}(${quote}${key}${quote}`)
+}
+fs.writeFileSync(path.join(output, 'comercial.js'), nativeSession(fs.readFileSync(path.join(frontend, 'comercial.js'), 'utf8')))
+for (const file of ['brand.css', 'experience.css', 'comercial.css', 'icon-192-v2.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
 }
@@ -57,7 +62,7 @@ const nativeUI = publicUI.replace(publicStartup, '\n')
 if (!nativeUI.includes('await window.portalNativeOffline?.()') || !nativeUI.includes('window.portalNativeOnline?.()')) {
     throw new Error('Integração do diretório offline não encontrada.')
 }
-fs.writeFileSync(path.join(output, 'public-ui.js'), nativeUI)
+fs.writeFileSync(path.join(output, 'public-ui.js'), nativeSession(nativeUI))
 fs.cpSync(path.join(frontend, 'vendor/leaflet'), path.join(output, 'vendor/leaflet'), { recursive: true })
 for (const file of ['portal.css', 'portal-native.js']) {
     fs.copyFileSync(path.join(root, file), path.join(output, file))

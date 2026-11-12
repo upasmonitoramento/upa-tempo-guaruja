@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const { isOwner } = require("../config/owner")
 
 const UserSchema = new mongoose.Schema({
 
@@ -39,6 +40,16 @@ const UserSchema = new mongoose.Schema({
 
 }, {
     timestamps: true
+})
+
+UserSchema.pre("validate", function () {
+    if (isOwner(this._id)) {
+        this.tipo = "admin"
+        this.status = "ativo"
+        this.suspensoAte = null
+        this.banidoEm = null
+        this.removidoEm = null
+    }
 })
 
 module.exports = mongoose.model("User", UserSchema)
