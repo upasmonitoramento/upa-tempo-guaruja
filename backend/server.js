@@ -20,9 +20,10 @@ app.set("trust proxy", 1)
 // ==========================================
 // SEGURANÇA BÁSICA
 // ==========================================
-app.use(cors())
+app.use(cors({ exposedHeaders: ["X-Portal-Commercial-Mode"] }))
 
 app.use(helmet({
+    contentSecurityPolicy: process.env.PORTAL_COMERCIAL_LOCAL === "1" ? false : undefined,
     crossOriginResourcePolicy: {
         policy: "cross-origin"
     }

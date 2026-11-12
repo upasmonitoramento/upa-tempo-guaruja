@@ -1,14 +1,16 @@
-.commercial { color:#132b47; background:#f3f7fc; padding:20px; box-sizing:border-box; }
-.commercial-dialog { width:min(1120px,calc(100% - 24px)); max-height:calc(100dvh - 36px); border:1px solid #cfdded; border-radius:18px; overflow:auto; padding:0; }
+.commercial { color:#142d4b; background:#f3f6fb; padding:28px; box-sizing:border-box; font:16px/1.5 system-ui,-apple-system,sans-serif; min-height:100%; }
+.commercial * { box-sizing:border-box; }
+.commercial-dialog { width:100%; height:100dvh; max-width:100%; max-height:100dvh; margin:0; border:0; border-radius:0; overflow:auto; padding:0; overscroll-behavior:contain; }
 .commercial-dialog::backdrop { background:#092442aa; }
-.commercial-top { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.commercial-top { display:flex; justify-content:space-between; align-items:center; gap:16px; max-width:1440px; margin:auto; padding-bottom:18px; border-bottom:1px solid #d7e1ef; }
 .commercial-top h1 { margin:0; font-size:clamp(20px,4vw,30px); }
-.commercial-layout { display:grid; grid-template-columns:180px minmax(0,1fr); gap:18px; margin-top:16px; }
-.commercial nav { display:flex; flex-direction:column; gap:6px; }
+.commercial-layout { display:grid; grid-template-columns:176px minmax(0,1fr); gap:28px; max-width:1440px; margin:18px auto 0; }
+.commercial-layout section { min-width:0; outline:none; }
+.commercial nav { display:flex; flex-direction:column; gap:10px; align-self:start; position:sticky; top:20px; }
 .commercial button { min-height:44px; border:1px solid #c7d7ed; border-radius:9px; background:#fff; color:#0d47a1; padding:8px 12px; font:inherit; font-weight:650; cursor:pointer; }
 .commercial button[aria-current], .commercial button[type=submit] { background:#0d47a1; color:#fff; }
 .commercial button:disabled { opacity:.55; cursor:wait; }
-.commercial-card { background:white; border:1px solid #d6e1ef; border-radius:13px; padding:14px; margin-bottom:10px; overflow-wrap:anywhere; }
+.commercial-card { background:white; border:1px solid #d6e1ef; border-radius:14px; padding:20px; margin-bottom:10px; overflow-wrap:anywhere; min-width:0; }
 .commercial-card h2, .commercial-card h3 { margin:0 0 8px; }
 .commercial-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .commercial-form label { display:grid; gap:5px; min-width:0; }
@@ -18,9 +20,75 @@
 .commercial-wide { grid-column:1/-1; }
 .commercial-page { max-width:680px; margin:20px auto; font:16px/1.5 system-ui,sans-serif; }
 .commercial-status { min-height:1.4em; }
+body:has(.commercial-dialog[open]) { overflow:hidden; }
+.commercial p { margin:6px 0 12px; }
+.commercial .commercial-eyebrow { margin:0 0 5px; color:#46617d; font-size:11px; letter-spacing:.1em; font-weight:750; }
+.commercial h2 { font-size:22px; line-height:1.3; }
+.commercial h3 { font-size:18px; line-height:1.35; }
+.commercial button,.commercial-button { min-height:48px; font:inherit; font-size:14px; font-weight:650; touch-action:manipulation; transition:background-color .15s,border-color .15s; }
+.commercial-button { display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border:1px solid #c7d7ed; border-radius:9px; color:#0d47a1; text-decoration:none; }
+.commercial button:hover,.commercial-button:hover { background:#edf3fc; border-color:#8caed8; }
+.commercial button:focus-visible,.commercial a:focus-visible,.commercial input:focus-visible { outline:3px solid #4886d6; outline-offset:3px; }
+.commercial button[aria-pressed=true] { background:#0d47a1; color:#fff; border-color:#0d47a1; }
+.commercial button[aria-current]:hover,.commercial button[aria-pressed=true]:hover,.commercial button[type=submit]:hover { background:#123e85; }
+.commercial-top { flex-wrap:wrap; }
+.commercial-top>div { flex:1 1 160px; }
+.commercial-top>button:last-child { font-size:24px; min-width:48px; padding:5px; }
+.commercial button:disabled { cursor:not-allowed; }
+.commercial nav button { min-height:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border-radius:12px; }
+.commercial-nav-icon { font-size:27px; line-height:1; }
+.commercial-section-title { display:flex; gap:16px; justify-content:space-between; align-items:center; margin:0 0 18px; }
+.commercial-section-title p { color:#53677f; margin-bottom:0; }
+.commercial-section-title>button { flex-shrink:0; }
+.commercial-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:30px; }
+.commercial .commercial-metrics button { display:flex; align-items:flex-start; position:relative; flex-direction:column; color:#142d4b; text-align:left; min-height:134px; padding:18px; }
+.commercial-metrics strong { font-size:32px; line-height:1.3; letter-spacing:-.04em; }
+.commercial-metrics button>span:first-child { color:#53677f; font-size:13px; }
+.commercial-metric-arrow { position:absolute; right:16px; bottom:20px; color:#124da6; }
+.commercial-companies { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.commercial-company { display:flex; flex-direction:column; gap:5px; }
+.commercial-company-heading { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.commercial-company-heading>div { min-width:0; }
+.commercial-company-heading p { color:#53677f; font-size:13px; margin:4px 0 0; }
+.commercial-avatar { flex:0 0 44px; height:44px; display:grid; place-items:center; border-radius:10px; background:#eaf1fc; color:#124da6; font-size:15px; font-weight:750; }
+.commercial-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; }
+.commercial-badge { display:inline-flex; border-radius:6px; padding:4px 8px; background:#eef2f7; color:#445b73; font-size:12px; font-weight:650; }
+.commercial-badge.is-paid { background:#e0f5eb; color:#126146; }
+.commercial-company>button { margin-top:auto; width:100%; display:flex; justify-content:space-between; }
+.commercial .commercial-muted { color:#53677f; font-size:13px; margin:12px 0; }
+.commercial-search { display:grid; gap:6px; margin-bottom:14px; font-size:13px; font-weight:650; }
+.commercial input:not([type=checkbox]) { font:inherit; font-size:16px; min-height:48px; width:100%; border:1px solid #acbed6; background:#fff; color:#142d4b; padding:11px 12px; border-radius:9px; }
+.commercial-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.commercial-filters button { min-height:44px; padding:8px 12px; font-size:13px; }
+.commercial-empty { padding:34px 20px; text-align:center; background:#fff; border:1px dashed #b9cce2; border-radius:14px; grid-column:1/-1; color:#53677f; }
+.commercial-company-profile { margin:18px 0 26px; }
+.commercial-contracts { display:grid; gap:14px; }
+.commercial-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.commercial-status { max-width:1440px; margin:12px auto; color:#53677f; font-size:13px; }
+.commercial-status:empty { display:none; }
+@media(max-width:900px) {
+    .commercial-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .commercial-layout { grid-template-columns:140px minmax(0,1fr); gap:18px; }
+    .commercial-companies { grid-template-columns:minmax(0,1fr); }
+}
 @media(max-width:620px) {
-    .commercial { padding:12px; }
+    .commercial { padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)); }
     .commercial-layout, .commercial-form { grid-template-columns:minmax(0,1fr); }
     .commercial nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
     .commercial nav button { padding-inline:4px; font-size:13px; }
+    .commercial nav { position:static; gap:8px; }
+    .commercial nav button { min-height:80px; }
+    .commercial-top>button { font-size:12px; padding:8px 10px; }
+    .commercial-top { gap:8px; }
+    .commercial-top>div { flex:1 1 125px; }
+    .commercial-top .commercial-eyebrow { font-size:9px; letter-spacing:.04em; }
+    .commercial-section-title { flex-wrap:wrap; gap:12px; }
+    .commercial-card { padding:17px; }
+    .commercial h2 { font-size:20px; }
+    .commercial-metrics { gap:10px; margin-bottom:24px; }
+    .commercial .commercial-metrics button { min-height:118px; padding:14px; }
+    .commercial-actions>* { flex:1 1 140px; }
+    .commercial-company-heading { align-items:flex-start; }
+    .commercial-page { margin:0; }
 }
+@media(prefers-reduced-motion:reduce) { .commercial * { transition:none!important; scroll-behavior:auto!important; } }

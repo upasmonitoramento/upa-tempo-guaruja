@@ -146,8 +146,8 @@ async function checkRole(browser, role, device) {
             const tabs = [
                 ['Usuários', 'Nenhum usuário encontrado.'],
                 ['Patrocinadores', 'Nenhum patrocinador encontrado.'],
-                ['Anúncios/ADS', 'Nenhum anúncio encontrado.'],
-                ['Áreas de ADS', 'Nenhuma área de ADS encontrada.'],
+                ['Anúncios', 'Nenhum anúncio encontrado.'],
+                ['Espaços', 'Nenhuma área de ADS encontrada.'],
                 ['Histórico', 'Nenhum log encontrado.']
             ]
             for (const [name, message] of tabs) {

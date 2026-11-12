@@ -30,8 +30,10 @@ router.use((req, res, next) => {
     const enabled = production()
         ? process.env.PORTAL_COMERCIAL_PRODUCAO === "1" && apiKey() && webhookToken()
         : process.env.PORTAL_COMERCIAL_TESTE === "1"
-    if (!enabled) return res.sendStatus(404)
-    res.set("X-Portal-Commercial-Mode", production() ? "production" : "sandbox")
+    // Administrators can inspect the dashboard before live billing is enabled.
+    const preparation = production() && !enabled && req.method === "GET" && req.path === "/painel"
+    if (!enabled && !preparation) return res.sendStatus(404)
+    res.set("X-Portal-Commercial-Mode", preparation ? "preparation" : production() ? "production" : "sandbox")
     next()
 })
 

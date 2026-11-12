@@ -309,6 +309,16 @@ img { max-width: 100%; }
 .medico-row input, .medico-row select { min-width: 0; }
 .medico-row button { padding: 10px !important; }
 #adminPanel { width: min(1440px, 100%); margin: auto; }
+#adminPanel .admin-tabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; }
+#adminPanel .admin-tab-btn svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+#adminPanel .admin-tab-btn { min-height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; border:1px solid #d3e0ef; border-radius:12px; padding:12px 8px; color:#124a9f; background:#f5f8fd; transition:background-color .15s; }
+#adminPanel .admin-tab-btn>span { font-size:26px; line-height:1; }
+#adminPanel .admin-tab-btn:hover { transform:none; background:#e8f0fc; }
+#adminPanel .admin-tab-btn.active { color:white; background:#124da6; border-color:#124da6; box-shadow:none; }
+@media(max-width:620px) {
+    #adminPanel .admin-tabs { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    #adminPanel .admin-tab-btn { min-height:82px; font-size:12px; overflow-wrap:anywhere; }
+}
 .admin-card { border-radius: 18px; }
 .admin-btn { min-height: 44px; }
 .admin-input, .admin-select, .admin-table select { min-height: 44px; font-size: 14px; }

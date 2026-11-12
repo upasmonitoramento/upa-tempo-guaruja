@@ -110,7 +110,14 @@ for (const production of [false, true]) test(`proposta, aceite e Pix simulado em
     })
     const date = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
     if (production) {
-        assert.equal((await localFetch(url + "/painel")).status, 404)
+        assert.equal((await localFetch(url + "/painel")).status, 401)
+        t.mock.method(model, "find", () => ({ select: () => ({ sort: () => ({ limit: () => ({ lean: async () => [] }) }) }) }))
+        const preparation = await localFetch(url + "/painel", { headers })
+        assert.equal(preparation.status, 200)
+        assert.equal(preparation.headers.get("X-Portal-Commercial-Mode"), "preparation")
+        assert.deepEqual(await preparation.json(), [])
+        assert.equal((await post("/propostas/" + id + "/pix", {})).status, 404)
+        assert.equal(charges, 0)
         process.env.PORTAL_COMERCIAL_PRODUCAO = "1"
     }
     const created = await post("/propostas", { company: "Empresa fictícia", email: "teste@example.test",
