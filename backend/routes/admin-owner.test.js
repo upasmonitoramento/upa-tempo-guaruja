@@ -29,8 +29,8 @@ test('API bloqueia alteração de permissão, suspensão, banimento e remoção 
     // No database call should be made on any forbidden mutation.
     t.mock.method(User, 'findById', () => { throw new Error('Forbidden mutation reached database') })
     const admin = jwt.sign({ id: '692000000000000000000001', tipo: 'admin' }, process.env.JWT_SECRET)
-    for (const action of ['tipo', 'suspender', 'banir', 'remover', 'TIPO/']) {
-        const response = await fetch(`${base}/usuarios/${ownerId}/${action}`, { method: 'PUT', headers: { Authorization: admin, 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'usuario', quantidade: 1, unidade: 'dias' }) })
+    for (const [target, action] of [...['tipo', 'suspender', 'banir', 'remover', 'TIPO/'].map(action => [ownerId, action]), [ownerId.toUpperCase(), 'tipo']]) {
+        const response = await fetch(`${base}/usuarios/${target}/${action}`, { method: 'PUT', headers: { Authorization: admin, 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'usuario', quantidade: 1, unidade: 'dias' }) })
         assert.equal(response.status, 403, action)
         assert.match((await response.json()).erro, /proprietária/)
     }
