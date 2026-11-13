@@ -2,7 +2,7 @@ const fs = require('node:fs')
 const http = require('node:http')
 const path = require('node:path')
 const root = path.resolve(__dirname, '../public')
-const mime = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon'}
+const mime = {'.woff2':'font/woff2','.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon'}
 const port = Number(process.env.MOBILE_PREVIEW_PORT || 3199)
 http.createServer((req, res) => {
     const relative = new URL(req.url, 'http://127.0.0.1').pathname.slice(1) || 'index.html'

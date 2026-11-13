@@ -55,7 +55,7 @@ function conectaStart() {
     const splash = document.createElement('div')
     splash.id = 'conectaSplash'
     splash.setAttribute('aria-label','Conecta Saúde')
-    splash.innerHTML = '<div class="splash-brand"><img src="/brand-mark.svg" alt="" width="76" height="76"><span>Conecta Saúde</span></div>'
+    splash.innerHTML = '<div class="splash-brand"><img src="/brand-wordmark.svg" alt="" width="76" height="76"><span>Conecta Saúde</span></div>'
     document.body.append(splash)
     conectaSelecionarCidade()
     setInterval(() => {

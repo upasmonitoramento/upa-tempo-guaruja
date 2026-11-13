@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="115 80 282 350" role="img" aria-label="Conecta Saúde">
+  <path fill="#fff" d="M256 86c-75 0-135 60-135 135 0 87 103 181 124 199a17 17 0 0 0 22 0c21-18 124-112 124-199 0-75-60-135-135-135Z"/>
+  <circle cx="256" cy="220" r="91" fill="#1554B5"/>
+  <path d="M180 226h40l19-39 27 79 19-40h47" fill="none" stroke="#14B88A" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

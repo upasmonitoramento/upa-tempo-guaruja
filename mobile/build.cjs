@@ -49,7 +49,7 @@ function nativeSession(source) {
         `portalSession.${({ getItem: 'get', setItem: 'set', removeItem: 'delete' })[method]}(${quote}${key}${quote}`)
 }
 fs.writeFileSync(path.join(output, 'comercial.js'), nativeSession(fs.readFileSync(path.join(frontend, 'comercial.js'), 'utf8')))
-for (const file of ['brand.css', 'experience.css', 'modern.css', 'entry.css', 'brand-mark.svg', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
+for (const file of ['brand.css', 'experience.css', 'modern.css', 'entry.css', 'outfit.woff2', 'outfit-OFL.txt', 'brand-wordmark.svg', 'brand-mark.svg', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
 }
