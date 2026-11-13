@@ -22,7 +22,10 @@ async function conectaEntrarCidade(id) {
     document.getElementById('conectaCities').hidden = true
     document.getElementById('citySwitch').textContent = 'Guarujá ⌄'
     mostrarLista()
-    if (!unidades.length) await carregarDados()
+    if (!unidades.length) {
+        document.getElementById('lista').innerHTML = '<div class="page-shell empty-state" role="status"><p>Carregando as unidades de Guarujá…</p></div>'
+        await carregarDados()
+    }
     conectaCarregarAviso()
 }
 
