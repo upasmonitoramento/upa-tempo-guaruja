@@ -49,12 +49,13 @@ function nativeSession(source) {
         `portalSession.${({ getItem: 'get', setItem: 'set', removeItem: 'delete' })[method]}(${quote}${key}${quote}`)
 }
 fs.writeFileSync(path.join(output, 'comercial.js'), nativeSession(fs.readFileSync(path.join(frontend, 'comercial.js'), 'utf8')))
-for (const file of ['brand.css', 'experience.css', 'modern.css', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
+for (const file of ['brand.css', 'experience.css', 'modern.css', 'entry.css', 'brand-mark.svg', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
 }
 const publicUI = fs.readFileSync(path.join(frontend, 'public-ui.js'), 'utf8').replace(/\r\n/g, '\n')
-const publicStartup = /\ncarregarDados\(\)\natualizarInterfaceUsuario\(\)\s*$/
+fs.writeFileSync(path.join(output, 'conecta.js'), nativeSession(fs.readFileSync(path.join(frontend, 'conecta.js'), 'utf8')))
+const publicStartup = /\ndocument.addEventListener\('DOMContentLoaded', \(\) => conectaStart\(\), \{ once:true \}\)\s*$/
 if (!publicStartup.test(publicUI)) throw new Error('Inicialização do portal não encontrada.')
 const nativeUI = publicUI.replace(publicStartup, '\n')
     .replace('        unidades = data', '        window.portalNativeOnline?.()\n        unidades = data')
@@ -88,6 +89,7 @@ replace(/    <meta name="apple-mobile-web-app[^\n]*\n/g, '')
 replace('    <script src="/pwa.js?v=1" defer></script>',
     '    <link rel="stylesheet" href="/portal.css">\n' +
     '    <link rel="stylesheet" href="/modern.css?v=4">\n' +
+    '    <link rel="stylesheet" href="/entry.css?v=1">\n' +
     '    <script src="/config.js"></script>\n' +
     '    <script src="/portal-native.js" defer></script>')
 replace('const API = window.location.origin',
@@ -100,7 +102,7 @@ replace(/                <button[^\n]*id="instalarApp"[^\n]*\n/, '')
 replace(/    <div id="login"[\s\S]*?(?=    <div id="perfil")/, `    <div id="login" style="display:none;">
         <form id="loginBox" class="auth-box" aria-labelledby="nativeLoginTitle">
             <p class="section-kicker">ÁREA DA EQUIPE</p>
-            <h2 id="nativeLoginTitle">Entrar no Portal Saúde</h2>
+            <h2 id="nativeLoginTitle">Entrar no Conecta Saúde</h2>
             <p>Use sua conta cadastrada. A consulta das unidades é livre e não exige login.</p>
             <label for="email">E-mail</label>
             <input id="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required>

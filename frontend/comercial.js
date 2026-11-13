@@ -85,7 +85,7 @@
         const dialog = document.createElement("dialog")
         dialog.className = "commercial-dialog"
         dialog.setAttribute("aria-label", "Gestão de publicidade")
-        dialog.innerHTML = `<div class="commercial"><header class="commercial-top"><div><p class="commercial-eyebrow">PORTAL SAÚDE · GESTÃO</p><h1>Publicidade</h1></div><button type="button" data-close aria-label="Voltar ao Portal">Voltar ao Portal</button></header>
+        dialog.innerHTML = `<div class="commercial"><header class="commercial-top"><div><p class="commercial-eyebrow">CONECTA SAÚDE · GESTÃO</p><h1>Publicidade</h1></div><button type="button" data-close aria-label="Voltar ao Portal">Voltar ao Portal</button></header>
             <p class="commercial-status" role="status">Carregando painel…</p>
             <div class="commercial-layout"><nav aria-label="Painel comercial">
             <button data-tab="resumo">${icon('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="18" width="7" height="3" rx="1"/>')}Resumo</button><button data-tab="parcerias">${icon('<path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/>')}Parcerias</button><button data-tab="campanhas">${icon('<path d="M4 10h4l12-5v14L8 14H4zM8 14l2 7h4l-2-6M4 10v4"/>')}Campanhas</button>

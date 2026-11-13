@@ -15,6 +15,7 @@ const MedicoPlantaoSchema = new mongoose.Schema({
 })
 
 const AtendimentoSchema = new mongoose.Schema({
+    cidade: { type:String, default:'guaruja', enum:['guaruja'] },
 
     upa: {
         type: String,

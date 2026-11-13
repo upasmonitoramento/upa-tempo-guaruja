@@ -1,6 +1,6 @@
 {
-  "name": "Saúde em Tempo Real — Guarujá",
-  "short_name": "Saúde Guarujá",
+  "name": "Conecta Saúde",
+  "short_name": "Conecta Saúde",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

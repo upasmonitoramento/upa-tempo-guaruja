@@ -257,7 +257,7 @@ async function carregarDados() {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(),15000)
     try {
-        const [response, photos] = await Promise.all([fetch(`${API}/atendimento`,{cache:'no-store',signal:controller.signal}),fetch('/images/units.json',{cache:'no-store',signal:controller.signal}).then(r => r.ok ? r.json() : []).catch(() => [])])
+        const [response, photos] = await Promise.all([fetch(`${API}/atendimento?cidade=guaruja`,{cache:'no-store',signal:controller.signal}),fetch('/images/units.json',{cache:'no-store',signal:controller.signal}).then(r => r.ok ? r.json() : []).catch(() => [])])
         if (!response.ok) throw new Error(`Atendimento HTTP ${response.status}`)
         const data = await response.json()
         if (!Array.isArray(data)) throw new Error('Resposta de atendimento inválida')
@@ -377,5 +377,5 @@ async function sincronizarPerfilSessao() {
 
 portalInitNavigation()
 sincronizarPerfilSessao()
-carregarDados()
 atualizarInterfaceUsuario()
+document.addEventListener('DOMContentLoaded', () => conectaStart(), { once:true })

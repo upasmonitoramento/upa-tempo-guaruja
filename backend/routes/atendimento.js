@@ -69,7 +69,8 @@ router.get("/", async (req, res) => {
 
     try {
 
-        const atendimentos = await Atendimento.find()
+        if (req.query.cidade && req.query.cidade !== 'guaruja') return res.status(400).json({ erro:'Cidade indisponível.' })
+        const atendimentos = await Atendimento.find({ $or:[{ cidade:'guaruja' },{ cidade:{ $exists:false } }] })
             .sort({ upa: 1 })
 
         res.json(atendimentos)

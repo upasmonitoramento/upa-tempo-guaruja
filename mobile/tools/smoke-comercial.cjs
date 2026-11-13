@@ -30,6 +30,8 @@ async function main() {
                 return route.fulfill({ headers, json: [] })
             })
             await page.goto(base)
+            await page.locator('#conectaSplash').waitFor({state:'detached'})
+            await page.locator('[data-city="guaruja"]').click()
             await page.evaluate(() => window.abrirComercial())
             const panel = page.getByRole('dialog', { name: 'Gestão de publicidade' })
             await panel.getByRole('heading', { name: 'Visão geral' }).waitFor()

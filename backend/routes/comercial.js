@@ -15,7 +15,7 @@ const Partnership = mongoose.model("CommercialPartnership", new mongoose.Schema(
 }, { timestamps: true }))
 const digest = value => createHash("sha256").update(value).digest("hex")
 const text = (value, limit) => typeof value === "string" ? value.trim().slice(0, limit) : ""
-const terms = "Piloto do Portal Saúde. A proposta informa o valor, o período e onde a campanha será exibida. A exibição depende do aceite, da confirmação do Pix e da aprovação da arte."
+const terms = "Piloto do Conecta Saúde. A proposta informa o valor, o período e onde a campanha será exibida. A exibição depende do aceite, da confirmação do Pix e da aprovação da arte."
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
     !isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value
 const today = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date())
@@ -96,7 +96,7 @@ router.post("/propostas", requireAdmin, async (req, res) => {
     }
     const token = randomBytes(32).toString("hex")
     await Partnership.create({ company, email, packageName, cities, positions: slots, start, end, due, cents,
-        terms: production() ? terms.replace("Piloto do Portal Saúde.", "Proposta de publicidade do Portal Saúde.") : terms,
+        terms: production() ? terms.replace("Piloto do Conecta Saúde.", "Proposta de publicidade do Conecta Saúde.") : terms,
         expires: new Date(Date.now() + 7 * 86400000), tokenHash: digest(token) })
     res.status(201).json({ path: "/proposta.html#" + token })
 })
@@ -154,7 +154,7 @@ router.post("/propostas/:id/pix", requireAdmin, async (req, res) => {
     }
     const payment = await asaas("/payments", "POST", { customer: p.customerId, billingType: "PIX",
         value: p.cents / 100, dueDate: p.due, externalReference: String(p.id),
-        description: production() ? "Portal Saúde - publicidade" : "Portal Saúde - cobrança de teste" })
+        description: production() ? "Conecta Saúde - publicidade" : "Conecta Saúde - cobrança de teste" })
     await refresh(p, payment)
     res.json({ ok: true })
 })

@@ -1,6 +1,6 @@
 // Somente a estrutura do aplicativo fica disponível offline. Fotos, anúncios e API não são salvos aqui.
-const CACHE_NAME = 'saude-guaruja-v11'
-const SHELL = ['/index.html', '/manifest.json', '/favicon-32.png', '/app-icon-192-v3.png', '/brand.css?v=1', '/experience.css?v=1', '/modern.css?v=4', '/pwa.js?v=1', '/public-ui.js?v=1']
+const CACHE_NAME = 'saude-guaruja-v12'
+const SHELL = ['/index.html', '/manifest.json', '/favicon-32.png', '/app-icon-192-v3.png', '/brand-mark.svg', '/brand.css?v=1', '/experience.css?v=1', '/modern.css?v=4', '/entry.css?v=1', '/conecta.js?v=1', '/pwa.js?v=1', '/public-ui.js?v=1']
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()))

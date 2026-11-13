@@ -71,6 +71,7 @@ const atendimentoRoutes = require("./routes/atendimento")
 app.use("/atendimento", atendimentoRoutes)
 
 const adminRoutes = require("./routes/admin")
+app.use("/admin/avisos", require("./routes/avisos"))
 app.use("/admin", adminRoutes)
 
 const patrocinadoresRoutes = require("./routes/patrocinadores")

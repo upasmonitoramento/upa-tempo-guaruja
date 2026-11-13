@@ -63,6 +63,7 @@ async function openPortal(browser, role, device) {
 
         if (method === 'GET' && pathname === '/atendimento') return json([currentUnit])
         if (method === 'GET' && publicLists.includes(pathname)) return json([])
+        if (method === 'GET' && pathname === '/admin/avisos/publico') return json(null)
         if (method === 'POST' && pathname === '/auth/login') {
             const credentials = request.postDataJSON()
             return credentials.email === user.email && credentials.senha === 'senha-de-teste'
@@ -83,6 +84,8 @@ async function openPortal(browser, role, device) {
     })
 
     await page.goto(preview.href)
+    await page.locator('#conectaSplash').waitFor({state:'detached'})
+    await page.locator('[data-city="guaruja"]').click()
     await page.getByRole('heading', { name: unit.upa }).waitFor()
     return { context, page, user, requests, errors, dialogs, setConnected: value => { connected = value } }
 }
@@ -110,6 +113,8 @@ async function publicFlow(page, setConnected, device) {
 
     setConnected(false)
     await page.reload()
+    await page.locator('#conectaSplash').waitFor({state:'detached'})
+    await page.locator('[data-city="guaruja"]').click()
     await page.getByText(/Sem conexão com o portal/).waitFor()
     await page.getByRole('button', { name: `Ver detalhes de ${unit.upa}` }).click()
     await detail.getByRole('button', { name: 'Remover dos favoritos', exact: true, pressed: true }).waitFor()
@@ -163,8 +168,9 @@ async function checkRole(browser, role, device) {
                 await adminPanel.getByText(message, { exact: true }).waitFor()
             }
             for (const endpoint of adminLists) assert.ok(requests.includes(`GET ${endpoint}`), endpoint)
+            await adminPanel.getByRole('button', { name: 'Avisos', exact:true }).waitFor()
         } else {
-            assert.ok(!requests.some(request => request.startsWith('GET /admin/')))
+            assert.ok(!requests.some(request => request.startsWith('GET /admin/') && request !== 'GET /admin/avisos/publico'))
         }
 
         if (role === 'funcionario') {

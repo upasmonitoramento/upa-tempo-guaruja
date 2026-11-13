@@ -1,4 +1,4 @@
-/* Mobile additions to the packaged Portal Saúde. No patient data is stored. */
+/* Mobile additions to the packaged Conecta Saúde. No patient data is stored. */
 (() => {
     'use strict'
     const byId = id => document.getElementById(id)
@@ -45,7 +45,7 @@
     })
 
     const info = {
-        about: ['Sobre o projeto', 'O Portal Saúde reúne endereços, telefones, rotas e informações de demonstração das UPAs e prontos-socorros de Guarujá. É um projeto independente, sem vínculo oficial com as unidades.'],
+        about: ['Sobre o projeto', 'O Conecta Saúde reúne endereços, telefones, rotas e informações de demonstração das UPAs e prontos-socorros de Guarujá. É um projeto independente, sem vínculo oficial com as unidades.'],
         privacy: ['Política de Privacidade', 'A consulta das unidades não exige conta. Os favoritos ficam neste aparelho. A área da equipe usa as informações da conta cadastrada para autenticação e gestão do portal.' + (config.privacyUrl ? '' : ' A política completa precisa ser validada antes da publicação nas lojas.'), config.privacyUrl, 'Ler a política completa'],
         terms: ['Termos de Uso', 'Tempos e equipes são exemplos e não representam a situação atual. Confirme os dados com a unidade. Este portal é informativo e não substitui atendimento nem canais oficiais de emergência.'],
         sponsors: ['Patrocinadores', 'Os espaços comerciais aparecem com a identificação Publicidade. Anúncios com link abrem o endereço do patrocinador fora do aplicativo.'],
@@ -165,5 +165,5 @@
         } catch { /* The portal's connection error remains visible. */ }
     }
     atualizarInterfaceUsuario()
-    carregarDados()
+    conectaStart()
 })()

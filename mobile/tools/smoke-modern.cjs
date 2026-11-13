@@ -103,6 +103,8 @@ async function check(browser, kind, origin, width, height) {
     })
     try {
         await page.goto(origin)
+        await page.locator('#conectaSplash').waitFor({state:'detached'})
+        await page.locator('[data-city="guaruja"]').click()
         await page.locator('.unit-card').first().waitFor()
         await view(page, 'home')
         await noOverflow(page, `${kind}/${width}/home`)
@@ -143,6 +145,8 @@ async function check(browser, kind, origin, width, height) {
         await view(page, 'favorites')
         assert.equal(await page.locator('.unit-card:visible').count(), 1, 'Detail back should preserve the favorites destination')
         await page.reload()
+        await page.locator('#conectaSplash').waitFor({state:'detached'})
+        await page.locator('[data-city="guaruja"]').click()
         await page.locator('.unit-card').first().waitFor()
         await navigate(page, 'favorites')
         assert.equal(await page.locator('.unit-card:visible').count(), 1, 'Favorite should survive a reload')
