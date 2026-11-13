@@ -118,6 +118,10 @@ body[data-portal-view="map"] .site-footer { display: none; }
 .detail-back svg, .detail-favorite svg { width: 22px; height: 22px; flex: 0 0 22px; }
 .detail-back:hover, .detail-favorite:hover { background: #eaf1fc; color: var(--health-blue); }
 .detail-favorite[aria-pressed="true"] { color: var(--health-blue); background: #eaf1fc; }
+.detail-favorite[aria-pressed="true"] svg { fill: currentColor; }
+#favoriteFeedback { margin:0 0 10px; padding:8px 12px; color:#1554b5; background:#edf3ff; border-radius:8px; font:500 12px/1.5 var(--health-font); }
+.conecta-map-pin { background:transparent; border:0; }
+.conecta-map-pin svg { display:block; width:32px; height:44px; filter:drop-shadow(0 2px 2px #172b4630); }
 .detail-context-title { flex: 1; min-width: 0; color: var(--health-ink); font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .detail-example-label { color: var(--health-muted); font-size: 9px; letter-spacing: .6px; font-weight: 600; }
 .detail-grid { grid-template-columns: minmax(0,1fr) minmax(0,1.12fr); border: 0; border-radius: 18px; background: #fff; gap: 0; }

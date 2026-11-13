@@ -60,12 +60,22 @@ function portalShowFavorites() {
 }
 
 function portalToggleFavorite(id, button) {
+    id = String(id)
     if (portalFavorites.has(id)) portalFavorites.delete(id)
     else portalFavorites.add(id)
-    try { localStorage.setItem('saude:favorite-unit-ids:v1', JSON.stringify([...portalFavorites])) } catch { /* Keep it for this visit. */ }
+    let persisted = true
+    try { localStorage.setItem('saude:favorite-unit-ids:v1', JSON.stringify([...portalFavorites])) } catch { persisted = false }
     const selected = portalFavorites.has(id)
     button.setAttribute('aria-pressed', String(selected))
     button.setAttribute('aria-label', selected ? 'Remover dos favoritos' : 'Favoritar unidade')
+    let feedback = document.getElementById('favoriteFeedback')
+    if (!feedback) {
+        feedback = document.createElement('p')
+        feedback.id = 'favoriteFeedback'
+        feedback.setAttribute('role','status')
+        document.querySelector('.detail-topline').after(feedback)
+    }
+    feedback.textContent = selected ? (persisted ? 'Unidade salva nos favoritos.' : 'Salva nesta visita. O navegador não permitiu guardar neste aparelho.') : 'Unidade removida dos favoritos.'
 }
 
 function portalBackToUnits() {
