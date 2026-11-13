@@ -3,15 +3,8 @@
     'use strict'
     const byId = id => document.getElementById(id)
     const config = globalThis.SAUDE_CONFIG
-    const favoritesKey = 'saude:favorite-unit-ids:v1'
-    const favorites = new Set()
-    let onlyFavorites = false
     let offline = false
     let openedUnit = null
-    try {
-        const ids = JSON.parse(localStorage.getItem(favoritesKey) || '[]')
-        if (Array.isArray(ids)) ids.filter(id => typeof id === 'string').forEach(id => favorites.add(id))
-    } catch { /* Favorites are optional if storage is unavailable. */ }
 
     const login = byId('loginBox')
     login.addEventListener('submit', async event => {
@@ -102,25 +95,6 @@
         if (destination) openExternal(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`)
     }
 
-    function favoriteButton(unit) {
-        const id = String(unit._id)
-        const button = document.createElement('button')
-        button.className = 'button-secondary native-favorite'
-        button.type = 'button'
-        const update = () => {
-            button.textContent = favorites.has(id) ? '★ Unidade favorita' : '☆ Favoritar unidade'
-            button.setAttribute('aria-pressed', String(favorites.has(id)))
-        }
-        update()
-        button.addEventListener('click', () => {
-            if (favorites.has(id)) favorites.delete(id)
-            else favorites.add(id)
-            try { localStorage.setItem(favoritesKey, JSON.stringify([...favorites])) } catch { /* Session only. */ }
-            update()
-        })
-        return button
-    }
-
     function retryNotice() {
         const notice = document.createElement('p')
         notice.className = 'data-note native-offline'
@@ -144,22 +118,7 @@
         const shell = byId('lista').querySelector('.page-shell')
         const cards = byId('cardsContainer')
         if (!cards) return
-        const toolbar = document.createElement('div')
-        toolbar.className = 'native-favorite-toolbar'
-        const filter = document.createElement('button')
-        filter.type = 'button'
-        filter.className = 'button-secondary'
-        filter.textContent = onlyFavorites ? '★ Favoritas · mostrar todas' : '☆ Ver favoritas'
-        filter.setAttribute('aria-pressed', String(onlyFavorites))
-        filter.addEventListener('click', () => {
-            onlyFavorites = !onlyFavorites
-            filtroAtendimentoAtual = 'todos'
-            carregarLista()
-            document.querySelector('.native-favorite-toolbar button')?.focus({ preventScroll: true })
-        })
-        toolbar.append(filter)
-        if (offline) toolbar.prepend(retryNotice())
-        cards.before(toolbar)
+        if (offline) cards.before(retryNotice())
         if (offline) {
             shell.querySelector('.classic-wait-filters')?.remove()
             shell.querySelector('.classic-hero-eyebrow').textContent = 'Diretório salvo no aplicativo'
@@ -170,13 +129,6 @@
             if (offline) {
                 for (const el of card.querySelectorAll('.unit-card-metrics, .unit-card-status, .unit-card-updated')) el.remove()
             }
-            if (onlyFavorites && !favorites.has(card.id.slice('card-upa-'.length))) card.hidden = true
-        }
-        if (onlyFavorites && !cards.querySelector('.unit-card:not([hidden])')) {
-            const empty = document.createElement('p')
-            empty.className = 'empty-state'
-            empty.textContent = 'Nenhuma unidade favorita nesta lista. Abra os detalhes de uma unidade para salvá-la.'
-            cards.replaceChildren(empty)
         }
     }
     const renderDetails = verDetalhes
@@ -184,15 +136,12 @@
         renderDetails(unit)
         openedUnit = String(unit._id)
         const detail = byId('lista').querySelector('.unit-detail')
-        detail.querySelector('.detail-actions').append(favoriteButton(unit))
         if (offline) {
             for (const el of detail.querySelectorAll('.detail-info-grid, .detail-staff, .data-note, .detail-example-label')) el.remove()
             detail.prepend(retryNotice())
         }
     }
 
-    const showList = mostrarLista
-    mostrarLista = () => { onlyFavorites = false; showList() }
     const showForm = mostrarForm
     mostrarForm = () => {
         const type = getUser()?.tipo

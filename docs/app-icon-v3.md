@@ -1,4 +1,6 @@
-# Ícone do aplicativo, versão 3
+# Histórico do ícone do aplicativo, versão 3
+
+> Arte anterior substituída pela identidade vetorial da revisão 4. Consulte [design-v4.md](design-v4.md) para a fonte, exportação e integração atuais. Os nomes de arquivos v3 foram mantidos como aliases para compatibilidade; o manifest usa `?v=4`.
 
 Arte criada com a ferramenta integrada `imagegen`, usando o ícone anterior como referência. A identidade do aplicativo, os dados e as demais telas foram preservados.
 

@@ -4,6 +4,13 @@ var portalAdStates = new Map()
 var portalMapLoading = null
 var portalReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 var portalSaveData = Boolean(navigator.connection && navigator.connection.saveData)
+var portalFavorites = new Set()
+var portalFavoritesOnly = false
+var portalDetailReturn = 'home'
+try {
+    const ids = JSON.parse(localStorage.getItem('saude:favorite-unit-ids:v1') || '[]')
+    if (Array.isArray(ids)) ids.filter(id => typeof id === 'string').forEach(id => portalFavorites.add(id))
+} catch { /* Saved units are optional when storage is unavailable. */ }
 var portalAdObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     entries.forEach(entry => {
         const state = portalAdStates.get(entry.target)
@@ -21,9 +28,117 @@ function portalIcon(name) {
         clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
         team: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m1-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v2"/>',
         heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
-        map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/>'
+        map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/>',
+        home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
+        account: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+        edit: '<path d="m15 4 5 5M4 20l4-1 13-13-4-4L4 15Z"/>',
+        grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+        campaign: '<path d="M3 10h5l12-5v14L8 14H3zM8 14l2 7h4l-2-6"/>',
+        logout: '<path d="M10 4H4v16h6m-1-8h12m-4-4 4 4-4 4"/>'
     }
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.arrow}</svg>`
+}
+
+function portalSetView(view) {
+    document.body.dataset.portalView = view
+    const account = document.getElementById('portalAccount')
+    if (account) account.style.display = view === 'account' ? 'block' : 'none'
+    const active = view === 'detail' ? portalDetailReturn : ['home','map','favorites'].includes(view) ? view : 'account'
+    document.querySelectorAll('[data-destination]').forEach(button => {
+        if (button.dataset.destination === active) button.setAttribute('aria-current', 'page')
+        else button.removeAttribute('aria-current')
+    })
+}
+
+function portalShowFavorites() {
+    mostrarLista()
+    portalFavoritesOnly = true
+    filtroAtendimentoAtual = 'todos'
+    portalSetView('favorites')
+    carregarLista()
+    portalScrollTop()
+}
+
+function portalToggleFavorite(id, button) {
+    if (portalFavorites.has(id)) portalFavorites.delete(id)
+    else portalFavorites.add(id)
+    try { localStorage.setItem('saude:favorite-unit-ids:v1', JSON.stringify([...portalFavorites])) } catch { /* Keep it for this visit. */ }
+    const selected = portalFavorites.has(id)
+    button.setAttribute('aria-pressed', String(selected))
+    button.setAttribute('aria-label', selected ? 'Remover dos favoritos' : 'Favoritar unidade')
+}
+
+function portalBackToUnits() {
+    if (portalDetailReturn === 'map') { mostrarMapa(); return }
+    if (portalDetailReturn === 'favorites') portalShowFavorites()
+    else mostrarLista()
+    document.getElementById('unidadesTitulo')?.focus({ preventScroll:true })
+}
+
+function portalAccountIdentity() {
+    const panel = document.getElementById('portalAccount')
+    if (!panel) return
+    const user = getUser()
+    panel.querySelector('.account-name').textContent = user?.nome || 'Sua conta no Portal'
+    panel.querySelector('.account-subtitle').textContent = user?.email || 'Consulte as unidades sem precisar entrar.'
+    panel.querySelector('#accountAvatar').src = user?.foto ? fotoUsuario(user) : '/app-icon-192-v3.png'
+    panel.querySelector('#accountLogin').hidden = Boolean(user)
+    panel.querySelector('[data-profile]').hidden = !user
+    panel.querySelector('[data-logout]').hidden = !user
+    panel.querySelector('.account-status').textContent = user?.tipo === 'admin' ? 'Administração e equipe' : user?.tipo === 'funcionario' ? 'Área da equipe' : 'Preferências e acesso'
+}
+
+function abrirConta() {
+    limparTimersAds()
+    fecharMenuUsuario()
+    for (const id of ['lista','map','formulario','login','perfil','adminPanel']) document.getElementById(id).style.display = 'none'
+    portalSetView('account')
+    portalAccountIdentity()
+    portalScrollTop()
+}
+
+function portalInitNavigation() {
+    document.body.dataset.portalView = 'home'
+    const nav = document.createElement('nav')
+    nav.id = 'portalBottomNav'
+    nav.className = 'portal-bottom-nav'
+    nav.setAttribute('aria-label', 'Navegação principal')
+    nav.innerHTML = [['home','home','Início'],['map','map','Mapa'],['favorites','heart','Favoritas'],['account','account','Conta']].map(([destination,icon,label]) => `<button type="button" data-destination="${destination}">${portalIcon(icon)}<span>${label}</span></button>`).join('')
+    document.body.append(nav)
+    nav.addEventListener('click', event => {
+        const button = event.target.closest('[data-destination]')
+        if (!button) return
+        ;({ home:mostrarLista, map:mostrarMapa, favorites:portalShowFavorites, account:abrirConta })[button.dataset.destination]()
+    })
+    const panel = document.createElement('section')
+    panel.id = 'portalAccount'
+    panel.className = 'account-shell'
+    panel.style.display = 'none'
+    panel.setAttribute('aria-labelledby','accountTitle')
+    panel.innerHTML = `<header class="account-identity"><img id="accountAvatar" src="/app-icon-192-v3.png" width="56" height="56" alt=""><div><h1 id="accountTitle" class="account-name"></h1><p class="account-subtitle"></p></div></header><p class="account-status"></p><div class="account-links"><button id="accountLogin" type="button" onclick="mostrarLogin()">${portalIcon('account')}<span>Entrar na minha conta</span>${portalIcon('arrow')}</button><button type="button" data-profile onclick="abrirPerfil()">${portalIcon('account')}<span>Meu perfil</span>${portalIcon('arrow')}</button></div><div class="account-section"><h2>Neste aparelho</h2><div class="account-links"><button type="button" onclick="portalShowFavorites()">${portalIcon('heart')}<span>Unidades favoritas</span>${portalIcon('arrow')}</button></div></div><div class="account-links account-session"><button type="button" data-logout onclick="logout()">${portalIcon('logout')}<span>Sair da conta</span>${portalIcon('arrow')}</button></div>`
+    document.getElementById('lista').before(panel)
+    const actions = panel.querySelector('.account-links')
+    for (const [id,icon,label] of [['btnCadastrar','edit','Atualizar atendimento'],['btnPainelAdmin','grid','Administração'],['btnComercial','campaign','Publicidade']]) {
+        const button = document.getElementById(id)
+        button.innerHTML = `${portalIcon(icon)}<span>${label}</span>${portalIcon('arrow')}`
+        actions.append(button)
+    }
+    const desktop = document.createElement('button')
+    desktop.id = 'desktopFavorites'
+    desktop.dataset.destination = 'favorites'
+    desktop.innerHTML = `${portalIcon('heart')}<span>Favoritas</span>`
+    desktop.onclick = portalShowFavorites
+    document.querySelector('.topbar-buttons').insertBefore(desktop, document.getElementById('menuUsuarioArea'))
+    document.querySelector('#menuUsuarioArea > button').onclick = abrirConta
+    const guestAccount = document.getElementById('btnLoginTopo')
+    guestAccount.textContent = 'Conta'
+    guestAccount.onclick = abrirConta
+    guestAccount.dataset.destination = 'account'
+    document.querySelector('#menuUsuarioArea > button').dataset.destination = 'account'
+    document.querySelector('.topbar-buttons > button[onclick="mostrarLista()"]').dataset.destination = 'home'
+    document.querySelector('.topbar-buttons > button[onclick="mostrarMapa()"]').dataset.destination = 'map'
+    portalSetView('home')
+    portalAccountIdentity()
 }
 
 function portalScrollTop() {
@@ -71,7 +186,7 @@ function portalAdSlot(id, number, className = '') {
 function carregarLista() {
     limparTimersAds()
     const selected = filtroAtendimentoAtual || 'todos'
-    const filtered = ordenarUnidades(selected === 'todos' ? unidades : unidades.filter(u => statusDaUnidade(u) === selected))
+    const filtered = ordenarUnidades(unidades.filter(u => (!portalFavoritesOnly || portalFavorites.has(String(u._id))) && (selected === 'todos' || statusDaUnidade(u) === selected)))
     renderizarBarraUpasMobile()
     const filters = [['normal', 'Até 25 minutos'], ['lotado', 'De 26 minutos até 1h09min'], ['critico', '1h10min ou mais']]
     document.getElementById('lista').innerHTML = `
@@ -79,9 +194,9 @@ function carregarLista() {
             <div class="health-layout">
                 <aside class="ads-side ads-lateral-coluna" aria-label="Publicidade lateral esquerda">${[1,2,3,4].map((n,i) => portalAdSlot(`adLateralEsquerda${i+1}`, n, 'ads-slot-lateral-pequeno')).join('')}</aside>
                 <section class="health-main" aria-labelledby="unidadesTitulo">
-                    <section class="classic-health-hero" aria-labelledby="unidadesTitulo">
+                    <section class="classic-health-hero ${portalFavoritesOnly ? 'favorites-hero' : ''}" aria-labelledby="unidadesTitulo">
                         <p class="classic-hero-eyebrow">Demonstração · tempos e equipes de exemplo</p>
-                        <h1 id="unidadesTitulo" tabindex="-1">Saúde de Guarujá ao vivo</h1>
+                        <h1 id="unidadesTitulo" tabindex="-1">${portalFavoritesOnly ? 'Suas unidades favoritas' : 'Saúde de Guarujá ao vivo'}</h1>
                         <p class="classic-hero-copy">Veja a situação das UPAs e prontos-socorros da cidade por cor de tempo de espera.</p>
                         <div class="wait-filters classic-wait-filters" role="group" aria-label="Filtrar por tempo de espera de exemplo">
                             ${filters.map(([value,label]) => `<button type="button" class="wait-filter filtro-bolinha status-filter-${value} ${value === selected ? 'active' : ''}" aria-label="${label}" title="${label}" aria-pressed="${value === selected}" onclick="filtrarAtendimentos('${value}')"><span class="sr-only">${label}</span></button>`).join('')}
@@ -99,7 +214,7 @@ function carregarLista() {
                             <p class="unit-card-updated">Cadastro de exemplo · ${escapeHTML(portalAtualizacao(u))}</p>
                             <button class="unit-card-action" aria-label="Ver detalhes de ${escapeHTML(nomeCurtoUPA(u))}" onclick="verDetalhesPorId('${escapeHTML(u._id)}')">Ver detalhes ${portalIcon('arrow')}</button>
                             ${portalAdSlot(`adCard${slot}`,slot,'ads-slot-card')}</div></article>`
-                    }).join('') : '<div class="empty-state"><h3>Nenhuma unidade nesta faixa</h3><p>Escolha outro filtro para continuar.</p><button class="button-secondary" onclick="filtrarAtendimentos(\'todos\')">Mostrar todas</button></div>'}</div>
+                    }).join('') : portalFavoritesOnly ? '<div class="empty-state"><h3>Nenhuma unidade favorita</h3><p>Toque no coração nos detalhes de uma unidade para salvá-la neste aparelho.</p><button onclick="mostrarLista()">Explorar unidades</button></div>' : '<div class="empty-state"><h3>Nenhuma unidade nesta faixa</h3><p>Escolha outro filtro para continuar.</p><button class="button-secondary" onclick="filtrarAtendimentos(\'todos\')">Mostrar todas</button></div>'}</div>
                     ${portalAdSlot('adBannerInferior',17,'ads-slot-banner')}
                 </section>
                 <aside class="ads-side ads-lateral-coluna" aria-label="Publicidade lateral direita">${[5,6,7,8].map((n,i) => portalAdSlot(`adLateralDireita${i+1}`, n, 'ads-slot-lateral-pequeno')).join('')}</aside>
@@ -115,14 +230,16 @@ function htmlMedicosDetalhe(u) {
 }
 
 function verDetalhes(u) {
+    portalDetailReturn = document.body.dataset.portalView === 'map' ? 'map' : portalFavoritesOnly ? 'favorites' : 'home'
+    portalSetView('detail')
     limparTimersAds()
     fecharMenuUsuario()
     for (const id of ['map','formulario','login','perfil','adminPanel']) document.getElementById(id).style.display = 'none'
     document.getElementById('lista').style.display = 'block'
     document.getElementById('lista').innerHTML = `<div class="page-shell unit-detail">
-        <div class="detail-topline"><button class="detail-back" onclick="mostrarLista()">${portalIcon('back')} Todas as unidades</button><span class="detail-example-label">DADOS DE DEMONSTRAÇÃO</span></div>
+        <div class="detail-topline detail-toolbar"><button class="detail-back" aria-label="Voltar para unidades" onclick="portalBackToUnits()">${portalIcon('back')}</button><span class="detail-context-title">${escapeHTML(nomeCurtoUPA(u))}</span><button type="button" class="detail-favorite" aria-label="${portalFavorites.has(String(u._id)) ? 'Remover dos favoritos' : 'Favoritar unidade'}" aria-pressed="${portalFavorites.has(String(u._id))}" onclick="portalToggleFavorite('${escapeHTML(u._id)}',this)">${portalIcon('heart')}</button></div>
         <article class="detail-grid"><div class="detail-media">${portalPhoto(u,false,true)}</div><div class="detail-body">
-            <p class="hero-eyebrow">GUARUJÁ · UNIDADE DE ATENDIMENTO</p><h1 class="detail-title">${escapeHTML(nomeCurtoUPA(u))}</h1><p class="detail-address">${portalIcon('pin')}${escapeHTML(enderecoDaUnidade(u))}</p>
+            <p class="detail-example-label">DADOS DE DEMONSTRAÇÃO</p><h1 class="detail-title">${escapeHTML(nomeCurtoUPA(u))}</h1><p class="detail-address">${portalIcon('pin')}${escapeHTML(enderecoDaUnidade(u))}</p>
             <div class="detail-info-grid"><section class="detail-info"><span>Espera de exemplo</span><strong>${escapeHTML(portalTempo(u))}</strong><small>Não é uma previsão de atendimento.</small></section><section class="detail-info"><span>Pessoas aguardando</span><strong class="info-unavailable">Não informado</strong><small>A integração com a unidade ainda não está ativa.</small></section></div>
             <div class="detail-contact">${htmlTelefoneDetalhe(u)}</div>
             <div class="detail-actions"><button class="button-primary" onclick="abrirRota(${Number(u.lat)||0},${Number(u.lng)||0})">${portalIcon('map')} Abrir rota</button><button class="button-secondary" onclick="mostrarMapa()">Ver todas no mapa</button></div>
@@ -238,6 +355,7 @@ async function carregarMapa() {
 }
 
 async function mostrarMapa() {
+    portalSetView('map')
     limparTimersAds();fecharMenuUsuario()
     for(const id of ['lista','formulario','login','perfil','adminPanel'])document.getElementById(id).style.display='none'
     document.getElementById('map').style.display='block'
@@ -257,6 +375,7 @@ async function sincronizarPerfilSessao() {
     } catch { /* Keep the existing session view while offline. */ }
 }
 
+portalInitNavigation()
 sincronizarPerfilSessao()
 carregarDados()
 atualizarInterfaceUsuario()

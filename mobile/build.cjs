@@ -49,7 +49,7 @@ function nativeSession(source) {
         `portalSession.${({ getItem: 'get', setItem: 'set', removeItem: 'delete' })[method]}(${quote}${key}${quote}`)
 }
 fs.writeFileSync(path.join(output, 'comercial.js'), nativeSession(fs.readFileSync(path.join(frontend, 'comercial.js'), 'utf8')))
-for (const file of ['brand.css', 'experience.css', 'comercial.css', 'icon-192-v2.png', 'favicon.ico',
+for (const file of ['brand.css', 'experience.css', 'modern.css', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
 }
@@ -87,6 +87,7 @@ replace(/    <link rel="apple-touch-icon"[^\n]*\n/, '')
 replace(/    <meta name="apple-mobile-web-app[^\n]*\n/g, '')
 replace('    <script src="/pwa.js?v=1" defer></script>',
     '    <link rel="stylesheet" href="/portal.css">\n' +
+    '    <link rel="stylesheet" href="/modern.css?v=4">\n' +
     '    <script src="/config.js"></script>\n' +
     '    <script src="/portal-native.js" defer></script>')
 replace('const API = window.location.origin',

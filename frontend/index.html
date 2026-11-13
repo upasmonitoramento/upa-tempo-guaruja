@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Saúde em Tempo Real | Guarujá</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0d47a1">
+    <meta name="theme-color" content="#1554b5">
     <meta name="description" content="Acompanhe os tempos de espera e a situação das UPAs e prontos-socorros do Guarujá.">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=1">
-    <link rel="shortcut icon" href="/favicon.ico?v=1">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=4">
+    <link rel="shortcut icon" href="/favicon.ico?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png?v=4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Saúde Guarujá">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1449,6 +1449,7 @@
     <link rel="stylesheet" href="/experience.css?v=1">
     <script src="/public-ui.js?v=1" defer></script>
     <link rel="stylesheet" href="/comercial.css">
+    <link rel="stylesheet" href="/modern.css?v=4">
     <script src="/comercial.js" defer></script>
     <script src="/pwa.js?v=1" defer></script>
 </head>
@@ -2408,6 +2409,7 @@
 
         function atualizarInterfaceUsuario() {
             const user = getUser()
+            if (typeof portalAccountIdentity === 'function') portalAccountIdentity()
             const btnCadastrar = document.getElementById("btnCadastrar")
             const menuArea = document.getElementById("menuUsuarioArea")
             const btnLoginTopo = document.getElementById("btnLoginTopo")
@@ -2449,6 +2451,7 @@
         }
 
         async function abrirPerfil() {
+            portalSetView('profile')
             limparTimersAds()
             fecharMenuUsuario()
             const token = localStorage.getItem("token")
@@ -2513,6 +2516,7 @@
         }
 
         async function abrirPainelAdmin() {
+            portalSetView('admin')
             limparTimersAds()
             fecharMenuUsuario()
             const user = getUser()
@@ -4743,6 +4747,8 @@
         }
 
         function mostrarLista() {
+            portalFavoritesOnly = false
+            portalSetView('home')
             limparTimersAds()
             fecharMenuUsuario()
             document.getElementById("lista").style.display = "block"
@@ -4756,6 +4762,7 @@
         }
 
         function mostrarForm() {
+            portalSetView('form')
             limparTimersAds()
             fecharMenuUsuario()
             document.getElementById("lista").style.display = "none"
@@ -4767,6 +4774,7 @@
         }
 
         function mostrarLogin() {
+            portalSetView('login')
             limparTimersAds()
             fecharMenuUsuario()
             document.getElementById("lista").style.display = "none"
