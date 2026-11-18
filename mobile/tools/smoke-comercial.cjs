@@ -19,10 +19,11 @@ async function main() {
             const errors = []
             page.on('pageerror', error => errors.push(error.message))
             let requests = 0
+            let mode = 'preparation'
             await context.route('**/*', route => {
                 const url = new URL(route.request().url())
                 if (url.origin === base) return route.continue()
-                const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'X-Portal-Commercial-Mode', 'X-Portal-Commercial-Mode': 'preparation' }
+                const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'X-Portal-Commercial-Mode', 'X-Portal-Commercial-Mode': mode }
                 if (url.pathname === '/comercial/painel') {
                     requests++
                     return route.fulfill({ headers, json: [proposal('1', 'Parceiro', 'RECEIVED'), proposal('2', 'Pendente', 'PENDING', -10), proposal('3', 'Parceiro', 'REFUNDED', -9)] })
@@ -62,6 +63,18 @@ async function main() {
             await panel.screenshot({ path: path.join(folder, `${viewport.name}-publicidade.png`) })
             await panel.getByRole('button', { name: 'Voltar ao Portal' }).click()
             assert.equal(await page.locator('dialog[open]').count(), 0)
+            mode = 'sandbox'
+            await page.evaluate(() => window.abrirComercial())
+            await panel.getByRole('button', { name: 'Nova proposta', exact: true }).click()
+            await panel.locator('[name="company"]').fill('Rascunho preservado')
+            await panel.locator('[name="email"]').fill('rascunho@example.test')
+            await panel.getByRole('button', { name: 'Atualizar dados' }).click()
+            await page.waitForFunction(() => !document.querySelector('.commercial-top button:last-child').disabled)
+            assert.equal(await panel.locator('[name="company"]').inputValue(), 'Rascunho preservado')
+            assert.equal(await panel.locator('[name="email"]').inputValue(), 'rascunho@example.test')
+            page.once('dialog', dialog => dialog.dismiss())
+            await panel.getByRole('button', { name: 'Voltar ao Portal' }).click()
+            assert.equal(await panel.isVisible(), true, 'Canceling must preserve the draft')
             assert.deepEqual(errors, [])
             console.log(`${viewport.name}: commercial filters, profile, read-only mode and layout OK`)
             await context.close()

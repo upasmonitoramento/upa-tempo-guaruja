@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema({
     },
 
     senha: String,
+    sessionVersion: { type: Number, default: 0, select: false },
 
     cpf: {
         type: String,

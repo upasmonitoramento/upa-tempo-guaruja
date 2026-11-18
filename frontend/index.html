@@ -1579,7 +1579,8 @@
             <h2>Redefinir Senha</h2>
 
             <input id="emailRedefinir" placeholder="Email cadastrado" autocomplete="email">
-            <input id="cpfRedefinir" placeholder="CPF cadastrado" maxlength="14">
+            <button type="button" onclick="solicitarRedefinicao()">Enviar código para meu email</button>
+            <input id="cpfRedefinir" placeholder="Cole o código recebido por email" autocomplete="one-time-code" maxlength="64" aria-label="Código de recuperação">
             <input id="novaSenhaRedefinir" type="password" placeholder="Nova senha (mínimo 8 caracteres)"
                 autocomplete="new-password" minlength="8"
                 oninput="validarSenhaVisual('novaSenhaRedefinir', 'msgNovaSenhaRedefinir')">
@@ -1777,7 +1778,7 @@
         }
 
         function statusBadge(status) {
-            const s = status || "ativo"
+            const s = ["ativo", "suspenso", "banido", "removido", "pausado", "expirado"].includes(status) ? status : "ativo"
             return `<span class="badge-status status-${s}">${s}</span>`
         }
 
@@ -2392,25 +2393,32 @@
         }
 
         async function fazerLogin() {
-            if (!email.value || !senha.value) return alert("Preencha email e senha")
+            const button = document.querySelector('#loginBox button')
+            if (button?.disabled) return
+            if (button) button.disabled = true
+            try {
+                if (!email.value || !senha.value) return alert("Preencha email e senha")
 
-            const res = await fetch(`${API}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.value, senha: senha.value })
-            })
+                const res = await fetch(`${API}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email.value, senha: senha.value }),
+                    signal: AbortSignal.timeout(15000)
+                })
 
-            const data = await res.json()
+                const data = await res.json()
 
-            if (data.token) {
-                localStorage.setItem("token", data.token)
-                localStorage.setItem("user", JSON.stringify(data.user))
-                atualizarInterfaceUsuario()
-                alert("Login realizado!")
-                mostrarLista()
-            } else {
-                alert(data.erro || "Email ou senha inválidos")
-            }
+                if (data.token) {
+                    localStorage.setItem("token", data.token)
+                    localStorage.setItem("user", JSON.stringify(data.user))
+                    atualizarInterfaceUsuario()
+                    alert("Login realizado!")
+                    mostrarLista()
+                } else {
+                    alert(data.erro || "Email ou senha inválidos")
+                }
+            } catch { alert('Não foi possível conectar ao servidor. Confira sua internet e tente novamente.') }
+            finally { if (button) button.disabled = false }
         }
 
         function atualizarInterfaceUsuario() {
@@ -2488,37 +2496,72 @@
             document.getElementById("fotoPreview").src = fotoUsuario(user)
         }
 
+        async function prepararFotoPerfil(file) {
+            const supported = /\.(jpe?g|png|webp)$/i.test(file.name)
+            if (supported && file.size <= 1024 * 1024) return file
+            const url = URL.createObjectURL(file)
+            try {
+                const image = new Image()
+                image.src = url
+                await image.decode()
+                const scale = Math.min(1, 1024 / Math.max(image.width, image.height))
+                const canvas = document.createElement('canvas')
+                canvas.width = Math.max(1, Math.round(image.width * scale))
+                canvas.height = Math.max(1, Math.round(image.height * scale))
+                const context = canvas.getContext('2d')
+                context.fillStyle = '#fff'
+                context.fillRect(0, 0, canvas.width, canvas.height)
+                context.drawImage(image, 0, 0, canvas.width, canvas.height)
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82))
+                if (!blob || blob.size > 2 * 1024 * 1024) throw new Error('Image too large')
+                return new File([blob], 'foto-perfil.jpg', { type: 'image/jpeg' })
+            } catch {
+                alert('Não foi possível preparar essa foto. Escolha uma imagem JPG, PNG ou WEBP menor.')
+                return null
+            } finally { URL.revokeObjectURL(url) }
+        }
+
         async function salvarPerfil() {
-            const token = localStorage.getItem("token")
-            if (!token) return alert("Você precisa estar logado")
+            const button = document.querySelector('#perfil button[onclick="salvarPerfil()"]')
+            if (button?.disabled) return
+            if (button) button.disabled = true
+            try {
+                const token = localStorage.getItem("token")
+                if (!token) return alert("Você precisa estar logado")
 
-            const senhaNova = document.getElementById("perfilSenha").value.trim()
-            const foto = document.getElementById("fotoPerfil").files[0]
-            if (!senhaNova && !foto) return alert("Nenhuma alteração foi feita")
+                const senhaNova = document.getElementById("perfilSenha").value.trim()
+                const original = document.getElementById("fotoPerfil").files[0]
+                const foto = original ? await prepararFotoPerfil(original) : null
+                if (original && !foto) return
+                if (!senhaNova && !foto) return alert("Nenhuma alteração foi feita")
 
-            if (senhaNova && !senhaTemMinimo8(senhaNova)) {
-                validarSenhaVisual("perfilSenha", "msgPerfilSenha", true)
-                return alert("A nova senha precisa ter no mínimo 8 caracteres.")
-            }
+                if (senhaNova && !senhaTemMinimo8(senhaNova)) {
+                    validarSenhaVisual("perfilSenha", "msgPerfilSenha", true)
+                    return alert("A nova senha precisa ter no mínimo 8 caracteres.")
+                }
 
-            const formData = new FormData()
-            if (senhaNova) formData.append("senha", senhaNova)
-            if (foto) formData.append("foto", foto)
+                const formData = new FormData()
+                if (senhaNova) formData.append("senha", senhaNova)
+                if (foto && foto.size > 2 * 1024 * 1024) return alert('A foto de perfil deve ter até 2 MB. Escolha uma imagem menor.')
+                if (foto) formData.append("foto", foto)
 
-            const res = await fetch(`${API}/auth/perfil`, { method: "PUT", headers: { Authorization: token }, body: formData })
-            const data = await res.json()
+                const res = await fetch(`${API}/auth/perfil`, { method: "PUT", headers: { Authorization: token }, body: formData, signal: AbortSignal.timeout(20000) })
+                const data = await res.json()
 
-            if (res.ok) {
-                const userAtualizado = { id: data.user._id || data.user.id, nome: data.user.nome, email: data.user.email, cpf: data.user.cpf, tipo: data.user.tipo, foto: data.user.foto, status: data.user.status, suspensoAte: data.user.suspensoAte }
-                localStorage.setItem("user", JSON.stringify(userAtualizado))
-                atualizarInterfaceUsuario()
-                alert("Perfil atualizado com sucesso!")
-                document.getElementById("fotoPerfil").value = ""
-                document.getElementById("perfilSenha").value = ""
-                abrirPerfil()
-            } else {
-                alert(data.erro || "Erro ao salvar perfil")
-            }
+                if (res.ok) {
+                    const userAtualizado = { id: data.user._id || data.user.id, nome: data.user.nome, email: data.user.email, cpf: data.user.cpf, tipo: data.user.tipo, foto: data.user.foto, status: data.user.status, suspensoAte: data.user.suspensoAte }
+                    localStorage.setItem("user", JSON.stringify(userAtualizado))
+                    atualizarInterfaceUsuario()
+                    alert("Perfil atualizado com sucesso!")
+                    document.getElementById("fotoPerfil").value = ""
+                    document.getElementById("perfilSenha").value = ""
+                    if (senhaNova) { logout(); return }
+                    abrirPerfil()
+                } else {
+                    alert(data.erro || "Erro ao salvar perfil")
+                }
+            } catch { alert('Não foi possível conectar ao servidor. Confira sua internet e tente novamente.') }
+            finally { if (button) button.disabled = false }
         }
 
         async function abrirPainelAdmin() {
@@ -2562,7 +2605,7 @@
                             <h3 style="color:#0d47a1; margin-top:0;">Usuários cadastrados</h3>
 
                             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
-                                <input id="adminBusca" class="admin-input" placeholder="Buscar por nome, email ou CPF" value="${adminBuscaAtual}">
+                                <input id="adminBusca" class="admin-input" placeholder="Buscar por nome, email ou CPF" value="${escapeHTML(adminBuscaAtual)}">
                                 <select id="adminFiltro" class="admin-select">
                                     <option value="todos">Todos</option>
                                     <option value="admins">Admins</option>
@@ -2589,7 +2632,7 @@
                             </p>
 
                             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
-                                <input id="patrocinadorBusca" class="admin-input" placeholder="Buscar por empresa, responsável, email, CPF/CNPJ ou segmento" value="${patrocinadorBuscaAtual}">
+                                <input id="patrocinadorBusca" class="admin-input" placeholder="Buscar por empresa, responsável, email, CPF/CNPJ ou segmento" value="${escapeHTML(patrocinadorBuscaAtual)}">
                                 <select id="patrocinadorStatus" class="admin-select">
                                     <option value="todos">Todos</option>
                                     <option value="ativo">Ativos</option>
@@ -2827,11 +2870,11 @@
                     <tr>
                         <td style="min-width:220px;">
                             <div style="display:flex; align-items:center; gap:10px;">
-                                <img src="${fotoUsuario(u)}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #e3f2fd;">
-                                <div><b>${u.nome || "-"}</b><br><small style="color:#666;">Criado: ${formatarDataCurta(u.createdAt)}</small></div>
+                                <img src="${escapeHTML(fotoUsuario(u))}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #e3f2fd;">
+                                <div><b>${escapeHTML(u.nome || "-")}</b><br><small style="color:#666;">Criado: ${formatarDataCurta(u.createdAt)}</small></div>
                             </div>
                         </td>
-                        <td>${u.email || "-"}</td>
+                        <td>${escapeHTML(u.email || "-")}</td>
                         <td>${formatarCPF(u.cpf || "")}</td>
                         <td>${tipoBadge(u.tipo)}</td>
                         <td>${statusBadge(u.status || "ativo")}</td>
@@ -2879,10 +2922,10 @@
                 </div>
 
                 <div style="display:flex; gap:22px; align-items:center; margin-top:22px; flex-wrap:wrap;">
-                    <img src="${fotoUsuario(u)}" style="width:130px; height:130px; border-radius:50%; object-fit:cover; border:4px solid #0d47a1;">
+                    <img src="${escapeHTML(fotoUsuario(u))}" style="width:130px; height:130px; border-radius:50%; object-fit:cover; border:4px solid #0d47a1;">
                     <div>
-                        <h2 style="margin:0 0 8px 0;">${u.nome || "-"}</h2>
-                        <p style="margin:4px 0;"><b>Email:</b> ${u.email || "-"}</p>
+                        <h2 style="margin:0 0 8px 0;">${escapeHTML(u.nome || "-")}</h2>
+                        <p style="margin:4px 0;"><b>Email:</b> ${escapeHTML(u.email || "-")}</p>
                         <p style="margin:4px 0;"><b>CPF:</b> ${formatarCPF(u.cpf || "")}</p>
                         <p style="margin:4px 0;"><b>Tipo:</b> ${tipoBadge(u.tipo)}</p>
                         <p style="margin:4px 0;"><b>Status:</b> ${statusBadge(u.status || "ativo")}</p>
@@ -2905,7 +2948,7 @@
                     <h2 style="margin:0; color:#0d47a1;">Suspender usuário</h2>
                     <button onclick="fecharModalAdmin()" class="admin-btn btn-gray">Fechar</button>
                 </div>
-                <p>Defina por quanto tempo a conta <b>${nome || "selecionada"}</b> ficará suspensa.</p>
+                <p>Defina por quanto tempo a conta <b>${escapeHTML(nome || "selecionada")}</b> ficará suspensa.</p>
                 <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
                     <input id="suspensaoQuantidade" type="number" min="1" value="1" class="admin-input" style="min-width:140px;" placeholder="Quantidade">
                     <select id="suspensaoUnidade" class="admin-select">
@@ -3085,15 +3128,15 @@
                     <tr>
                         <td style="min-width:240px;">
                             <div style="display:flex; align-items:center; gap:10px;">
-                                <img src="${fotoPatrocinador(p)}" style="width:46px; height:46px; border-radius:14px; object-fit:cover; border:2px solid #e3f2fd;">
+                                <img src="${escapeHTML(fotoPatrocinador(p))}" style="width:46px; height:46px; border-radius:14px; object-fit:cover; border:2px solid #e3f2fd;">
                                 <div>
-                                    <b>${p.empresaNome || "-"}</b><br>
-                                    <small style="color:#666;">${p.segmento || "Segmento não informado"}</small>
+                                    <b>${escapeHTML(p.empresaNome || "-")}</b><br>
+                                    <small style="color:#666;">${escapeHTML(p.segmento || "Segmento não informado")}</small>
                                 </div>
                             </div>
                         </td>
-                        <td>${p.responsavelNome || "-"}</td>
-                        <td>${p.email || "-"}</td>
+                        <td>${escapeHTML(p.responsavelNome || "-")}</td>
+                        <td>${escapeHTML(p.email || "-")}</td>
                         <td>${formatarDocumentoPatrocinador(p.tipoDocumentoResponsavel, p.documentoResponsavel)}</td>
                         <td>${statusPatrocinadorBadge(p.status)}</td>
                         <td>
@@ -3144,19 +3187,19 @@
                 </div>
 
                 <div style="display:flex; gap:22px; align-items:center; margin-top:22px; flex-wrap:wrap;">
-                    <img src="${fotoPatrocinador(p)}" style="width:130px; height:130px; border-radius:24px; object-fit:cover; border:4px solid #0d47a1;">
+                    <img src="${escapeHTML(fotoPatrocinador(p))}" style="width:130px; height:130px; border-radius:24px; object-fit:cover; border:4px solid #0d47a1;">
 
                     <div>
-                        <h2 style="margin:0 0 8px 0;">${p.empresaNome || "-"}</h2>
-                        <p style="margin:4px 0;"><b>Segmento:</b> ${p.segmento || "-"}</p>
+                        <h2 style="margin:0 0 8px 0;">${escapeHTML(p.empresaNome || "-")}</h2>
+                        <p style="margin:4px 0;"><b>Segmento:</b> ${escapeHTML(p.segmento || "-")}</p>
                         <p style="margin:4px 0;"><b>Status:</b> ${statusPatrocinadorBadge(p.status)}</p>
-                        <p style="margin:4px 0;"><b>Email:</b> ${p.email || "-"}</p>
-                        <p style="margin:4px 0;"><b>Telefone:</b> ${p.telefone || "-"}</p>
+                        <p style="margin:4px 0;"><b>Email:</b> ${escapeHTML(p.email || "-")}</p>
+                        <p style="margin:4px 0;"><b>Telefone:</b> ${escapeHTML(p.telefone || "-")}</p>
                     </div>
                 </div>
 
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:24px;">
-                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Responsável</b><br>${p.responsavelNome || "-"}</div>
+                    <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Responsável</b><br>${escapeHTML(p.responsavelNome || "-")}</div>
                     <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Documento responsável</b><br>${formatarDocumentoPatrocinador(p.tipoDocumentoResponsavel, p.documentoResponsavel)}</div>
                     <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>CNPJ empresa</b><br>${formatarCNPJ(p.empresaCnpj || "")}</div>
                     <div style="background:#f4f6f9; padding:16px; border-radius:16px;"><b>Data nascimento</b><br>${p.dataNascimento ? formatarDataCurta(p.dataNascimento) : "-"}</div>
@@ -3166,7 +3209,7 @@
 
                 <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
                     <b>Observações</b><br>
-                    ${p.observacoes || "-"}
+                    ${escapeHTML(p.observacoes || "-")}
                 </div>
             `)
         }
@@ -3852,7 +3895,7 @@
 
                 <div style="margin-top:14px; background:#f4f6f9; padding:16px; border-radius:16px;">
                     <b>Mídia do anúncio</b><br>
-                    <small style="color:#666;">Aceita JPG, JPEG, PNG, WEBP, MP4 ou WEBM. Limite de 30 MB.</small><br><br>
+                    <small style="color:#666;">Aceita JPG, JPEG, PNG, WEBP, MP4 ou WEBM. Limite de 4 MB por envio. Para vídeos maiores, use uma URL HTTPS da mídia.</small><br><br>
                     <input type="file" id="anuncioMidiaFile" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm">
                     ${a ? `<p style="font-size:13px; color:#555; margin-bottom:0;">Mídia atual: ${escapeHTML(a.midia || "-")}</p>` : ""}
                 </div>
@@ -3877,6 +3920,7 @@
             const midiaUrl = document.getElementById("anuncioMidiaUrl").value.trim()
             const descricao = document.getElementById("anuncioDescricao").value.trim()
             const midiaFile = document.getElementById("anuncioMidiaFile").files[0]
+            if (midiaFile && midiaFile.size > 4 * 1024 * 1024) return alert('O envio aceita até 4 MB. Para vídeos maiores, informe uma URL HTTPS da mídia.')
             const areasSelecionadas = Array.from(document.querySelectorAll(".anuncioAreaCheck:checked")).map(input => input.value)
             const posicao = obterPosicaoAnuncioPorAreas(areasSelecionadas)
 
@@ -4442,10 +4486,10 @@
                 html += `
                     <tr>
                         <td>${formatarData(log.data)}</td>
-                        <td>${log.usuarioNome || "-"}</td>
-                        <td>${log.acao || "-"}</td>
-                        <td>${log.alvo || "-"}</td>
-                        <td>${log.detalhes || "-"}</td>
+                        <td>${escapeHTML(log.usuarioNome || "-")}</td>
+                        <td>${escapeHTML(log.acao || "-")}</td>
+                        <td>${escapeHTML(log.alvo || "-")}</td>
+                        <td>${escapeHTML(log.detalhes || "-")}</td>
                     </tr>
                 `
             })
@@ -4537,6 +4581,7 @@
             formData.append("medico", medicosPlantao.map(m => m.nome).filter(Boolean).join(", "))
             formData.append("especialidade", medicosPlantao.map(m => m.especialidade).filter(Boolean).join(", "))
 
+            if (fotoFile.files[0]?.size > 4 * 1024 * 1024) return alert('A foto deve ter até 4 MB.')
             if (fotoFile.files[0]) formData.append("foto", fotoFile.files[0])
             else if (fotoUrl.value) formData.append("foto", fotoUrl.value)
 
@@ -4626,20 +4671,6 @@
             e.target.value = v
         })
 
-        document.getElementById("cpfRedefinir").addEventListener("input", e => {
-            let v = e.target.value.replace(/\D/g, "")
-
-            if (v.length > 11) {
-                v = v.slice(0, 11)
-            }
-
-            v = v.replace(/(\d{3})(\d)/, "$1.$2")
-            v = v.replace(/(\d{3})(\d)/, "$1.$2")
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-
-            e.target.value = v
-        })
-
         document.getElementById("fotoPerfil").addEventListener("change", () => {
             const arquivo = document.getElementById("fotoPerfil").files[0]
             if (arquivo) document.getElementById("fotoPreview").src = URL.createObjectURL(arquivo)
@@ -4700,56 +4731,38 @@
             }
         }
 
-        async function redefinirSenha() {
-
-            const email = emailRedefinir.value.trim()
-            const cpf = cpfRedefinir.value.replace(/\D/g, "")
-            const novaSenha = novaSenhaRedefinir.value.trim()
-
-            if (!email || !cpf || !novaSenha) {
-                alert("Preencha email, CPF e nova senha")
-                return
-            }
-
-            if (cpf.length !== 11) {
-                alert("CPF precisa ter 11 números")
-                return
-            }
-
-            if (!senhaTemMinimo8(novaSenha)) {
-                validarSenhaVisual("novaSenhaRedefinir", "msgNovaSenhaRedefinir")
-                alert("A nova senha precisa ter no mínimo 8 caracteres.")
-                return
-            }
-
-            const res = await fetch(`${API}/auth/redefinir-senha`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email,
-                    cpf,
-                    novaSenha
+        async function solicitarRedefinicao() {
+            try {
+                const res = await fetch(`${API}/auth/solicitar-redefinicao`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailRedefinir.value.trim() }), signal: AbortSignal.timeout(20000)
                 })
-            })
+                const data = await res.json()
+                alert(res.ok ? data.msg : (data.erro || 'Não foi possível enviar o código.'))
+            } catch { alert('Não foi possível conectar. Confira sua internet e tente novamente.') }
+        }
 
-            const data = await res.json()
-
-            if (res.ok) {
-
-                alert("Senha redefinida com sucesso!")
-
-                emailRedefinir.value = ""
-                cpfRedefinir.value = ""
-                novaSenhaRedefinir.value = ""
-
+        async function redefinirSenha() {
+            const token = cpfRedefinir.value.trim()
+            const novaSenha = novaSenhaRedefinir.value
+            if (!/^[a-f\d]{64}$/.test(token)) return alert('Cole o código completo recebido por email.')
+            if (!senhaTemMinimo8(novaSenha)) return alert('A senha precisa ter no mínimo 8 caracteres.')
+            try {
+                const res = await fetch(`${API}/auth/redefinir-senha`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, novaSenha }), signal: AbortSignal.timeout(20000)
+                })
+                const data = await res.json()
+                if (!res.ok) return alert(data.erro || 'Não foi possível redefinir a senha.')
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                emailRedefinir.value = ''
+                cpfRedefinir.value = ''
+                novaSenhaRedefinir.value = ''
+                atualizarInterfaceUsuario()
+                alert('Senha redefinida. Entre com sua nova senha.')
                 voltarLogin()
-
-            } else {
-
-                alert(data.erro || "Erro ao redefinir senha")
-            }
+            } catch { alert('Não foi possível conectar. Confira sua internet e tente novamente.') }
         }
 
         function mostrarLista() {

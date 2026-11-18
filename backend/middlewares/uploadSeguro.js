@@ -114,7 +114,7 @@ const uploadFotoPerfil = criarUploadSeguro({
 const uploadFotoAtendimento = criarUploadSeguro({
     prefixo: "atendimento",
     pasta: "atendimentos",
-    limiteMB: 5,
+    limiteMB: 4,
     tiposPermitidos: imagensPermitidas,
     mensagemFormatos: "JPG, JPEG, PNG ou WEBP"
 })("foto")
@@ -130,7 +130,7 @@ const uploadLogoPatrocinador = criarUploadSeguro({
 const uploadMidiaAnuncio = criarUploadSeguro({
     prefixo: "anuncio",
     pasta: "anuncios",
-    limiteMB: 30,
+    limiteMB: 4,
     tiposPermitidos: midiasAnuncioPermitidas,
     mensagemFormatos: "JPG, JPEG, PNG, WEBP, MP4 ou WEBM"
 })("midia")

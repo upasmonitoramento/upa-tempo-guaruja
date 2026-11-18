@@ -15,6 +15,7 @@
   "name": "saude-em-tempo-real",
   "private": true,
   "scripts": {
+    "test": "node --test backend/routes/*.test.js",
     "build": "node scripts/build.js",
     "start": "node backend/server.js"
   },

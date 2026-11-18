@@ -1,8 +1,7 @@
 const express = require("express")
 const mongoose = require("mongoose")
-const jwt = require("jsonwebtoken")
+const auth = require('../middlewares/auth')
 const { createHash, randomBytes, timingSafeEqual } = require("node:crypto")
-const User = require("../models/User")
 
 const router = express.Router()
 const Partnership = mongoose.model("CommercialPartnership", new mongoose.Schema({
@@ -38,17 +37,10 @@ router.use((req, res, next) => {
 })
 
 async function requireAdmin(req, res, next) {
-    if (!process.env.JWT_SECRET) return res.sendStatus(503)
-    let session
-    try {
-        session = jwt.verify(req.get("Authorization"), process.env.JWT_SECRET, { algorithms: ["HS256"] })
-    } catch {
-        return res.sendStatus(401)
-    }
-    if (!mongoose.isObjectIdOrHexString(session.id)) return res.sendStatus(401)
-    const user = await User.findById(session.id).select("tipo status")
-    if (user?.tipo !== "admin" || user.status !== "ativo") return res.sendStatus(403)
-    next()
+    return auth(req, res, () => {
+        if (req.user.tipo !== 'admin') return res.sendStatus(403)
+        next()
+    })
 }
 
 async function asaas(path, method = "GET", body) {

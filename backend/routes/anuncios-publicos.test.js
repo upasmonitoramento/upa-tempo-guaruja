@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const Anuncio = require('../models/Anuncio')
+const User = require('../models/User')
 const router = require('./anuncios')
 
 test('publicidade respeita período e parceiro ativo; painel não aceita visitante ou funcionário', async t => {
@@ -29,10 +30,13 @@ test('publicidade respeita período e parceiro ativo; painel não aceita visitan
     const base='http://127.0.0.1:'+server.address().port
     assert.deepEqual((await(await fetch(base+'/publicos')).json()).map(row=>row._id),['imagem','video'])
     const count=queries
+    let role = 'funcionario'
+    t.mock.method(User, 'findById', () => ({ select: async () => ({ tipo: role, status: 'ativo' }) }))
     assert.equal((await fetch(base)).status,401)
     const staff=jwt.sign({id:'692000000000000000000001',tipo:'funcionario'},process.env.JWT_SECRET)
     assert.equal((await fetch(base,{headers:{Authorization:staff}})).status,403)
     assert.equal(queries,count,'Forbidden users must not reach the ad query')
     const admin=jwt.sign({id:'692000000000000000000001',tipo:'admin'},process.env.JWT_SECRET)
+    role = 'admin'
     assert.equal((await fetch(base,{headers:{Authorization:admin}})).status,200)
 })

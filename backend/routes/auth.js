@@ -5,6 +5,13 @@ const User = require("../models/User")
 
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
+const crypto = require("node:crypto")
+const rateLimit = require("express-rate-limit")
+const PasswordReset = require("../models/PasswordReset")
+const recoveryEmail = require("../config/recoveryEmail")
+const recoveryLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false,
+    message: { erro: 'Muitas tentativas. Aguarde 15 minutos e tente novamente.' } })
+router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
 
 const auth = require("../middlewares/auth")
 const { uploadFotoPerfil } = require("../middlewares/uploadSeguro")
@@ -13,7 +20,7 @@ const { uploadFotoPerfil } = require("../middlewares/uploadSeguro")
 // VALIDAR SENHA
 // ==========================================
 function senhaValida(senha) {
-    return senha && senha.trim().length >= 8
+    return typeof senha === 'string' && senha.trim().length >= 8 && Buffer.byteLength(senha, 'utf8') <= 72
 }
 
 // ==========================================
@@ -79,7 +86,7 @@ router.post("/register", async (req, res) => {
 
         const { nome, email, senha, cpf } = req.body
 
-        if (!nome || !email || !senha || !cpf) {
+        if (typeof nome !== 'string' || typeof email !== 'string' || typeof senha !== 'string' || typeof cpf !== 'string' || !nome.trim() || nome.length > 160 || !email || !senha || !cpf) {
             return res.status(400).json({
                 erro: "Preencha todos os campos"
             })
@@ -156,13 +163,13 @@ router.post("/register", async (req, res) => {
 // ==========================================
 // LOGIN
 // ==========================================
-router.post("/login", async (req, res) => {
+router.post("/login", recoveryLimit, async (req, res) => {
 
     try {
 
         const { email, senha } = req.body
 
-        if (!email || !senha) {
+        if (typeof email !== 'string' || typeof senha !== 'string' || !email || !senha || Buffer.byteLength(senha, 'utf8') > 72) {
             return res.status(400).json({
                 erro: "Informe email e senha"
             })
@@ -178,11 +185,11 @@ router.post("/login", async (req, res) => {
 
         const user = await User.findOne({
             email: emailLimpo
-        })
+        }).select('+sessionVersion')
 
         if (!user) {
             return res.status(400).json({
-                erro: "Usuário não encontrado"
+                erro: "Email ou senha inválidos"
             })
         }
 
@@ -214,14 +221,15 @@ router.post("/login", async (req, res) => {
 
         if (!senhaValidaBanco) {
             return res.status(400).json({
-                erro: "Senha inválida"
+                erro: "Email ou senha inválidos"
             })
         }
 
         const token = jwt.sign(
             {
                 id: user._id,
-                tipo: user.tipo
+                tipo: user.tipo,
+                sessionVersion: user.sessionVersion || 0
             },
             process.env.JWT_SECRET,
             {
@@ -295,7 +303,7 @@ router.put(
 
         try {
 
-            const user = await User.findById(req.user.id)
+            const user = await User.findById(req.user.id).select('+sessionVersion')
 
             if (!user) {
                 return res.status(404).json({
@@ -333,6 +341,7 @@ router.put(
                 const senhaHash = await bcrypt.hash(req.body.senha, 10)
 
                 user.senha = senhaHash
+                user.sessionVersion = Number(user.sessionVersion || 0) + 1
             }
 
             if (req.file) {
@@ -340,6 +349,8 @@ router.put(
             }
 
             await user.save()
+
+            if (req.body.senha) await PasswordReset.deleteOne({ _id: user._id })
 
             res.json({
                 msg: "Perfil atualizado",
@@ -368,32 +379,48 @@ router.put(
 
 // ==========================================
 // REDEFINIR SENHA
-// email + cpf + nova senha
+// Somente um código aleatório, de uso único, enviado ao email cadastrado.
 // ==========================================
-router.post("/redefinir-senha", async (req, res) => {
+router.post('/solicitar-redefinicao', recoveryLimit, async (req, res) => {
+    if (!recoveryEmail.configured()) return res.status(503).json({ erro: 'A recuperação por email ainda não está disponível. Entre em contato com o suporte.' })
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : ''
+    if (!emailValido(email)) return res.status(400).json({ erro: 'Informe um email válido.' })
+    const message = { msg: 'Se existir uma conta ativa com esse email, enviaremos um código. Confira também o spam.' }
+    try {
+        const user = await User.findOne({ email, $or: [{ status: 'ativo' }, { status: { $exists: false } }] })
+        if (!user) return res.json(message)
+        const now = new Date()
+        const token = crypto.randomBytes(32).toString('hex')
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+        let reset
+        try {
+            reset = await PasswordReset.findOneAndUpdate({ _id: user._id, issuedAt: { $lte: new Date(+now - 60000) } },
+                { $set: { tokenHash, issuedAt: now, expiresAt: new Date(+now + 20 * 60000) } }, { upsert: true, new: true })
+        } catch (error) {
+            if (error.code === 11000) return res.json(message)
+            throw error
+        }
+        try { await recoveryEmail.sendRecovery(email, token) }
+        catch (error) {
+            await PasswordReset.deleteOne({ _id: reset._id, tokenHash })
+            throw error
+        }
+        return res.json(message)
+    } catch (error) {
+        console.error('Recuperação de senha indisponível:', error.name)
+        return res.status(503).json({ erro: 'Não foi possível enviar o email. Tente novamente mais tarde.' })
+    }
+})
+
+router.post("/redefinir-senha", recoveryLimit, async (req, res) => {
 
     try {
 
-        const { email, cpf, novaSenha } = req.body
+        const { token, novaSenha } = req.body
 
-        if (!email || !cpf || !novaSenha) {
+        if (typeof token !== 'string' || !/^[a-f\d]{64}$/.test(token)) {
             return res.status(400).json({
-                erro: "Informe email, CPF e nova senha"
-            })
-        }
-
-        const emailLimpo = String(email).trim().toLowerCase()
-        const cpfLimpo = String(cpf).replace(/\D/g, "")
-
-        if (!emailValido(emailLimpo)) {
-            return res.status(400).json({
-                erro: "Informe um email válido"
-            })
-        }
-
-        if (!cpfValido(cpfLimpo)) {
-            return res.status(400).json({
-                erro: "Informe um CPF válido"
+                erro: "Solicite e informe o código enviado ao seu email."
             })
         }
 
@@ -403,14 +430,13 @@ router.post("/redefinir-senha", async (req, res) => {
             })
         }
 
-        const user = await User.findOne({
-            email: emailLimpo,
-            cpf: cpfLimpo
-        })
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+        const reset = await PasswordReset.findOneAndDelete({ tokenHash, expiresAt: { $gt: new Date() } })
+        const user = reset ? await User.findById(reset._id).select('+sessionVersion') : null
 
         if (!user) {
-            return res.status(404).json({
-                erro: "Dados não encontrados"
+            return res.status(400).json({
+                erro: "Código inválido ou expirado. Solicite um novo código."
             })
         }
 
@@ -435,6 +461,7 @@ router.post("/redefinir-senha", async (req, res) => {
         const senhaHash = await bcrypt.hash(novaSenha, 10)
 
         user.senha = senhaHash
+        user.sessionVersion = Number(user.sessionVersion || 0) + 1
 
         await user.save()
 

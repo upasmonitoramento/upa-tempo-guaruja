@@ -92,7 +92,10 @@
             </nav><section></section></div></div>`
         document.body.append(dialog)
         dialog.addEventListener("close", () => dialog.remove())
-        dialog.querySelector("[data-close]").onclick = () => dialog.close()
+        let proposalNeedsAttention = false
+        const mayLeave = () => !proposalNeedsAttention || confirm('Há uma proposta não salva ou um link privado recém-criado. Você já guardou o que precisa e deseja sair?')
+        dialog.querySelector("[data-close]").onclick = () => { if (mayLeave()) dialog.close() }
+        dialog.addEventListener('cancel', event => { if (!mayLeave()) event.preventDefault() })
         const refreshButton = document.createElement("button")
         refreshButton.textContent = "↻"
         refreshButton.setAttribute("aria-label", "Atualizar dados")
@@ -231,8 +234,9 @@
                 <fieldset class="commercial-wide"><legend>Posições</legend>${Object.entries(slots).map(([key, value]) => `<label><input type="checkbox" name="positions" value="${key}">${value}</label>`).join("")}</fieldset>
                 <button type="submit">Criar proposta</button></form><div data-result></div></div>
                 `
-            section.querySelector("[data-back]").onclick = () => { showForm = false; companyKey = null; render("parcerias") }
+            section.querySelector("[data-back]").onclick = () => { if (!mayLeave()) return; proposalNeedsAttention = false; showForm = false; companyKey = null; render("parcerias") }
             const form = section.querySelector("form")
+            form.addEventListener('input', () => { proposalNeedsAttention = true })
             handleForm(form, status, async fields => {
                 const data = await request("/propostas", { admin: true, method: "POST", body: {
                     ...Object.fromEntries(fields),
@@ -254,6 +258,7 @@
                 input.setAttribute("aria-label", "Link privado da proposta")
                 input.value = link.href
                 result.append(link, document.createElement("br"), input)
+                proposalNeedsAttention = true
                 status.textContent = "Proposta criada. Guarde o link privado para o aceite."
             })
         }
@@ -273,6 +278,8 @@
         }
         dialog.querySelectorAll("[data-tab]").forEach(btn => {
             btn.onclick = async () => {
+                if (!mayLeave()) return
+                proposalNeedsAttention = false
                 try { companyKey = null; showForm = false; await render(btn.dataset.tab) }
                 catch (error) { status.textContent = error.message }
             }
@@ -280,7 +287,8 @@
         refreshButton.onclick = async () => {
             refreshButton.disabled = true
             status.textContent = "Atualizando…"
-            try { await load(); await render(selected) }
+            // Refresh data without rebuilding a proposal form or its one-time private link.
+            try { await load(); if (!showForm) await render(selected); status.textContent = showForm ? 'Dados atualizados. Sua proposta foi preservada.' : 'Dados atualizados.' }
             catch (error) { status.textContent = error.message }
             finally { refreshButton.disabled = false }
         }

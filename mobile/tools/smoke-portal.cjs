@@ -169,6 +169,15 @@ async function checkRole(browser, role, device) {
             }
             for (const endpoint of adminLists) assert.ok(requests.includes(`GET ${endpoint}`), endpoint)
             await adminPanel.getByRole('button', { name: 'Avisos', exact:true }).waitFor()
+            await page.evaluate(() => renderizarUsuariosAdmin([{
+                _id: '692000000000000000000001',
+                nome: '<img src=x onerror="window.adminInjected=true">',
+                email: '<svg onload="window.adminInjected=true">',
+                tipo: 'usuario', status: 'ativo'
+            }]))
+            assert.equal(await adminPanel.locator('#adminUsuarios img[src="x"], #adminUsuarios svg').count(), 0)
+            assert.ok((await adminPanel.locator('#adminUsuarios').innerText()).includes('<img src=x'))
+            assert.equal(await page.evaluate(() => window.adminInjected), undefined)
         } else {
             assert.ok(!requests.some(request => request.startsWith('GET /admin/') && request !== 'GET /admin/avisos/publico'))
         }
@@ -185,6 +194,21 @@ async function checkRole(browser, role, device) {
         }
 
         assert.ok(requests.includes('POST /auth/login'))
+        const prepared = await page.evaluate(async () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = 1600; canvas.height = 1200
+            canvas.getContext('2d').fillRect(0, 0, 1600, 1200)
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+            // Keep image data valid while making the source exceed the preparation threshold.
+            const file = new File([blob, new Uint8Array(1100000)], 'foto.png', { type: 'image/png' })
+            const result = await prepararFotoPerfil(file)
+            const bitmap = await createImageBitmap(result)
+            const info = { size: result.size, type: result.type, width: bitmap.width, height: bitmap.height }
+            bitmap.close()
+            return info
+        })
+        assert.equal(prepared.type, 'image/jpeg')
+        assert.ok(prepared.size < 2 * 1024 * 1024 && Math.max(prepared.width, prepared.height) <= 1024)
         assert.deepEqual(errors, [])
         console.log(`${device}: ${role} OK`)
     } catch (error) {
