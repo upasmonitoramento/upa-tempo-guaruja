@@ -2,6 +2,13 @@ const mongoose = require("mongoose")
 
 const AnuncioSchema = new mongoose.Schema({
 
+    partnership: { type: mongoose.Schema.Types.ObjectId, ref: 'CommercialPartnership' },
+    publicationRevision: Number,
+    slot: String,
+    cities: [String],
+    storageKey: { type: String, select: false },
+    thumbnailKey: { type: String, select: false },
+
     patrocinador: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Patrocinador",
@@ -64,4 +71,5 @@ const AnuncioSchema = new mongoose.Schema({
     timestamps: true
 })
 
+AnuncioSchema.index({ partnership: 1, publicationRevision: 1, slot: 1 }, { unique: true, partialFilterExpression: { partnership: { $type: 'objectId' } } })
 module.exports = mongoose.model("Anuncio", AnuncioSchema)

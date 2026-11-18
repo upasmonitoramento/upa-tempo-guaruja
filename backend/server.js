@@ -66,6 +66,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 // ==========================================
 const authRoutes = require("./routes/auth")
 app.use("/auth", authRoutes)
+app.use('/parceiros', require('./routes/parceiros'))
+app.use('/admin/parceiros', require('./routes/partnerAdmin'))
 
 const atendimentoRoutes = require("./routes/atendimento")
 app.use("/atendimento", atendimentoRoutes)

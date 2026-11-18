@@ -10,6 +10,8 @@ const AreaAds = require("../models/AreaAds")
 const auth = require("../middlewares/auth")
 const verificarTipo = require("../middlewares/role")
 const { uploadMidiaAnuncio } = require("../middlewares/uploadSeguro")
+const { publicEligible } = require('../services/partnerRules')
+require('../models/CommercialPartnership')
 
 // ==========================================
 // FUNÇÕES AUXILIARES
@@ -118,17 +120,12 @@ router.get("/publicos", async (req, res) => {
         const anuncios = await Anuncio.find({
             status: "ativo"
         })
-            .populate("patrocinador", "empresaNome logo status")
+            .populate([{ path: 'patrocinador', select: 'empresaNome logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused' }])
             .sort({ createdAt: -1 })
 
-        const filtrados = anuncios.filter(anuncio => {
-
-            if (!anuncio.patrocinador) return false
-
-            if (anuncio.patrocinador.status !== "ativo") return false
-
-            return anuncioDentroDoPeriodo(anuncio)
-        })
+        const city = req.query.cidade || 'guaruja'
+        if (city !== 'guaruja') return res.status(400).json({ erro: 'Cidade indisponível.' })
+        const filtrados = anuncios.filter(anuncio => publicEligible(anuncio, city))
 
         res.json(filtrados)
 

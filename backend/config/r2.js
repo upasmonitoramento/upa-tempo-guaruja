@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3")
 const crypto = require("crypto")
 const path = require("path")
 
@@ -96,5 +96,9 @@ async function uploadArquivoR2(file, opcoes = {}) {
 }
 
 module.exports = {
-    uploadArquivoR2
+    uploadArquivoR2,
+    async deletePartnerAsset(key) {
+        if (typeof key !== 'string' || !/^parceiros\/[a-z0-9-]+\.(?:png|jpe?g|webp|mp4|webm)$/.test(key)) throw new Error('Invalid partner asset key')
+        await getClienteR2().send(new DeleteObjectCommand({ Bucket: obterEnvObrigatoria('R2_BUCKET_NAME'), Key: key }))
+    }
 }

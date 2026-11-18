@@ -10,6 +10,7 @@
     }
   },
   "rewrites": [
+    { "source": "/parceiros/:path*", "destination": "/api" },
     {
       "source": "/comercial/:path*",
       "destination": "/api"

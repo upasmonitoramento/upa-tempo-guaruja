@@ -1,5 +1,5 @@
 // Somente a estrutura do aplicativo fica disponível offline. Fotos, anúncios e API não são salvos aqui.
-const CACHE_NAME = 'saude-guaruja-v15'
+const CACHE_NAME = 'saude-guaruja-v16'
 const SHELL = ['/outfit.woff2', '/brand-wordmark.svg', '/index.html', '/manifest.json', '/favicon-32.png', '/app-icon-192-v3.png', '/brand-mark.svg', '/brand.css?v=1', '/experience.css?v=1', '/modern.css?v=4', '/entry.css?v=1', '/conecta.js?v=1', '/pwa.js?v=1', '/public-ui.js?v=1']
 
 self.addEventListener('install', event => {
@@ -12,7 +12,7 @@ self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return
     const url = new URL(event.request.url)
     if (url.origin !== self.location.origin) return
-    if (/^\/(auth|atendimento|admin|patrocinadores|anuncios|areas-ads|api|images)(\/|$)/.test(url.pathname)) {
+    if (/^\/(auth|parceiros|comercial|atendimento|admin|patrocinadores|anuncios|areas-ads|api|images)(\/|$)/.test(url.pathname)) {
         event.respondWith(fetch(event.request, { cache: 'no-store' }))
         return
     }

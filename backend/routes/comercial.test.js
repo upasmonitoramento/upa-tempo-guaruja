@@ -147,3 +147,25 @@ for (const production of [false, true]) test(`proposta, aceite e Pix simulado em
     assert.equal((await post("/propostas/" + id + "/pix", {})).status, 200)
     assert.equal(charges, 1)
 })
+
+test('nova proposta usa 14/28 dias, não cobra e rejeita cidades indisponíveis', async t => {
+    delete process.env.VERCEL_ENV
+    process.env.PORTAL_COMERCIAL_TESTE = '1'; process.env.JWT_SECRET = 'quote-local-test'
+    const model = mongoose.model('CommercialPartnership')
+    let created = []
+    t.mock.method(User, 'findById', () => ({ select: async () => ({ tipo: 'admin', status: 'ativo' }) }))
+    t.mock.method(model, 'create', async values => { created.push(values) })
+    const localFetch = fetch
+    t.mock.method(global, 'fetch', () => assert.fail('Creating a proposal must not contact a payment provider'))
+    const app = express(); app.use(express.json(), router)
+    const server = app.listen(0, '127.0.0.1'); await new Promise(r => server.once('listening', r))
+    t.after(() => new Promise(r => server.close(r)))
+    const body = { company: 'Empresa QA', email: 'quote@example.test', packageName: 'Mensal', cities: ['Guarujá'], positions: ['card'], cents: 500, durationDays: 28, due: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) }
+    const post = values => localFetch('http://127.0.0.1:' + server.address().port + '/propostas', { method: 'POST', headers: { Authorization: jwt.sign({ id: '692000000000000000000001' }, process.env.JWT_SECRET), 'Content-Type': 'application/json' }, body: JSON.stringify(values) })
+    assert.equal((await post(body)).status, 201)
+    assert.equal(created[0].durationDays, 28)
+    assert.equal((Date.parse(created[0].end) - Date.parse(created[0].start)) / 86400000, 27)
+    assert.equal((await post({ ...body, durationDays: 15 })).status, 400)
+    assert.equal((await post({ ...body, cities: ['Cidade ainda indisponível'] })).status, 400)
+    assert.equal(created.length, 1)
+})

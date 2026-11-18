@@ -2,6 +2,9 @@ const mongoose = require("mongoose")
 
 const PatrocinadorSchema = new mongoose.Schema({
 
+    partnerIdentity: { type: String, unique: true, sparse: true },
+    partnerAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerAccount' },
+
     // ==========================================
     // DADOS DO RESPONSÁVEL
     // ==========================================

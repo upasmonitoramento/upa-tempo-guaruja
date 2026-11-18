@@ -23,7 +23,7 @@ module.exports = async (req, res, next) => {
             { algorithms: ["HS256"] }
         )
 
-        if (!decoded.id || !/^[a-f\d]{24}$/i.test(String(decoded.id))) throw new Error("Invalid subject")
+        if (decoded.aud || !decoded.id || !/^[a-f\d]{24}$/i.test(String(decoded.id))) throw new Error("Invalid subject")
         let user
         try {
             user = await User.findById(decoded.id).select("tipo status suspensoAte +sessionVersion")

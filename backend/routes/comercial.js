@@ -4,25 +4,19 @@ const auth = require('../middlewares/auth')
 const { createHash, randomBytes, timingSafeEqual } = require("node:crypto")
 
 const router = express.Router()
-const Partnership = mongoose.model("CommercialPartnership", new mongoose.Schema({
-    company: String, email: String, packageName: String, cities: [String],
-    positions: [String], start: String, end: String, due: String, cents: Number,
-    terms: String, expires: Date, tokenHash: String,
-    accepted: Date, representative: String, document: String,
-    customerId: String, paymentId: String, paymentUrl: String,
-    paymentStatus: String, paymentAttempt: Date
-}, { timestamps: true }))
+const Partnership = require('../models/CommercialPartnership')
+const { production, apiKey, webhookToken, asaas, refresh } = require('../services/commercialPayments')
+const emailService = require('../config/recoveryEmail')
+const { sendInvite } = require('../services/partnerAccess')
+const { slug } = require('../services/partnerRules')
 const digest = value => createHash("sha256").update(value).digest("hex")
 const text = (value, limit) => typeof value === "string" ? value.trim().slice(0, limit) : ""
-const terms = "Piloto do Conecta Saúde. A proposta informa o valor, o período e onde a campanha será exibida. A exibição depende do aceite, da confirmação do Pix e da aprovação da arte."
+const terms = "Piloto do Conecta Saúde. A proposta informa o valor, a duração de 14 ou 28 dias e as posições contratadas. As datas indicadas são referências de planejamento. O período começa no próximo dia útil após o valor estar disponível no Asaas e as artes serem aprovadas; a data final será exibida no portal. Alterar artes não renova o período. Uma renovação exige nova proposta e novo pagamento. A exibição depende do aceite e da revisão das artes e do link de destino."
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
     !isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value
 const today = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date())
 const positions = ["card", "detalhe", "rodape", "banner"]
 const adminView = "-tokenHash -document -customerId"
-const production = () => process.env.VERCEL_ENV === "production"
-const apiKey = () => production() ? process.env.ASAAS_API_KEY : process.env.ASAAS_SANDBOX_API_KEY
-const webhookToken = () => production() ? process.env.ASAAS_WEBHOOK_TOKEN : process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN
 
 router.use((req, res, next) => {
     res.set("Cache-Control", "no-store")
@@ -43,44 +37,22 @@ async function requireAdmin(req, res, next) {
     })
 }
 
-async function asaas(path, method = "GET", body) {
-    if (!apiKey()) throw Object.assign(new Error("Configure a chave do Asaas."), { status: 503 })
-    const base = production() ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3"
-    const response = await fetch(base + path, {
-        method, redirect: "error", signal: AbortSignal.timeout(7000),
-        headers: { access_token: apiKey(), "Content-Type": "application/json", "User-Agent": "PortalSaude/1.0" },
-        body: body ? JSON.stringify(body) : undefined
-    })
-    if (!response.ok) throw Object.assign(new Error("O Asaas recusou a operação. Confira a configuração e os dados."), { status: 502 })
-    return response.json()
-}
-
-async function refresh(partnership, payment) {
-    if (!payment || payment.externalReference !== String(partnership.id) ||
-        payment.customer !== partnership.customerId || payment.billingType !== "PIX" ||
-        Math.round(Number(payment.value) * 100) !== partnership.cents) {
-        throw Object.assign(new Error("A cobrança retornada não corresponde à proposta."), { status: 409 })
-    }
-    const invoice = payment.invoiceUrl ? new URL(payment.invoiceUrl) : null
-    const hosts = production() ? ["asaas.com", "www.asaas.com"] : ["sandbox.asaas.com"]
-    await Partnership.updateOne({ _id: partnership.id }, { $set: {
-        paymentId: payment.id,
-        paymentStatus: payment.status,
-        paymentUrl: invoice?.protocol === "https:" && hosts.includes(invoice.hostname) ? invoice.href : undefined
-    } })
-}
-
 router.get("/painel", requireAdmin, async (req, res) => {
     res.json(await Partnership.find().select(adminView).sort({ createdAt: -1 }).limit(100).lean())
 })
 
 router.post("/propostas", requireAdmin, async (req, res) => {
-    const { start, end, due, cents } = req.body
+    const { due, cents } = req.body
+    const durationDays = [14, 28].includes(Number(req.body.durationDays)) ? Number(req.body.durationDays) : 14
+    const start = req.body.start || today()
+    const end = req.body.end || (validDate(start) ? new Date(Date.parse(start) + (durationDays - 1) * 86400000).toISOString().slice(0, 10) : '')
+    if (req.body.durationDays !== undefined && ![14, 28].includes(Number(req.body.durationDays))) return res.status(400).json({ erro: 'Escolha 14 ou 28 dias de campanha.' })
     const company = text(req.body.company, 160)
     const email = text(req.body.email, 160).toLowerCase()
     const packageName = text(req.body.packageName, 80)
     const cities = Array.isArray(req.body.cities) ? [...new Set(req.body.cities.map(city => text(city, 80)).filter(Boolean))] : []
     const slots = Array.isArray(req.body.positions) ? [...new Set(req.body.positions)] : []
+    if (cities.some(city => slug(city) !== 'guaruja')) return res.status(400).json({ erro: 'Por enquanto, somente Guarujá está disponível. Novas cidades serão liberadas quando tiverem unidades e espaços configurados.' })
     if (!company || !packageName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
         !cities.length || cities.length > 3 || !slots.length || !slots.every(slot => positions.includes(slot)) ||
         ![start, end, due].every(validDate) || start > end || due < today() || !Number.isSafeInteger(cents) || cents < 500 || cents > 10000000) {
@@ -88,6 +60,7 @@ router.post("/propostas", requireAdmin, async (req, res) => {
     }
     const token = randomBytes(32).toString("hex")
     await Partnership.create({ company, email, packageName, cities, positions: slots, start, end, due, cents,
+        portalVersion: 1, durationDays,
         terms: production() ? terms.replace("Piloto do Conecta Saúde.", "Proposta de publicidade do Conecta Saúde.") : terms,
         expires: new Date(Date.now() + 7 * 86400000), tokenHash: digest(token) })
     res.status(201).json({ path: "/proposta.html#" + token })
@@ -95,7 +68,7 @@ router.post("/propostas", requireAdmin, async (req, res) => {
 
 router.get("/aceite/:token", async (req, res) => {
     const p = await Partnership.findOne({ tokenHash: digest(req.params.token), expires: { $gt: new Date() } })
-        .select("company packageName cities positions start end due cents terms accepted")
+        .select("company packageName cities positions start end due cents terms accepted durationDays portalVersion")
     if (!p) return res.sendStatus(404)
     res.json(p)
 })
@@ -158,7 +131,10 @@ router.post("/asaas/webhook", async (req, res) => {
     const id = req.body.payment?.id
     if (typeof id !== "string" || !/^pay_[\w-]{1,90}$/.test(id)) return res.sendStatus(200)
     const p = await Partnership.findOne({ paymentId: id })
-    if (p) await refresh(p, await asaas("/payments/" + encodeURIComponent(id)))
+    if (p) {
+        await refresh(p, await asaas("/payments/" + encodeURIComponent(id)))
+        if (p.paymentStatus === 'RECEIVED' && p.portalVersion === 1 && emailService.configured()) await sendInvite(p)
+    }
     res.sendStatus(200)
 })
 

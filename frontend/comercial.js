@@ -40,7 +40,7 @@
     function summary(item) {
         return `<h2>${escape(item.company)}</h2><p>${escape(item.packageName)} · ${money(item.cents)}</p>
             <p>${escape(item.cities.join(", "))} · ${escape(item.positions.map(slot => slots[slot]).join(", "))}</p>
-            <p>Campanha de ${escape(item.start)} até ${escape(item.end)}. Pix vence em ${escape(item.due)}.</p>`
+            <p>${item.durationDays ? `${item.durationDays} dias de campanha. Início após recebimento e aprovação. ` : `Campanha de ${escape(item.start)} até ${escape(item.end)}. `}Pix vence em ${escape(item.due)}.</p>`
     }
 
     function handleForm(form, status, action) {
@@ -156,6 +156,7 @@
                 if (preparation) section.querySelectorAll("[data-new],[data-pix]").forEach(button => { button.disabled = true; button.title = "Disponível após a ativação comercial" })
             })
             selected = tab
+            section.partnerReviewView = null
             section.tabIndex = -1
             dialog.querySelectorAll("[data-tab]").forEach(btn => {
                 btn.removeAttribute("aria-current")
@@ -175,6 +176,10 @@
                 return
             }
             if (tab === "campanhas") {
+                if (window.renderPartnerReviews) {
+                    await window.renderPartnerReviews(section, { message: text => { status.textContent = text }, legacy: () => { dialog.close(); abrirPainelAdmin() } })
+                    return
+                }
                 section.innerHTML = `<div class="commercial-card"><h2>Prévia de campanhas</h2><p>Confira o que foi combinado em cada proposta.</p><button data-legacy>Gerenciar anúncios e artes</button></div>
                     ${items.map(item => `<article class="commercial-card">${summary(item)}<p>${item.accepted && item.paymentStatus === "RECEIVED" ? "Aceite e Pix confirmados. Confira a arte e a publicação no painel de anúncios." : "Aguardando aceite ou recebimento."}</p></article>`).join("")}`
                 section.querySelector("[data-legacy]").onclick = () => { dialog.close(); abrirPainelAdmin() }
@@ -191,7 +196,7 @@
                     <h2>Histórico de propostas</h2><div class="commercial-contracts">${contracts.map(item => `<article class="commercial-card">${summary(item)}<div class="commercial-card-meta">${badge(item)}<span>${item.accepted ? "Aceite registrado" : "Aguardando aceite"}</span></div>
                     <p class="commercial-muted">Responsável · ${escape(item.representative || "Não informado")}</p>
                     <div class="commercial-actions">${item.paymentUrl && !window.Capacitor?.isNativePlatform() ? `<a class="commercial-button" href="${escape(item.paymentUrl)}" target="_blank" rel="noopener">Abrir Pix${testLabel()}</a>` : ""}
-                    ${item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix" + testLabel()}</button>` : ""}</div></article>`).join("")}</div>`
+                    ${item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix" + testLabel()}</button>` : ""}${item.paymentStatus === 'RECEIVED' && item.portalVersion === 1 ? `<button data-partner-invite="${escape(item._id)}">Enviar acesso ao parceiro</button>` : ''}</div></article>`).join("")}</div>`
                 section.querySelector("[data-back]").onclick = () => { companyKey = null; render("parcerias") }
                 section.querySelector("[data-new]").onclick = () => {
                     showForm = true
@@ -200,6 +205,12 @@
                     section.querySelector('[name="email"]').value = company.email
                 }
                 bindPayments()
+                section.querySelectorAll('[data-partner-invite]').forEach(button => button.onclick = async () => {
+                    button.disabled = true
+                    try { status.textContent = (await window.enviarConviteParceiro(button.dataset.partnerInvite)).msg }
+                    catch (error) { status.textContent = error.message }
+                    finally { button.disabled = false }
+                })
                 return
             }
             if (!showForm) {
@@ -226,10 +237,10 @@
                 <label>Empresa ou pessoa<input name="company" required maxlength="160"></label>
                 <label>E-mail para aceite<input name="email" required type="email"></label>
                 <label>Nome do pacote<input name="packageName" required maxlength="80"></label>
+                <label>Duração<select name="durationDays"><option value="14">2 semanas · 14 dias</option><option value="28">4 semanas · 28 dias</option></select></label>
                 <label>Valor da cobrança (R$)<input name="value" type="number" required min="5" step="0.01"></label>
-                <label>Cidades (até 3, separadas por vírgula)<input name="cities" value="Guarujá" required></label>
-                <label>Início da campanha<input name="start" required type="date"></label>
-                <label>Fim da campanha<input name="end" required type="date"></label>
+                <label>Cidade disponível<input name="cities" value="Guarujá" required readonly></label>
+                <p class="commercial-muted">O início será programado para o próximo dia útil após o pagamento recebido e a aprovação das artes. O pacote define 14 ou 28 dias corridos.</p>
                 <label>Vencimento do Pix<input name="due" required type="date"></label>
                 <fieldset class="commercial-wide"><legend>Posições</legend>${Object.entries(slots).map(([key, value]) => `<label><input type="checkbox" name="positions" value="${key}">${value}</label>`).join("")}</fieldset>
                 <button type="submit">Criar proposta</button></form><div data-result></div></div>

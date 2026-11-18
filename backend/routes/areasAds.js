@@ -8,6 +8,8 @@ const User = require("../models/User")
 
 const auth = require("../middlewares/auth")
 const verificarTipo = require("../middlewares/role")
+const { publicEligible } = require('../services/partnerRules')
+require('../models/CommercialPartnership')
 
 // 1-8 = laterais | 9-10 = rodapé | 11-15 = cards das 5 UPAs | 16 = detalhes da UPA | 17 = banner inferior
 const areasPadrao = [
@@ -235,32 +237,29 @@ function anuncioDentroDoPeriodo(anuncio) {
     return true
 }
 
-function filtrarAnunciosValidos(lista) {
+function filtrarAnunciosValidos(lista, city) {
     if (!Array.isArray(lista)) return []
-    return lista.filter(anuncio => {
-        if (!anuncio) return false
-        if (anuncio.status !== "ativo") return false
-        if (!anuncio.patrocinador) return false
-        if (anuncio.patrocinador.status !== "ativo") return false
-        return anuncioDentroDoPeriodo(anuncio)
-    })
+    return lista.filter(anuncio => publicEligible(anuncio, city))
 }
 
-async function buscarAreaCompleta(query) {
+async function buscarAreaCompleta(query, publicView = false) {
+    const children = [{ path: 'patrocinador', select: publicView ? 'empresaNome logo status' : 'empresaNome responsavelNome email logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused' }]
     return AreaAds.find(query)
-        .populate({ path: "anuncioAtual", populate: { path: "patrocinador", select: "empresaNome responsavelNome email logo status" } })
-        .populate({ path: "anunciosAtuais", populate: { path: "patrocinador", select: "empresaNome responsavelNome email logo status" } })
+        .populate({ path: "anuncioAtual", populate: children })
+        .populate({ path: "anunciosAtuais", populate: children })
         .sort({ ordem: 1 })
 }
 
 router.get("/publicas", async (req, res) => {
     try {
+        const city = req.query.cidade || 'guaruja'
+        if (city !== 'guaruja') return res.status(400).json({ erro: 'Cidade indisponível.' })
         await garantirAreasPadrao()
-        const areas = await buscarAreaCompleta({ status: "ativo", codigo: { $in: codigosPadrao } })
+        const areas = await buscarAreaCompleta({ status: "ativo", codigo: { $in: codigosPadrao } }, true)
         const areasFiltradas = areas.map(area => {
             const obj = area.toObject()
-            obj.anunciosAtuais = filtrarAnunciosValidos(obj.anunciosAtuais)
-            if (obj.anunciosAtuais.length === 0 && obj.anuncioAtual && obj.anuncioAtual.status === "ativo" && obj.anuncioAtual.patrocinador && obj.anuncioAtual.patrocinador.status === "ativo" && anuncioDentroDoPeriodo(obj.anuncioAtual)) {
+            obj.anunciosAtuais = filtrarAnunciosValidos(obj.anunciosAtuais, city)
+            if (obj.anunciosAtuais.length === 0 && publicEligible(obj.anuncioAtual, city)) {
                 obj.anunciosAtuais = [obj.anuncioAtual]
             }
             obj.anuncioAtual = null

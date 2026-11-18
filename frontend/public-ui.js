@@ -125,7 +125,7 @@ function portalInitNavigation() {
     panel.className = 'account-shell'
     panel.style.display = 'none'
     panel.setAttribute('aria-labelledby','accountTitle')
-    panel.innerHTML = `<header class="account-identity"><img id="accountAvatar" src="/app-icon-192-v3.png" width="56" height="56" alt=""><div><h1 id="accountTitle" class="account-name"></h1><p class="account-subtitle"></p></div></header><p class="account-status"></p><div class="account-links"><button id="accountLogin" type="button" onclick="mostrarLogin()">${portalIcon('account')}<span>Entrar na minha conta</span>${portalIcon('arrow')}</button><button type="button" data-profile onclick="abrirPerfil()">${portalIcon('account')}<span>Meu perfil</span>${portalIcon('arrow')}</button></div><div class="account-section"><h2>Neste aparelho</h2><div class="account-links"><button type="button" onclick="portalShowFavorites()">${portalIcon('heart')}<span>Unidades favoritas</span>${portalIcon('arrow')}</button></div></div><div class="account-links account-session"><button type="button" data-logout onclick="logout()">${portalIcon('logout')}<span>Sair da conta</span>${portalIcon('arrow')}</button></div>`
+    panel.innerHTML = `<header class="account-identity"><img id="accountAvatar" src="/app-icon-192-v3.png" width="56" height="56" alt=""><div><h1 id="accountTitle" class="account-name"></h1><p class="account-subtitle"></p></div></header><p class="account-status"></p><div class="account-links"><button id="accountLogin" type="button" onclick="mostrarLogin()">${portalIcon('account')}<span>Entrar na minha conta</span>${portalIcon('arrow')}</button><button type="button" data-profile onclick="abrirPerfil()">${portalIcon('account')}<span>Meu perfil</span>${portalIcon('arrow')}</button></div><div class="account-section"><h2>Neste aparelho</h2><div class="account-links"><button type="button" onclick="portalShowFavorites()">${portalIcon('heart')}<span>Unidades favoritas</span>${portalIcon('arrow')}</button></div></div><div class="account-section"><h2>Parcerias</h2><div class="account-links"><button type="button" onclick="location.href='/parceiro.html'">${portalIcon('campaign')}<span>Portal do parceiro</span>${portalIcon('arrow')}</button></div></div><div class="account-links account-session"><button type="button" data-logout onclick="logout()">${portalIcon('logout')}<span>Sair da conta</span>${portalIcon('arrow')}</button></div>`
     document.getElementById('lista').before(panel)
     const actions = panel.querySelector('.account-links')
     for (const [id,icon,label] of [['btnCadastrar','edit','Atualizar atendimento'],['btnPainelAdmin','grid','Administração'],['btnComercial','campaign','Publicidade']]) {
@@ -315,6 +315,10 @@ function criarMidiaAnuncioPublico(a) {
 function atualizarAnuncioVisivel(s) {
     clearTimeout(s.timer)
     if (!s.element.isConnected || !s.visible || document.hidden || !s.element.getClientRects().length) {s.element.querySelectorAll('video').forEach(v=>v.pause());return}
+    const now = Date.now()
+    const active = s.anuncios.filter(a => (!a.dataInicio || +new Date(a.dataInicio) <= now) && (!a.dataFim || +new Date(a.dataFim) > now))
+    if (!active.length) { renderizarCarrosselAds(s.element.id, [], s.empty, 0, s.options); return }
+    if (active.length !== s.anuncios.length) { s.anuncios = active; s.index = 0; s.mounted = false }
     if (!s.mounted) {
         const a=s.anuncios[s.index%s.anuncios.length],link=linkSeguroAnuncio(a.linkDestino)
         const content=`<span class="ad-etiqueta-publicidade">Publicidade</span>${criarMidiaAnuncioPublico(a)}`
@@ -323,10 +327,16 @@ function atualizarAnuncioVisivel(s) {
     }
     const video=s.element.querySelector('video')
     if(video&&!portalSaveData&&!portalReducedMotion.matches)video.play().catch(()=>{})
-    if(s.anuncios.length>1&&s.options.rotacionar!==false&&!portalSaveData&&!portalReducedMotion.matches){
-        const a=s.anuncios[s.index%s.anuncios.length]
-        s.timer=setTimeout(()=>{s.index++;s.mounted=false;atualizarAnuncioVisivel(s)},Math.max(5,Number(a.tempoExibicaoSegundos||s.options.tempoTrocaSegundos)||6)*1000)
-    }
+    const rotate = s.anuncios.length > 1 && s.options.rotacionar !== false && !portalSaveData && !portalReducedMotion.matches
+    const a = s.anuncios[s.index % s.anuncios.length]
+    const rotation = rotate ? Math.max(5, Number(a.tempoExibicaoSegundos || s.options.tempoTrocaSegundos) || 6) * 1000 : Infinity
+    const expiry = Math.min(...s.anuncios.map(item => item.dataFim ? +new Date(item.dataFim) - now : Infinity))
+    const delay = Math.min(rotation, expiry, 86400000)
+    if (Number.isFinite(rotation) || Number.isFinite(expiry)) s.timer = setTimeout(() => {
+        if (rotate && delay >= rotation) s.index++
+        s.mounted = false
+        atualizarAnuncioVisivel(s)
+    }, Math.max(50, delay))
 }
 
 function renderizarCarrosselAds(elementId,anuncios,textoVazio='PUBLICIDADE',indiceInicial=0,opcoes={}) {
@@ -336,7 +346,7 @@ function renderizarCarrosselAds(elementId,anuncios,textoVazio='PUBLICIDADE',indi
     if(old){clearTimeout(old.timer);portalAdStates.delete(el);portalAdObserver?.unobserve(el)}
     if(!Array.isArray(anuncios)||!anuncios.length){el.classList.add('vazio');el.classList.remove('tem-ads');el.innerHTML=`<div class="ads-placeholder">${textoVazio}</div>`;return}
     el.classList.remove('vazio');el.classList.add('tem-ads')
-    const state={element:el,anuncios,index:indiceInicial,options:opcoes,visible:!portalAdObserver,mounted:false,timer:null}
+    const state={element:el,anuncios,index:indiceInicial,options:opcoes,empty:textoVazio,visible:!portalAdObserver,mounted:false,timer:null}
     portalAdStates.set(el,state)
     if(portalAdObserver)portalAdObserver.observe(el);else atualizarAnuncioVisivel(state)
 }

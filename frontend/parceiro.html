@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1554b5">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: blob:; media-src 'self' https: blob:; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <title>Portal do parceiro · Conecta Saúde</title>
+    <link rel="icon" href="/favicon-32.png">
+    <link rel="stylesheet" href="/partner.css">
+    <script src="/partner.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#partnerMain">Pular para o conteúdo</a>
+    <header class="partner-header">
+        <a class="partner-brand" href="/"><img src="/brand-mark.svg" width="28" height="36" alt=""><span>Conecta Saúde<small>Portal do parceiro</small></span></a>
+        <a class="partner-back" href="/">Voltar ao portal <span aria-hidden="true">↗</span></a>
+    </header>
+    <div class="partner-shell">
+        <nav class="partner-nav" aria-label="Portal do parceiro" hidden></nav>
+        <main id="partnerMain" tabindex="-1">
+            <div id="partnerStatus" class="partner-status" role="status" aria-live="polite">Carregando seu portal…</div>
+            <div id="partnerContent"></div>
+        </main>
+    </div>
+    <dialog id="partnerDialog" aria-labelledby="partnerDialogTitle"></dialog>
+</body>
+</html>

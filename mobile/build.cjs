@@ -49,6 +49,11 @@ function nativeSession(source) {
         `portalSession.${({ getItem: 'get', setItem: 'set', removeItem: 'delete' })[method]}(${quote}${key}${quote}`)
 }
 fs.writeFileSync(path.join(output, 'comercial.js'), nativeSession(fs.readFileSync(path.join(frontend, 'comercial.js'), 'utf8')))
+fs.writeFileSync(path.join(output, 'partner-admin.js'), nativeSession(fs.readFileSync(path.join(frontend, 'partner-admin.js'), 'utf8')))
+for (const file of ['partner.css', 'partner.js']) fs.copyFileSync(path.join(frontend, file), path.join(output, file))
+fs.writeFileSync(path.join(output, 'parceiro.html'), fs.readFileSync(path.join(frontend, 'parceiro.html'), 'utf8')
+    .replace("connect-src 'self';", `connect-src 'self' ${apiOrigin};`)
+    .replace('<script src="/partner.js" defer></script>', '<script src="/config.js"></script>\n    <script src="/partner.js" defer></script>'))
 for (const file of ['brand.css', 'experience.css', 'modern.css', 'entry.css', 'outfit.woff2', 'outfit-OFL.txt', 'brand-wordmark.svg', 'brand-mark.svg', 'comercial.css', 'icon-192-v2.png', 'app-icon-192-v3.png', 'favicon.ico',
     'favicon-16.png', 'favicon-32.png', 'images/units.json', 'images/unit-placeholder.svg']) {
     fs.copyFileSync(path.join(frontend, file), path.join(output, file))
@@ -110,6 +115,7 @@ replace(/    <div id="login"[\s\S]*?(?=    <div id="perfil")/, `    <div id="log
             <input id="senha" type="password" autocomplete="current-password" required>
             <p id="nativeLoginStatus" role="status"></p>
             <button type="submit">Entrar</button>
+            <a class="native-login-help" href="/parceiro.html">Entrar como parceiro</a>
             <button type="button" class="native-login-help" data-portal-info="support">Preciso de ajuda para entrar</button>
         </form>
     </div>
@@ -125,6 +131,7 @@ replace(/                <div class="footer-links">[\s\S]*?                <\/di
                     <button type="button" data-portal-info="privacy">Política de Privacidade</button>
                     <button type="button" data-portal-info="terms">Termos de Uso</button>
                     <button type="button" data-portal-info="sponsors">Patrocinadores</button>
+                    <a href="/parceiro.html">Portal do parceiro</a>
                     <button type="button" data-portal-info="support">Ajuda e contato</button>
                 </div>`)
 const contactIcon = whatsappUrl ? html.match(/<a href="https:\/\/wa\.me\/5513999999999[\s\S]*?(<svg[\s\S]*?<\/svg>)/)?.[1]
