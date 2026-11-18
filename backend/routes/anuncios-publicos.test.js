@@ -24,7 +24,7 @@ test('publicidade respeita período e parceiro ativo; painel não aceita visitan
         else assert.deepEqual(query.status,{ $ne:'removido' })
         return {populate:()=>({sort:async()=>rows})}
     })
-    const app=express();app.use(router)
+    const app=express();app.use(express.json(), router)
     const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve))
     t.after(()=>new Promise(resolve=>server.close(resolve)))
     const base='http://127.0.0.1:'+server.address().port
@@ -39,4 +39,8 @@ test('publicidade respeita período e parceiro ativo; painel não aceita visitan
     const admin=jwt.sign({id:'692000000000000000000001',tipo:'admin'},process.env.JWT_SECRET)
     role = 'admin'
     assert.equal((await fetch(base,{headers:{Authorization:admin}})).status,200)
+    for (const linkDestino of ['javascript:alert(1)', 'data:text/html,test', 'https://user:password@example.com']) {
+        const response = await fetch(base, { method: 'POST', headers: { Authorization: admin, 'Content-Type': 'application/json' }, body: JSON.stringify({ patrocinador: 'example', nome: 'Teste', posicao: 'card', linkDestino }) })
+        assert.equal(response.status, 400, 'Unsafe ad links must be rejected before creating an ad')
+    }
 })

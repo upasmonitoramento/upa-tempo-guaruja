@@ -29,6 +29,19 @@ function detectarTipoMidia(nomeArquivo) {
     return "imagem"
 }
 
+function urlValida(value, protocols) {
+    if (typeof value !== 'string' || value.length > 2048) return false
+    try {
+        const url = new URL(value)
+        return protocols.includes(url.protocol) && !url.username && !url.password && Boolean(url.hostname)
+    } catch { return false }
+}
+
+function linksValidos(linkDestino, midiaUrl) {
+    return (linkDestino == null || linkDestino === '' || urlValida(linkDestino, ['http:', 'https:'])) &&
+        (midiaUrl == null || midiaUrl === '' || urlValida(midiaUrl, ['https:']))
+}
+
 function anuncioDentroDoPeriodo(anuncio) {
     const agora = new Date()
 
@@ -221,6 +234,8 @@ router.post(
                 midiaUrl
             } = req.body
 
+            if (!linksValidos(linkDestino, midiaUrl)) return res.status(400).json({ erro: 'Informe um link HTTP/HTTPS válido e uma URL HTTPS para a mídia, sem usuário ou senha na URL.' })
+
             if (!patrocinador || !nome || !posicao) {
                 return res.status(400).json({
                     erro: "Informe patrocinador, nome do anúncio e posição"
@@ -334,6 +349,8 @@ router.put(
                 status,
                 midiaUrl
             } = req.body
+
+            if (!linksValidos(linkDestino, midiaUrl)) return res.status(400).json({ erro: 'Informe um link HTTP/HTTPS válido e uma URL HTTPS para a mídia, sem usuário ou senha na URL.' })
 
             if (patrocinador) {
                 const patrocinadorExiste = await Patrocinador.findById(patrocinador)

@@ -2044,7 +2044,7 @@
             try {
                 const link = new URL(url)
 
-                if (link.protocol === "http:" || link.protocol === "https:") {
+                if ((link.protocol === "http:" || link.protocol === "https:") && !link.username && !link.password) {
                     return link.href
                 }
 
@@ -3638,7 +3638,7 @@
 
                 <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
                     <b>Link de destino</b><br>
-                    ${a.linkDestino ? `<a href="${escapeHTML(a.linkDestino)}" target="_blank">${escapeHTML(a.linkDestino)}</a>` : "-"}
+                    ${linkSeguroAnuncio(a.linkDestino) ? `<a href="${escapeHTML(linkSeguroAnuncio(a.linkDestino))}" target="_blank" rel="noopener noreferrer">${escapeHTML(a.linkDestino)}</a>` : "-"}
                 </div>
 
                 <div style="background:#f4f6f9; padding:16px; border-radius:16px; margin-top:14px;">
