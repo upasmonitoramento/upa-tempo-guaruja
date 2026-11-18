@@ -373,3 +373,7 @@ body:is([data-portal-view="account"],[data-portal-view="login"],[data-portal-vie
     #portalBottomNav button[aria-current="page"] { outline: 2px solid Highlight; outline-offset: -3px; }
     .classic-health-hero, .unit-card, .account-links { border: 1px solid CanvasText; }
 }
+
+/* Keep all administrative labels at the same compact size, including injected notices. */
+#adminPanel .admin-tab-btn > span { font-size: inherit; line-height: 1.25; }
+#adminPanel .admin-return-commercial { margin: 0 0 12px; min-height: 44px; padding: 10px 14px; border: 1px solid #d3e0ef; border-radius: 10px; background: white; color: #124a9f; font: inherit; cursor: pointer; }

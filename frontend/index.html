@@ -2566,7 +2566,7 @@
             finally { if (button) button.disabled = false }
         }
 
-        async function abrirPainelAdmin() {
+        async function abrirPainelAdmin(abaInicial) {
             portalSetView('admin')
             limparTimersAds()
             fecharMenuUsuario()
@@ -2589,7 +2589,7 @@
                         </p>
 
                         <div class="admin-tabs">
-                            <button class="admin-tab-btn" onclick="abrirComercial()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/></svg>Parcerias</button>
+                            <button class="admin-tab-btn" onclick="abrirComercial()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/></svg>Publicidade</button>
                             <button id="tabBtnUsuarios" class="admin-tab-btn" onclick="selecionarAbaAdmin('usuarios')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M17 3a4 4 0 0 1 0 8M22 21v-2a7 7 0 0 0-3-5"/></svg>Usuários</button>
 
                             <button id="tabBtnPatrocinadores" class="admin-tab-btn" onclick="selecionarAbaAdmin('patrocinadores')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h16V9M9 4v5h11M9 4h6l5 5M7 13h10M7 16h7"/></svg>Patrocinadores</button>
@@ -2735,7 +2735,7 @@
             document.getElementById("anuncioStatus").addEventListener("change", buscarAnunciosAdmin)
             document.getElementById("anuncioPosicao").addEventListener("change", buscarAnunciosAdmin)
 
-            selecionarAbaAdmin(adminAbaAtual)
+            selecionarAbaAdmin(["usuarios", "patrocinadores", "anuncios", "areasAds", "historico"].includes(abaInicial) ? abaInicial : adminAbaAtual)
 
             await carregarUsuariosAdmin()
             await carregarPatrocinadoresAdmin()

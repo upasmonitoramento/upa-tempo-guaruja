@@ -64,13 +64,13 @@ function conectaStart() {
     const finish = () => { splash.remove(); city.inert = false; document.getElementById('conectaCitiesTitle').focus({ preventScroll:true }) }
     setTimeout(finish, portalReducedMotion.matches ? 0 : 1900)
     const openAdmin = abrirPainelAdmin
-    abrirPainelAdmin = async () => {
-        await openAdmin()
+    abrirPainelAdmin = async (...args) => {
+        await openAdmin(...args)
         const tabs = document.querySelector('#adminPanel .admin-tabs')
         if (tabs && !document.getElementById('btnAvisos')) {
             const button = document.createElement('button')
             button.id = 'btnAvisos'; button.className = 'admin-tab-btn'; button.type = 'button'
-            button.innerHTML = `${portalIcon('campaign')}<span>Avisos</span>`
+            button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Avisos</span>'
             button.onclick = conectaEditarAviso
             tabs.append(button)
         }

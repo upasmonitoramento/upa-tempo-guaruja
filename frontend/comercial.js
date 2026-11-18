@@ -80,7 +80,7 @@
         } catch (error) { status.textContent = error.message }
     }
 
-    async function showPanel() {
+    async function showPanel(initialTab) {
         fecharMenuUsuario()
         const dialog = document.createElement("dialog")
         dialog.className = "commercial-dialog"
@@ -106,7 +106,7 @@
         const status = dialog.querySelector("[role=status]")
         const section = dialog.querySelector("section")
         let items = []
-        let selected = "resumo"
+        let selected = ["resumo", "parcerias", "campanhas"].includes(initialTab) ? initialTab : "resumo"
         let filter = "todas"
         let search = ""
         let companyKey = null
@@ -146,9 +146,23 @@
                     <button data-company="${escape(item._id)}" aria-label="Abrir ficha de ${escape(item.company)}">Abrir ficha <span aria-hidden="true">↗</span></button></article>`
             }).join("") || '<div class="commercial-empty"><h3>Nenhuma parceria encontrada</h3><p>Altere a busca ou o filtro para ver outras propostas.</p></div>'
         }
+        async function openManualTools(area = 'areasAds') {
+            if (!mayLeave()) return
+            const returnTab = selected
+            dialog.close()
+            await abrirPainelAdmin(area)
+            const panel = document.getElementById('adminPanel')
+            const back = document.createElement('button')
+            back.type = 'button'
+            back.className = 'admin-return-commercial'
+            back.textContent = '← Voltar à publicidade'
+            back.onclick = () => { back.remove(); showPanel(returnTab) }
+            panel.prepend(back)
+            back.focus({ preventScroll: true })
+        }
         const load = async () => {
             items = await request("/painel", { admin: true })
-            status.textContent = preparation ? "Painel em preparação. Consulta liberada; criação de propostas e cobranças desativadas." : sandbox ? "Ambiente de teste. Use dados fictícios." : ""
+            status.textContent = preparation ? "Cobranças reais desligadas. Para publicar uma arte própria ou uma cortesia agora, vá em Campanhas → Anúncios manuais. Propostas pagas e convites ainda dependem da ativação comercial e do email." : sandbox ? "Ambiente de teste. Use dados fictícios." : ""
         }
         async function render(tab) {
             // Each screen inherits the current billing permissions, including its newly rendered buttons.
@@ -177,12 +191,12 @@
             }
             if (tab === "campanhas") {
                 if (window.renderPartnerReviews) {
-                    await window.renderPartnerReviews(section, { message: text => { status.textContent = text }, legacy: () => { dialog.close(); abrirPainelAdmin() } })
+                    await window.renderPartnerReviews(section, { message: text => { status.textContent = text }, legacy: openManualTools })
                     return
                 }
                 section.innerHTML = `<div class="commercial-card"><h2>Prévia de campanhas</h2><p>Confira o que foi combinado em cada proposta.</p><button data-legacy>Gerenciar anúncios e artes</button></div>
                     ${items.map(item => `<article class="commercial-card">${summary(item)}<p>${item.accepted && item.paymentStatus === "RECEIVED" ? "Aceite e Pix confirmados. Confira a arte e a publicação no painel de anúncios." : "Aguardando aceite ou recebimento."}</p></article>`).join("")}`
-                section.querySelector("[data-legacy]").onclick = () => { dialog.close(); abrirPainelAdmin() }
+                section.querySelector("[data-legacy]").onclick = () => openManualTools("anuncios")
                 return
             }
             if (companyKey && !showForm) {
