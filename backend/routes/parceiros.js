@@ -2,7 +2,6 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const rateLimit = require('express-rate-limit')
-const multer = require('multer')
 const Account = require('../models/PartnerAccount')
 const Token = require('../models/PartnerToken')
 const Partnership = require('../models/CommercialPartnership')
@@ -10,9 +9,8 @@ const partnerAuth = require('../middlewares/partnerAuth')
 const emailService = require('../config/recoveryEmail')
 const access = require('../services/partnerAccess')
 const payments = require('../services/commercialPayments')
-const { webURL } = require('../services/partnerRules')
-const media = require('../services/partnerMedia')
-const r2 = require('../config/r2')
+const campaignMedia = require('../services/partnerCampaignMedia')
+const { requireEntitlement, fundingMatch } = require('../services/partnerFunding')
 const router = express.Router()
 const authLimit = rateLimit({ windowMs: 15 * 60000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { erro: 'Muitas tentativas. Aguarde 15 minutos.' } })
 const dummyPassword = '$2b$10$mJEfJtK8mMAOox7lIQrZqOjU/F9iQsWV5NJ0AL9Aa.b3.rWBou/u.'
@@ -22,7 +20,6 @@ const validPassword = value => typeof value === 'string' && value.trim().length 
 const validId = id => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id)
 const accountView = a => ({ id: a._id, name: a.name, email: a.email, verifiedAt: a.verifiedAt })
 const session = a => ({ token: jwt.sign({ sub: String(a._id), version: a.sessionVersion || 0, environment: payments.environment() }, process.env.JWT_SECRET, { audience: 'conecta-partner', expiresIn: '2h' }), account: accountView(a) })
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 1, fields: 0, parts: 2 } }).single('file')
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
 router.get('/config', (req, res) => res.json({ emailReady: emailService.configured(), environment: payments.environment() }))
 
@@ -50,14 +47,14 @@ router.post('/login', authLimit, async (req, res) => {
 })
 
 router.post('/acesso/solicitar', authLimit, async (req, res) => {
-    if (!emailService.configured()) return res.status(503).json({ erro: 'O envio de email ainda está sendo conectado. Seu acesso será enviado após a confirmação do pagamento.' })
+    if (!emailService.configured()) return res.status(503).json({ erro: 'O envio de email ainda está sendo conectado. O acesso exige convite por email após pagamento recebido ou cortesia autorizada.' })
     const email = emailOf(req.body.email)
     if (!validEmail(email)) return res.status(400).json({ erro: 'Informe um email válido.' })
     const account = await Account.findOne({ email, environment: payments.environment(), active: true })
     if (account) await access.sendAccess(account, 'reset')
     else {
-        const p = await Partnership.findOne({ email, paymentStatus: 'RECEIVED', portalVersion: 1 }).sort({ createdAt: -1 })
-        if (p) { await payments.requireReceived(p); await access.sendInvite(p, true) }
+        const p = await Partnership.findOne({ email, portalVersion: 1, $or: [{ paymentStatus: 'RECEIVED', fundingType: { $ne: 'courtesy' } }, { fundingType: 'courtesy', courtesyRevokedAt: null }] }).sort({ createdAt: -1 })
+        if (p) { await requireEntitlement(p); await access.sendInvite(p, true) }
     }
     res.json({ msg: 'Se houver uma parceria elegível com esse email, enviaremos um link. Confira também o spam.' })
 })
@@ -85,9 +82,9 @@ router.post('/link/confirmar', authLimit, async (req, res) => {
         if (!result.matchedCount) return res.status(410).json({ erro: 'Acesso indisponível. Solicite um novo link.' })
         return res.json({ msg: 'Senha atualizada e acesso desbloqueado. Entre novamente.' })
     }
-    const p = await Partnership.findOne({ _id: token.partnership, email: token.email, accepted: { $ne: null }, portalVersion: 1 })
+    const p = await Partnership.findOne({ _id: token.partnership, email: token.email, portalVersion: 1, $or: [{ accepted: { $ne: null } }, { fundingType: 'courtesy' }] })
     if (!p) return res.status(410).json({ erro: 'A proposta não está disponível.' })
-    await payments.requireReceived(p)
+    await requireEntitlement(p)
     let account = await Account.findOne({ email: token.email, environment: payments.environment() }).select('+sessionVersion')
     if (account) {
         let current
@@ -101,7 +98,7 @@ router.post('/link/confirmar', authLimit, async (req, res) => {
     const consumed = await Token.findOneAndDelete({ _id: token._id, environment: payments.environment(), expires: { $gt: new Date() } })
     if (!consumed) return res.status(410).json({ erro: 'Este link já foi utilizado.' })
     if (!account) account = await Account.create({ email: token.email, name: p.representative || p.company, password: await bcrypt.hash(req.body.password, 10), environment: payments.environment(), verifiedAt: new Date(), sessionVersion: 0, policyVersion: '2026-11-18', policyAcceptedAt: new Date() })
-    const bound = await Partnership.updateOne({ _id: p._id, email: token.email, $or: [{ partnerAccount: null }, { partnerAccount: account._id }] }, { $set: { partnerAccount: account._id } })
+    const bound = await Partnership.updateOne({ _id: p._id, email: token.email, ...fundingMatch(p), portalPaused: { $ne: true }, $or: [{ partnerAccount: null }, { partnerAccount: account._id }] }, { $set: { partnerAccount: account._id, ...(p.fundingType === 'courtesy' && !p.accepted ? { accepted: new Date() } : {}) } })
     if (!bound.matchedCount) return res.status(409).json({ erro: 'Não foi possível vincular a campanha. Solicite outro link.' })
     res.json(session(account))
 })
@@ -126,7 +123,7 @@ function campaignView(p) {
     return { id: p._id, company: p.company, packageName: p.packageName, cents: p.cents, cities: p.cities, positions: p.positions,
         durationDays: p.durationDays, requirements: p.requirements, assets: p.assets, revision: p.revision || 0, reviewState: p.reviewState || 'draft',
         reviewFeedback: p.reviewFeedback, campaignStart: p.campaignStart, campaignEnd: p.campaignEnd, publishedAt: p.publishedAt,
-        paymentStatus: p.paymentStatus, paymentUrl: p.paymentUrl, due: p.due, destination: p.destination || '',
+        fundingType: p.fundingType || 'paid', courtesyRevokedAt: p.courtesyRevokedAt, paymentStatus: p.paymentStatus, paymentUrl: p.paymentUrl, due: p.due, destination: p.destination || '',
         portalPaused: p.portalPaused, renewalRequestedAt: p.renewalRequestedAt, createdAt: p.createdAt }
 }
 router.get('/campanhas', async (req, res) => {
@@ -152,58 +149,12 @@ async function ownCampaign(req, res, next) {
 router.use('/campanhas/:id', ownCampaign)
 router.get('/campanhas/:id', (req, res) => res.json(campaignView(req.campaign)))
 router.post('/campanhas/:id/pagamento', async (req, res) => {
+    if (req.campaign.fundingType === 'courtesy') { await requireEntitlement(req.campaign); return res.json(campaignView(req.campaign)) }
     if (req.campaign.paymentId) await payments.refresh(req.campaign, await payments.asaas('/payments/' + encodeURIComponent(req.campaign.paymentId)))
     res.json(campaignView(req.campaign))
 })
-router.post('/campanhas/:id/artes/:key', async (req, res) => {
-    const p = req.campaign
-    if (p.campaignEnd && p.campaignEnd <= new Date()) return res.status(409).json({ erro: 'O período contratado encerrou. Solicite a renovação para enviar novas artes.' })
-    const requirement = p.requirements.find(r => r.key === req.params.key)
-    const revision = Number(req.query.revision)
-    if (!requirement || !Number.isInteger(revision) || revision !== (p.revision || 0)) return res.status(409).json({ erro: 'O formato ou a campanha mudou. Atualize antes de enviar.' })
-    if (p.reviewState === 'pending' || p.portalPaused) return res.status(409).json({ erro: 'Aguarde a revisão ou liberação desta campanha.' })
-    if (p.paymentStatus !== 'RECEIVED') return res.status(409).json({ erro: 'O envio das artes exige pagamento recebido.' })
-    if (!p.paymentVerifiedAt || Date.now() - +new Date(p.paymentVerifiedAt) > 300000) await payments.requireReceived(p)
-    const lease = new Date(Date.now() + 60000)
-    const claim = await Partnership.updateOne({ _id: p._id, partnerAccount: req.partner._id, revision, reviewState: { $ne: 'pending' }, $or: [{ mediaLockUntil: null }, { mediaLockUntil: { $lt: new Date() } }] }, { $set: { mediaLockUntil: lease } })
-    if (!claim.modifiedCount) return res.status(409).json({ erro: 'Há outro envio em andamento. Aguarde e atualize.' })
-    let stored, thumbnail, saved = false
-    try {
-        await new Promise((resolve, reject) => upload(req, res, error => error ? reject(Object.assign(error, { status: 400 })) : resolve()))
-        if (!req.file) return res.status(400).json({ erro: 'Escolha o arquivo da arte.' })
-        const metadata = await media.inspect(req.file, requirement)
-        stored = await r2.uploadArquivoR2(req.file, { pasta: 'parceiros', prefixo: 'arte' })
-        if (metadata.thumbnail) {
-            thumbnail = await r2.uploadArquivoR2({ originalname: 'miniatura.webp', mimetype: 'image/webp', buffer: metadata.thumbnail }, { pasta: 'parceiros', prefixo: 'miniatura' })
-            delete metadata.thumbnail
-        }
-        const asset = { key: requirement.key, url: stored.url, storageKey: stored.key, thumbnailUrl: thumbnail?.url, thumbnailKey: thumbnail?.key, ...metadata, bytes: req.file.buffer.length }
-        const old = p.assets.find(a => a.key === requirement.key)
-        const assets = p.assets.filter(a => a.key !== requirement.key).map(a => a.toObject ? a.toObject() : a)
-        assets.push(asset)
-        const result = await Partnership.updateOne({ _id: p._id, revision, mediaLockUntil: lease, paymentStatus: 'RECEIVED' }, { $set: { assets, reviewState: 'draft', reviewFeedback: '' }, $inc: { revision: 1 }, $unset: { approvalHash: 1, approvalExpires: 1 } })
-        if (!result.modifiedCount) throw Object.assign(new Error('A campanha mudou durante o envio. Atualize e tente novamente.'), { status: 409 })
-        saved = true
-        if (old?.storageKey) await media.cleanupDraft(p, old)
-        res.json({ asset, revision: revision + 1 })
-    } finally {
-        if (stored && !saved) { try { await r2.deletePartnerAsset(stored.key) } catch (error) { console.error('Limpeza de envio incompleto:', error.name) } }
-        if (thumbnail && !saved) { try { await r2.deletePartnerAsset(thumbnail.key) } catch (error) { console.error('Limpeza de miniatura:', error.name) } }
-        await Partnership.updateOne({ _id: p._id, mediaLockUntil: lease }, { $unset: { mediaLockUntil: 1 } })
-    }
-})
-router.post('/campanhas/:id/revisao', async (req, res) => {
-    const p = req.campaign, revision = Number(req.body.revision)
-    if (p.campaignEnd && p.campaignEnd <= new Date()) return res.status(409).json({ erro: 'O período contratado encerrou. Solicite a renovação.' })
-    if (revision !== (p.revision || 0) || !Number.isInteger(revision) || p.reviewState === 'pending' || p.portalPaused || p.mediaLockUntil > new Date()) return res.status(409).json({ erro: 'A campanha mudou ou já está em revisão. Atualize.' })
-    if (!p.requirements.length || !p.requirements.every(r => p.assets.some(a => a.key === r.key))) return res.status(400).json({ erro: 'Envie uma arte para cada formato contratado.' })
-    const destination = typeof req.body.destination === 'string' ? req.body.destination.trim() : ''
-    if (destination && !webURL(destination)) return res.status(400).json({ erro: 'Informe um link HTTPS válido, sem usuário ou senha na URL, ou deixe em branco.' })
-    await payments.requireReceived(p)
-    const result = await Partnership.updateOne({ _id: p._id, revision, reviewState: { $ne: 'pending' }, $or: [{ mediaLockUntil: null }, { mediaLockUntil: { $lte: new Date() } }] }, { $set: { destination, reviewState: 'pending', submittedAt: new Date(), reviewFeedback: '' }, $inc: { revision: 1 }, $unset: { approvalHash: 1, approvalExpires: 1 } })
-    if (!result.modifiedCount) return res.status(409).json({ erro: 'A campanha mudou. Atualize antes de continuar.' })
-    res.json({ msg: 'Artes enviadas para revisão. Você acompanhará a resposta aqui.' })
-})
+router.post('/campanhas/:id/artes/:key', campaignMedia.uploadArt)
+router.post('/campanhas/:id/revisao', campaignMedia.submitReview)
 router.post('/campanhas/:id/renovacao', async (req, res) => {
     if (!['keep', 'new'].includes(req.body.art)) return res.status(400).json({ erro: 'Escolha manter as artes ou enviar novas.' })
     if (!req.campaign.campaignEnd) return res.status(409).json({ erro: 'A campanha ainda não foi publicada.' })

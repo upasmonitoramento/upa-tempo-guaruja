@@ -38,9 +38,9 @@
     }
 
     function summary(item) {
-        return `<h2>${escape(item.company)}</h2><p>${escape(item.packageName)} · ${money(item.cents)}</p>
+        return `<h2>${escape(item.company)}</h2><p>${escape(item.packageName)} · ${item.fundingType === 'courtesy' ? 'Cortesia · sem cobrança' : money(item.cents)}</p>
             <p>${escape(item.cities.join(", "))} · ${escape(item.positions.map(slot => slots[slot]).join(", "))}</p>
-            <p>${item.durationDays ? `${item.durationDays} dias de campanha. Início após recebimento e aprovação. ` : `Campanha de ${escape(item.start)} até ${escape(item.end)}. `}Pix vence em ${escape(item.due)}.</p>`
+            <p>${item.durationDays ? `${item.durationDays} dias de campanha. Início após ${item.fundingType === 'courtesy' ? 'a autorização da cortesia' : 'o recebimento'} e aprovação. ` : `Campanha de ${escape(item.start)} até ${escape(item.end)}. `}${item.fundingType === "courtesy" ? "Sem cobrança de Pix." : `Pix vence em ${escape(item.due)}.`}</p>`
     }
 
     function handleForm(form, status, action) {
@@ -82,6 +82,16 @@
 
     async function showPanel(initialTab) {
         fecharMenuUsuario()
+        const entryView = document.body.dataset.portalView
+        const entryAdminTab = typeof adminAbaAtual === 'string' ? adminAbaAtual : 'usuarios'
+        let usedTools = false
+        const returnToEntry = () => {
+            if (entryView === 'admin') return abrirPainelAdmin(entryAdminTab)
+            if (entryView === 'account') return abrirConta()
+            if (entryView === 'map') return mostrarMapa()
+            if (entryView === 'favorites') return portalShowFavorites()
+            return mostrarLista()
+        }
         const dialog = document.createElement("dialog")
         dialog.className = "commercial-dialog"
         dialog.setAttribute("aria-label", "Gestão de publicidade")
@@ -91,11 +101,18 @@
             <button data-tab="resumo">${icon('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="18" width="7" height="3" rx="1"/>')}Resumo</button><button data-tab="parcerias">${icon('<path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/>')}Parcerias</button><button data-tab="campanhas">${icon('<path d="M4 10h4l12-5v14L8 14H4zM8 14l2 7h4l-2-6M4 10v4"/>')}Campanhas</button>
             </nav><section></section></div></div>`
         document.body.append(dialog)
-        dialog.addEventListener("close", () => dialog.remove())
+        let legacyMount = null, toolLoading = false
+        function restoreTools() {
+            if (!legacyMount) return
+            fecharModalAdmin()
+            for (const [node, place] of legacyMount) { place.replaceWith(node); if (node.id === 'adminPanel') node.style.display = 'none' }
+            legacyMount = null
+        }
+        dialog.addEventListener("close", () => { restoreTools(); dialog.remove(); if (usedTools) returnToEntry() })
         let proposalNeedsAttention = false
-        const mayLeave = () => !proposalNeedsAttention || confirm('Há uma proposta não salva ou um link privado recém-criado. Você já guardou o que precisa e deseja sair?')
+        const mayLeave = () => !(proposalNeedsAttention || legacyMount && document.getElementById('modalAdmin').style.display === 'flex') || confirm('Há um formulário aberto, alterações não salvas ou um link privado recém-criado. Deseja sair desta tela?')
         dialog.querySelector("[data-close]").onclick = () => { if (mayLeave()) dialog.close() }
-        dialog.addEventListener('cancel', event => { if (!mayLeave()) event.preventDefault() })
+        dialog.addEventListener('cancel', event => { if (legacyMount && document.getElementById('modalAdmin').style.display === 'flex') { event.preventDefault(); fecharModalAdmin(); return }; if (!mayLeave()) event.preventDefault() })
         const refreshButton = document.createElement("button")
         refreshButton.textContent = "↻"
         refreshButton.setAttribute("aria-label", "Atualizar dados")
@@ -114,14 +131,16 @@
         const currentDate = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date())
         const keyFor = item => JSON.stringify([item.company, item.email])
         const recent = item => Date.now() - new Date(item.createdAt).getTime() < 7 * 86400000
-        const settled = item => item.paymentStatus === "RECEIVED"
-        const inPeriod = item => settled(item) && item.start <= currentDate() && item.end >= currentDate()
+        const settled = item => item.fundingType !== "courtesy" && item.paymentStatus === "RECEIVED"
+        const courtesy = item => item.fundingType === "courtesy" && !item.courtesyRevokedAt
+        const eligible = item => settled(item) || courtesy(item)
+        const inPeriod = item => eligible(item) && !item.portalPaused && item.campaignStart && new Date(item.campaignStart) <= new Date() && new Date(item.campaignEnd) > new Date()
         const matchesFilter = item => ({
             todas: true, recentes: recent(item), recebidas: settled(item), vigentes: inPeriod(item),
-            pendentes: !settled(item) && !["REFUNDED", "DELETED"].includes(item.paymentStatus),
+            pendentes: item.fundingType !== "courtesy" && !settled(item) && !["REFUNDED", "DELETED"].includes(item.paymentStatus),
             encerradas: item.end < currentDate()
         })[filter]
-        const badge = item => `<span class="commercial-badge ${settled(item) ? "is-paid" : ""}">${escape(paymentStatus[item.paymentStatus] || item.paymentStatus || "Sem cobrança")}</span>`
+        const badge = item => item.fundingType === "courtesy" ? `<span class="commercial-badge">${item.courtesyRevokedAt ? "Cortesia encerrada" : "Cortesia"}</span>` : `<span class="commercial-badge ${settled(item) ? "is-paid" : ""}">${escape(paymentStatus[item.paymentStatus] || item.paymentStatus || "Sem cobrança")}</span>`
         const openCompany = item => { companyKey = keyFor(item); showForm = false; render("parcerias"); section.focus() }
         const bindCompanies = () => section.querySelectorAll("[data-company]").forEach(button => {
             button.onclick = () => openCompany(items.find(item => item._id === button.dataset.company))
@@ -147,24 +166,36 @@
             }).join("") || '<div class="commercial-empty"><h3>Nenhuma parceria encontrada</h3><p>Altere a busca ou o filtro para ver outras propostas.</p></div>'
         }
         async function openManualTools(area = 'areasAds') {
-            if (!mayLeave()) return
+            if (!mayLeave() || toolLoading) return
+            toolLoading = true
+            usedTools = true
             const returnTab = selected
-            dialog.close()
-            await abrirPainelAdmin(area)
-            const panel = document.getElementById('adminPanel')
-            const back = document.createElement('button')
-            back.type = 'button'
-            back.className = 'admin-return-commercial'
-            back.textContent = '← Voltar à publicidade'
-            back.onclick = () => { back.remove(); showPanel(returnTab) }
-            panel.prepend(back)
-            back.focus({ preventScroll: true })
+            dialog.querySelectorAll('[data-tab]').forEach(button => { button.disabled = true })
+            status.textContent = 'Carregando ferramentas…'
+            try {
+                restoreTools()
+                await abrirPainelAdmin(area)
+                if (!dialog.isConnected) { document.getElementById('adminPanel').style.display = 'none'; returnToEntry(); return }
+                const nodes = ['adminPanel', 'modalAdmin'].map(id => document.getElementById(id))
+                legacyMount = nodes.map(node => { const place = document.createComment('publicidade-tools'); node.before(place); return [node, place] })
+                const back = document.createElement('button')
+                back.type = 'button'; back.className = 'admin-return-commercial'; back.textContent = '← Voltar à publicidade'
+                back.onclick = () => { if (mayLeave()) render(returnTab) }
+                const heading = document.createElement('h2')
+                heading.textContent = ({ areasAds: 'Espaços de publicidade', anuncios: 'Anúncios manuais', patrocinadores: 'Empresas cadastradas' })[area] || 'Ferramentas'
+                section.replaceChildren(back, heading, ...nodes)
+                status.textContent = 'Ferramentas manuais. Os anúncios já publicados foram preservados.'
+                back.focus({ preventScroll: true })
+            } catch (error) { status.textContent = error.message }
+            finally { toolLoading = false; dialog.querySelectorAll('[data-tab]').forEach(button => { button.disabled = false }) }
         }
         const load = async () => {
             items = await request("/painel", { admin: true })
-            status.textContent = preparation ? "Cobranças reais desligadas. Para publicar uma arte própria ou uma cortesia agora, vá em Campanhas → Anúncios manuais. Propostas pagas e convites ainda dependem da ativação comercial e do email." : sandbox ? "Ambiente de teste. Use dados fictícios." : ""
+            status.textContent = preparation ? "Cobranças reais desligadas. Cortesias e anúncios manuais estão disponíveis. Convites aguardam a conexão do email; propostas pagas dependem da ativação comercial." : sandbox ? "Ambiente de teste. Use dados fictícios." : ""
         }
         async function render(tab) {
+            if (toolLoading) return
+            restoreTools()
             // Each screen inherits the current billing permissions, including its newly rendered buttons.
             queueMicrotask(() => {
                 if (preparation) section.querySelectorAll("[data-new],[data-pix]").forEach(button => { button.disabled = true; button.title = "Disponível após a ativação comercial" })
@@ -179,7 +210,7 @@
             if (tab === "resumo") {
                 section.innerHTML = `<div class="commercial-section-title"><div><p class="commercial-eyebrow">ACOMPANHAMENTO</p><h2>Visão geral</h2><p>Parcerias e pagamentos em um só lugar.</p></div><button data-new>Nova proposta</button></div>
                     <div class="commercial-metrics">
-                    ${[["recentes","Novas nos últimos 7 dias",items.filter(recent).length],["recebidas","Pix recebidos",items.filter(settled).length],["pendentes","Pendentes",items.filter(item => !settled(item) && !["REFUNDED","DELETED"].includes(item.paymentStatus)).length],["vigentes","Pagas no período",items.filter(inPeriod).length]].map(([key,label,count])=>`<button data-filter-link="${key}"><span>${label}</span><strong>${count}</strong><span class="commercial-metric-arrow" aria-hidden="true">↗</span></button>`).join("")}</div>
+                    ${[["recentes","Novas nos últimos 7 dias",items.filter(recent).length],["recebidas","Pix recebidos",items.filter(settled).length],["pendentes","Pendentes",items.filter(item => item.fundingType !== "courtesy" && !settled(item) && !["REFUNDED","DELETED"].includes(item.paymentStatus)).length],["vigentes","Campanhas no ar",items.filter(inPeriod).length]].map(([key,label,count])=>`<button data-filter-link="${key}"><span>${label}</span><strong>${count}</strong><span class="commercial-metric-arrow" aria-hidden="true">↗</span></button>`).join("")}</div>
                     <div class="commercial-section-title"><h2>Chegaram recentemente</h2><button data-all>Ver todas</button></div>
                     <div class="commercial-companies">${companyCards(items.filter(recent).slice(0, 6))}</div>
                     <p class="commercial-muted">Exibindo até 100 propostas recentes. Pagamento recebido e período vigente são etapas anteriores à aprovação da arte e à publicação.</p>`
@@ -191,7 +222,7 @@
             }
             if (tab === "campanhas") {
                 if (window.renderPartnerReviews) {
-                    await window.renderPartnerReviews(section, { message: text => { status.textContent = text }, legacy: openManualTools })
+                    await window.renderPartnerReviews(section, { message: text => { status.textContent = text }, legacy: openManualTools, changed: load })
                     return
                 }
                 section.innerHTML = `<div class="commercial-card"><h2>Prévia de campanhas</h2><p>Confira o que foi combinado em cada proposta.</p><button data-legacy>Gerenciar anúncios e artes</button></div>
@@ -207,10 +238,10 @@
                     <div class="commercial-card commercial-company-profile"><p class="commercial-eyebrow">FICHA DA PARCERIA</p><h2>${escape(company.company)}</h2>
                     <p>${escape(company.email)}</p><p>${contracts.length} proposta(s) · ${contracts.filter(settled).length} Pix recebido(s)</p>
                     <button data-new>Nova proposta para esta empresa</button></div>
-                    <h2>Histórico de propostas</h2><div class="commercial-contracts">${contracts.map(item => `<article class="commercial-card">${summary(item)}<div class="commercial-card-meta">${badge(item)}<span>${item.accepted ? "Aceite registrado" : "Aguardando aceite"}</span></div>
+                    <h2>Histórico de propostas</h2><div class="commercial-contracts">${contracts.map(item => `<article class="commercial-card">${summary(item)}<div class="commercial-card-meta">${badge(item)}<span>${item.fundingType === "courtesy" ? "Autorização administrativa registrada" : item.accepted ? "Aceite registrado" : "Aguardando aceite"}</span></div>
                     <p class="commercial-muted">Responsável · ${escape(item.representative || "Não informado")}</p>
                     <div class="commercial-actions">${item.paymentUrl && !window.Capacitor?.isNativePlatform() ? `<a class="commercial-button" href="${escape(item.paymentUrl)}" target="_blank" rel="noopener">Abrir Pix${testLabel()}</a>` : ""}
-                    ${item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix" + testLabel()}</button>` : ""}${item.paymentStatus === 'RECEIVED' && item.portalVersion === 1 ? `<button data-partner-invite="${escape(item._id)}">Enviar acesso ao parceiro</button>` : ''}</div></article>`).join("")}</div>`
+                    ${item.fundingType !== 'courtesy' && item.accepted && (item.paymentId || !window.Capacitor?.isNativePlatform()) ? `<button data-pix="${escape(item._id)}">${item.paymentId ? "Conferir pagamento" : "Gerar Pix" + testLabel()}</button>` : ""}${(settled(item) || courtesy(item)) && item.portalVersion === 1 ? `<button data-partner-invite="${escape(item._id)}">Enviar acesso ao parceiro</button>` : ''}</div></article>`).join("")}</div>`
                 section.querySelector("[data-back]").onclick = () => { companyKey = null; render("parcerias") }
                 section.querySelector("[data-new]").onclick = () => {
                     showForm = true
@@ -230,7 +261,7 @@
             if (!showForm) {
                 section.innerHTML = `<div class="commercial-section-title"><div><p class="commercial-eyebrow">EMPRESAS E PESSOAS</p><h2>Parcerias</h2><p>Acompanhe as propostas e abra a ficha de cada parceiro.</p></div><button data-new>Nova proposta</button></div>
                     <label class="commercial-search">Buscar parceria<input type="search" placeholder="Empresa, e-mail ou pacote" value="${escape(search)}"></label>
-                    <div class="commercial-filters" role="group" aria-label="Filtrar parcerias">${[["todas","Todas"],["recentes","Recentes"],["recebidas","Pix recebidos"],["vigentes","Pagas no período"],["pendentes","Pendentes"],["encerradas","Encerradas"]].map(([key,label])=>`<button data-filter="${key}" aria-pressed="${filter===key}">${label}</button>`).join("")}</div>
+                    <div class="commercial-filters" role="group" aria-label="Filtrar parcerias">${[["todas","Todas"],["recentes","Recentes"],["recebidas","Pix recebidos"],["vigentes","Campanhas no ar"],["pendentes","Pendentes"],["encerradas","Encerradas"]].map(([key,label])=>`<button data-filter="${key}" aria-pressed="${filter===key}">${label}</button>`).join("")}</div>
                     <div class="commercial-companies" data-companies></div><p class="commercial-muted">Busca nas 100 propostas mais recentes.</p>`
                 const updateList = () => {
                     const query = search.toLocaleLowerCase("pt-BR")

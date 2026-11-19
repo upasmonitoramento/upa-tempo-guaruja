@@ -1,4 +1,5 @@
 const AreaAds = require('../models/AreaAds')
+const { entitled } = require('./partnerFunding')
 let holidayCalendar, nationalCalendar
 const positionMap = { card: 'card', detalhe: 'detalhe', rodape: 'rodape', banner: 'banner_inferior' }
 const labels = { card: 'Cards das unidades', detalhe: 'Detalhes da unidade', rodape: 'Rodapé', banner: 'Banner' }
@@ -60,7 +61,7 @@ function publicEligible(ad, city = 'guaruja', now = new Date()) {
         ad.dataInicio && new Date(ad.dataInicio) > now || ad.dataFim && new Date(ad.dataFim) <= now) return false
     if (ad.partnership) {
         const p = ad.partnership
-        return p.paymentStatus === 'RECEIVED' && !p.portalPaused && p.publishedRevision === ad.publicationRevision && ad.cities?.includes(city)
+        return entitled(p) && !p.portalPaused && p.publishedRevision === ad.publicationRevision && ad.cities?.includes(city)
     }
     // A deleted campaign must never turn into an unrestricted legacy advertisement.
     return ad.publicationRevision == null && city === 'guaruja'

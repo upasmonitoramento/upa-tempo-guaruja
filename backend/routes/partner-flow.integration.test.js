@@ -34,8 +34,9 @@ test('portal completo: convite, isolamento, artes, revisão, publicação, estor
     await Area.create({ numero: 11, codigo: 'ADS_11', nome: '11', posicao: 'card', larguraPx: 260, alturaPx: 76, status: 'ativo' })
     await Promise.all([User.init(), Account.init(), P.init(), Token.init(), Ad.init(), Sponsor.init(), Area.init()])
     const originalFetch = fetch
-    let providerStatus = 'PENDING', badAmount = false
+    let providerStatus = 'PENDING', badAmount = false, providerCalls = 0
     t.mock.method(global, 'fetch', async (url, options) => {
+        providerCalls++
         assert.equal(url, 'https://api-sandbox.asaas.com/v3/payments/pay_qa', 'Only the known mock payment can be consulted')
         assert.equal(options.method, 'GET', 'This test must never create a payment')
         return Response.json({ id: 'pay_qa', customer: 'cus_qa', externalReference: String(campaign._id), billingType: 'PIX', value: badAmount ? 249 : 250, status: providerStatus, invoiceUrl: 'https://sandbox.asaas.com/i/qa' })
@@ -158,4 +159,60 @@ test('portal completo: convite, isolamento, artes, revisão, publicação, estor
     assert.equal(first.items.length, 10); assert.equal(second.items.length, 3)
     assert.equal(new Set([...first.items, ...second.items].map(item => item.id)).size, 13)
     assert.equal((await call('/parceiros/campanhas?before=invalid', 'GET', null, recoveredToken)).status, 400)
+    // Courtesy grants work even with commercial billing disabled. All data remains in this QA database.
+    const sponsor = await Sponsor.create({ empresaNome: 'Empresa cortesia QA', responsavelNome: 'Titular QA', documentoResponsavel: '00000000000', tipoDocumentoResponsavel: 'cpf', email: 'courtesy@example.test', status: 'ativo' })
+    const body = { sponsor: String(sponsor._id), email: 'partner@example.test', reason: 'Divulgação própria em QA', positions: ['card'], durationDays: 14, confirmed: true }
+    const fundingCalls = providerCalls
+    assert.equal((await call('/admin/parceiros/cortesias', 'POST', body, staffToken)).status, 403)
+    assert.equal((await call('/admin/parceiros/cortesias', 'POST', body, recoveredToken)).status, 401)
+    assert.equal((await call('/admin/parceiros/cortesias', 'POST', { ...body, confirmed: false }, adminToken)).status, 400)
+    const grant = await call('/admin/parceiros/cortesias', 'POST', body, adminToken)
+    assert.equal(grant.status, 201, await grant.clone().text())
+    const courtesyId = (await grant.json()).id, cpath = '/admin/parceiros/campanhas/' + courtesyId
+    let cp = await P.findById(courtesyId)
+    assert.equal(cp.cents, 0); assert.equal(cp.paymentStatus, undefined); assert.equal(cp.paymentId, undefined)
+    assert.equal(String(cp.courtesyGrantedBy), String(admin._id))
+    assert.equal((await call(cpath + '/aprovar', 'POST', {}, adminToken)).status, 400)
+    assert.equal((await call('/comercial/propostas/' + courtesyId + '/pix', 'POST', {}, adminToken)).status, 409)
+    const adminUpload = async revision => { const form = new FormData(); form.append('file', new Blob([small], { type: 'image/png' }), 'cortesia.png'); return originalFetch(origin + cpath + '/artes/' + cp.requirements[0].key + '?revision=' + revision, { method: 'POST', headers: { Authorization: adminToken }, body: form }) }
+    assert.equal((await adminUpload(cp.revision)).status, 200)
+    cp = await P.findById(courtesyId)
+    assert.equal((await call(cpath + '/revisao', 'POST', { revision: cp.revision, destination: 'https://example.test/cortesia' }, adminToken)).status, 200)
+    cp = await P.findById(courtesyId)
+    const oldEnv = process.env.VERCEL_ENV; process.env.VERCEL_ENV = 'production'
+    let courtesyApproval
+    try {
+        const check = await call(cpath + '/preparar-aprovacao', 'POST', { revision: cp.revision }, adminToken)
+        assert.equal(check.status, 200, await check.clone().text()); courtesyApproval = await check.json()
+        assert.equal(courtesyApproval.fundingType, 'courtesy'); assert.equal(courtesyApproval.cents, 0)
+        assert.equal((await call(cpath + '/aprovar', 'POST', { revision: cp.revision, token: courtesyApproval.token, confirmed: true }, adminToken)).status, 200)
+    } finally { if (oldEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = oldEnv }
+    assert.equal(providerCalls, fundingCalls, 'Courtesy must never call Asaas')
+    assert.equal(await Sponsor.countDocuments({ _id: sponsor._id }), 1)
+    assert.equal(await Ad.countDocuments({ partnership: courtesyId }), 1)
+    await Ad.updateMany({ partnership: courtesyId }, { $set: { dataInicio: start, dataFim: end } })
+    await P.updateOne({ _id: courtesyId }, { $set: { campaignStart: start, campaignEnd: end } })
+    let publicRows = await (await call('/anuncios/publicos')).json()
+    assert.ok(publicRows.some(a => String(a.patrocinador._id) === String(sponsor._id)))
+    assert.equal((await call(cpath + '/convite', 'POST', {}, adminToken)).status, 200)
+    const courtesyInvite = letters.at(-1).text.match(/#invite=([a-f\d]{64})/)[1]
+    assert.ok(letters.at(-1).text.includes('cortesia'))
+    assert.equal((await call('/parceiros/link/confirmar', 'POST', { token: courtesyInvite })).status, 409, 'An existing partner account must sign in before binding')
+    assert.equal((await call('/parceiros/link/confirmar', 'POST', { token: courtesyInvite }, recoveredToken)).status, 200)
+    const ownCourtesy = await (await call('/parceiros/campanhas/' + courtesyId, 'GET', null, recoveredToken)).json()
+    assert.equal(ownCourtesy.fundingType, 'courtesy'); assert.equal(ownCourtesy.cents, 0)
+    assert.equal(ownCourtesy.courtesyGrantedBy, undefined)
+    cp = await P.findById(courtesyId)
+    assert.equal((await call(cpath + '/encerrar-cortesia', 'POST', { revision: cp.revision, confirmed: false }, adminToken)).status, 409)
+    assert.equal((await call(cpath + '/encerrar-cortesia', 'POST', { revision: cp.revision, confirmed: true }, staffToken)).status, 403)
+    assert.equal((await call(cpath + '/encerrar-cortesia', 'POST', { revision: cp.revision, confirmed: true }, adminToken)).status, 200)
+    assert.equal((await call(cpath + '/aprovar', 'POST', { revision: cp.revision, token: courtesyApproval.token, confirmed: true }, adminToken)).status, 409)
+    assert.equal((await adminUpload(cp.revision)).status, 409)
+    assert.equal((await call(cpath + '/convite', 'POST', {}, adminToken)).status, 409)
+    publicRows = await (await call('/anuncios/publicos')).json()
+    assert.equal(publicRows.some(a => String(a.patrocinador._id) === String(sponsor._id)), false)
+    const courtesyAreas = await (await call('/areas-ads/publicas')).json()
+    assert.equal(courtesyAreas.some(a => a.anunciosAtuais.some(ad => String(ad.patrocinador._id) === String(sponsor._id))), false)
+    assert.equal(providerCalls, fundingCalls)
+
 })

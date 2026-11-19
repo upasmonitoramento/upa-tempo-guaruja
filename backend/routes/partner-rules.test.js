@@ -42,3 +42,18 @@ test('anúncio exige revisão liberada, cidade, período e valor recebido', () =
     assert.equal(publicEligible(ad, 'santos', now), false)
     assert.equal(publicEligible(ad, 'guaruja', new Date('2026-12-02')), false)
 })
+
+
+test('cortesia exige concessão explícita; revogação e campos falsos não liberam anúncios', async () => {
+    const { entitled, validCourtesy, requireEntitlement } = require('../services/partnerFunding')
+    const grant = { fundingType: 'courtesy', cents: 0, courtesySponsor: 'sponsor', courtesyGrantedBy: 'admin', courtesyGrantedAt: new Date() }
+    assert.equal(validCourtesy(grant), true); assert.equal(entitled(grant), true)
+    for (const change of [{ courtesyRevokedAt: new Date() }, { courtesyGrantedBy: null }, { courtesySponsor: null }, { cents: 500 }, { paymentId: 'fake-payment' }]) {
+        assert.equal(entitled({ ...grant, ...change, paymentStatus: 'RECEIVED' }), false)
+        await assert.rejects(requireEntitlement({ ...grant, ...change }), /cortesia/)
+    }
+    assert.equal(entitled({ fundingType: 'unexpected', paymentStatus: 'RECEIVED' }), false)
+    const ad = { status: 'ativo', patrocinador: { status: 'ativo' }, cities: ['guaruja'], publicationRevision: 1, partnership: { ...grant, publishedRevision: 1 } }
+    assert.equal(publicEligible(ad), true)
+    assert.equal(publicEligible({ ...ad, partnership: { ...ad.partnership, courtesyRevokedAt: new Date() } }), false)
+})

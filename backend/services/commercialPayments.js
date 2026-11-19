@@ -13,6 +13,7 @@ async function asaas(path, method = 'GET', body) {
     return response.json()
 }
 async function refresh(partnership, payment) {
+    if (partnership.fundingType === 'courtesy') throw Object.assign(new Error('Cortesia não possui cobrança.'), { status: 409 })
     if (!payment || (partnership.paymentId && payment.id !== partnership.paymentId) ||
         payment.externalReference !== String(partnership.id || partnership._id) || payment.customer !== partnership.customerId ||
         payment.billingType !== 'PIX' || Math.round(Number(payment.value) * 100) !== partnership.cents) {

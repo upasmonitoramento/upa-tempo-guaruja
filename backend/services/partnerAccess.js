@@ -4,6 +4,7 @@ const Partnership = require('../models/CommercialPartnership')
 const email = require('../config/recoveryEmail')
 const { environment } = require('./commercialPayments')
 const { requirementsFor } = require('./partnerRules')
+const { entitled } = require('./partnerFunding')
 const digest = value => createHash('sha256').update(value).digest('hex')
 function site() {
     const url = new URL(process.env.PUBLIC_SITE_ORIGIN || 'https://upa-tempo-guaruja.vercel.app')
@@ -24,7 +25,7 @@ async function sendAccess(account, kind) {
 }
 async function sendInvite(p, force = false) {
     if (!email.configured()) throw Object.assign(new Error('Conecte o envio de email antes de convidar o parceiro.'), { status: 503 })
-    if (p.paymentStatus !== 'RECEIVED' || !p.accepted || p.portalVersion !== 1 || ![14, 28].includes(p.durationDays)) throw Object.assign(new Error('O convite exige proposta do portal aceita, duração de 14/28 dias e Pix recebido.'), { status: 409 })
+    if (p.portalPaused || !entitled(p) || p.fundingType !== 'courtesy' && !p.accepted || p.portalVersion !== 1 || ![14, 28].includes(p.durationDays)) throw Object.assign(new Error('O convite exige uma parceria elegível, com duração de 14/28 dias e pagamento recebido ou cortesia autorizada.'), { status: 409 })
     if (p.accessSentAt && !force) return
     if (p.accessSentAt && Date.now() - +new Date(p.accessSentAt) < 60000) throw Object.assign(new Error('Aguarde um minuto antes de reenviar o convite.'), { status: 429 })
     const now = new Date()
@@ -35,7 +36,7 @@ async function sendInvite(p, force = false) {
         const requirements = p.requirements?.length ? p.requirements : await requirementsFor(p.positions)
         await Tokens.deleteMany({ partnership: p._id || p.id, kind: 'invite' })
         await Tokens.create({ _id: digest(token), partnership: p._id || p.id, email: p.email, environment: environment(), kind: 'invite', expires: new Date(+now + 60 * 60000) })
-        await email.sendMessage(p.email, 'Conecta Saúde — ative seu portal do parceiro', `O pagamento da parceria ${p.packageName} foi recebido.\n\nValide este email e crie sua senha pelo link abaixo:\n${site()}/parceiro.html#invite=${token}\n\nO link expira em uma hora e funciona uma vez. No portal você poderá enviar suas artes e acompanhar a revisão. O anúncio só será publicado após aprovação.`)
+        await email.sendMessage(p.email, 'Conecta Saúde — ative seu portal do parceiro', `${p.fundingType === 'courtesy' ? 'Uma cortesia foi autorizada para a parceria' : 'O pagamento foi recebido para a parceria'} ${p.packageName}.\n\nValide este email e crie sua senha pelo link abaixo:\n${site()}/parceiro.html#invite=${token}\n\nO link expira em uma hora e funciona uma vez. No portal você poderá enviar suas artes e acompanhar a revisão. O anúncio só será publicado após aprovação.`)
         await Partnership.updateOne({ _id: p._id || p.id }, { $set: { accessSentAt: now, requirements }, $unset: { accessSendingUntil: 1 } })
     } catch (error) {
         await Tokens.deleteOne({ _id: digest(token) })

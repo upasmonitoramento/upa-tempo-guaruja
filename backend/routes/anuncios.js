@@ -120,14 +120,14 @@ router.get("/publicos", async (req, res) => {
         const anuncios = await Anuncio.find({
             status: "ativo"
         })
-            .populate([{ path: 'patrocinador', select: 'empresaNome logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused' }])
+            .populate([{ path: 'patrocinador', select: 'empresaNome logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused fundingType courtesySponsor courtesyGrantedBy courtesyGrantedAt courtesyRevokedAt cents paymentId' }])
             .sort({ createdAt: -1 })
 
         const city = req.query.cidade || 'guaruja'
         if (city !== 'guaruja') return res.status(400).json({ erro: 'Cidade indisponível.' })
         const filtrados = anuncios.filter(anuncio => publicEligible(anuncio, city))
 
-        res.json(filtrados)
+        res.json(filtrados.map(ad => { const row = ad.toObject ? ad.toObject() : { ...ad }; delete row.partnership; return row }))
 
     } catch (err) {
 

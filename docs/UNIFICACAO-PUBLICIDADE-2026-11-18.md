@@ -32,10 +32,20 @@ Revisar todos os pontos antes de liberar: convite, recuperação, envio e revis�
 - Bloqueio das propostas pagas explica que cobranças estão desligadas e aponta para envio manual.
 - Atalho Parcerias da administração passa a se chamar Publicidade, igual ao painel de destino.
 
-## Ainda pendente (não declarar como pronto)
+## Pendências registradas em 18/11 — ver atualização abaixo
 - Unificar efetivamente fichas de patrocinadores/parceiros e cadastro manual dentro do painel, sem transição entre telas antigas.
 - Implementar e testar cortesia em todos os pontos listados; criar o convite real de teste após email conectado.
 - Catálogo de pacotes, automação WhatsApp, renovação e limpeza agendada de arquivos.
 - Remover duplicidades de navegação somente após migração e testes com dados existentes.
 
 O domínio foi adiado pelo usuário para conversar com o pai. Não comprar domínio nem habilitar cobranças reais automaticamente.
+
+## Atualização em 19/11/2026
+
+Concluído: modalidade de cortesia explícita, criação administrativa, referência à empresa existente, motivo/autor/data, envio manual de artes, mesma revisão e aprovação em duas etapas, programação, portal do parceiro e encerramento. Cortesia não depende de ativação comercial do Asaas; pagamentos reais continuam desativados.
+
+Concluído: ferramentas de empresas, anúncios manuais e espaços reutilizadas dentro do painel de publicidade. Formulários existentes também ficam dentro do diálogo ativo; retorno e fechamento restauram a navegação. Não é necessário saltar para Usuários para usar essas ferramentas.
+
+Pendente: ativar email para enviar convite real ao titular, consolidação histórica de todas as peças antigas em campanhas e catálogo/automação/renovação/limpeza. Nenhuma conta de parceiro foi criada sem validação de email, e a arte existente da C7 foi preservada.
+
+Domínio escolhido pelo titular: `conectasaudeofc.com.br`. Disponibilidade informada pelo titular, não equivale a registro. Compra adiada para segunda-feira, 23/11/2026. Nenhuma compra, DNS, mudança de origem ou nova contratação realizada. Após o registro: conectar domínio e verificar HTTPS; validar remetente de email, configurar chaves no servidor; enviar convite e conferir entrega/ativação real. Não ativar cobranças reais por causa da compra do domínio.

@@ -1,6 +1,6 @@
 # Portal do parceiro — Conecta Saúde
 
-Implementado em 18/11/2026. Entrada: `/parceiro.html`; também disponível por Conta → Portal do parceiro e pelo formulário de login. O mesmo portal é incluído no build dos aplicativos.
+Implementado em 18/11/2026; atualizado em 19/11/2026 com cortesias e ferramentas manuais integradas. Entrada: `/parceiro.html`; também disponível por Conta → Portal do parceiro e pelo formulário de login. O mesmo portal é incluído no build dos aplicativos.
 
 ## Organização das telas
 
@@ -64,3 +64,15 @@ Fontes do calendário: [Registro nacional de 2026](https://www.gov.br/gestao/pt-
 - Os testes não equivalem à entrega de email real nem à homologação em aparelho físico/lojas.
 
 Executar `npm test`; a integração real isolada é opt-in: `PARTNER_INTEGRATION_LOCAL=1 node --test backend/routes/partner-flow.integration.test.js`. Nunca apontar os modelos para o banco principal do projeto durante esse teste: o script gera e verifica seu próprio nome de banco QA antes de removê-lo.
+
+## Cortesias — atualização de 19/11/2026
+
+Entrada: Publicidade → Campanhas → Nova cortesia. Escolher empresa ativa existente, email de acesso, motivo, duração de 14/28 dias e posições; confirmar autorização sem cobrança. O cadastro de empresas e as ferramentas manuais abrem dentro da própria publicidade, com retorno e restauração do painel ao sair.
+
+A cortesia fica separada de `paymentStatus` e não cria Pix, não consulta o Asaas nem registra recebimento inventado. O servidor guarda empresa, administrador concedente, data e motivo. O administrador envia as artes no mesmo detalhe da campanha, envia para revisão e confirma a publicação em duas etapas. O primeiro período começa no próximo dia útil após aprovação, respeitando o calendário existente; substituição de arte não adiciona dias. Encerrar cortesia exige confirmação e revisão atual; bloqueia envios, convites e novas exibições nas consultas públicas. Uma tela pública já aberta depende da próxima atualização para refletir o encerramento.
+
+O parceiro pode receber convite por email para a mesma campanha gratuita, sem criar uma segunda conta administradora. A conta de parceiro continua separada e exige validação do email. Sem o serviço de email conectado, a administração manual da cortesia funciona, mas os convites reais não são enviados.
+
+O cadastro antigo de patrocinador é reutilizado na cortesia por referência, sem duplicação de empresa. A arte já publicada da C7 não foi substituída nem migrada automaticamente. As peças antigas continuam nas ferramentas manuais; a consolidação histórica de todos os anúncios antigos em campanhas é uma etapa posterior, que deve preservar seus períodos e relações.
+
+Testes: pagamento e cortesia completos em MongoDB QA isolado/removido; chamada ao Asaas monitorada para garantir zero consultas na cortesia; produção simulada com cobrança desativada; permissões, cadastro, upload, revisão, aprovação, convite vinculado a conta existente, revogação, endpoints públicos e preservação da empresa existente. Interface testada em 320/390/1440 pixels, build nativo e WebKit/Safari; criação/upload/aprovação de cortesia no celular e computador; edição manual dentro do diálogo, retorno e Escape para fechar apenas o editor.

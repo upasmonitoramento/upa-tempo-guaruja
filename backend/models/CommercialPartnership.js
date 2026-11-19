@@ -3,6 +3,10 @@ const Asset = new mongoose.Schema({ key: String, url: String, storageKey: String
 const Requirement = new mongoose.Schema({ key: String, position: String, label: String, width: Number, height: Number, codes: [String] }, { _id: false })
 const Schema = new mongoose.Schema({
     company: String, email: String, packageName: String, cities: [String],
+    fundingType: { type: String, enum: ['paid', 'courtesy'], default: 'paid' },
+    courtesySponsor: { type: mongoose.Schema.Types.ObjectId, ref: 'Patrocinador' },
+    courtesyGrantedBy: mongoose.Schema.Types.ObjectId, courtesyGrantedAt: Date, courtesyReason: String,
+    courtesyRevokedAt: Date, courtesyRevokedBy: mongoose.Schema.Types.ObjectId,
     positions: [String], start: String, end: String, due: String, cents: Number,
     terms: String, expires: Date, tokenHash: String,
     accepted: Date, representative: String, document: String,

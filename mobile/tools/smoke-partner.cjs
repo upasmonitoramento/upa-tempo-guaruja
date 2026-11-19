@@ -59,10 +59,12 @@ async function fixtures(context, p, image) {
             p.revision++; p.reviewState = 'draft'
             return json({ asset: p.assets[0], revision: p.revision })
         }
-        if (u.pathname === '/parceiros/campanhas/' + p.id + '/revisao') { p.destination = req.postDataJSON().destination; p.reviewState = 'pending'; p.revision++; return json({ msg: 'Artes enviadas para revisão.' }) }
+        if (u.pathname.endsWith('/campanhas/' + p.id + '/revisao')) { p.destination = req.postDataJSON().destination; p.reviewState = 'pending'; p.revision++; return json({ msg: 'Artes enviadas para revisão.' }) }
+        if (u.pathname === '/admin/parceiros/empresas') return json({ items: [{ _id: '692000000000000000000003', empresaNome: 'Empresa de exemplo' }] })
+        if (u.pathname === '/admin/parceiros/cortesias') { assert.equal(req.postDataJSON().confirmed, true); return json({ id: p.id }, 201) }
         if (u.pathname === '/admin/parceiros/revisoes') return json({ items: [{ ...p, _id: p.id }], next: null })
         if (u.pathname === '/admin/parceiros/campanhas/' + p.id) return json({ ...p, _id: p.id, email: account.email })
-        if (u.pathname.endsWith('/preparar-aprovacao')) return json({ token: 'b'.repeat(64), start: '2026-11-19T03:00:00Z', end: '2026-12-03T03:00:00Z', cents: p.cents, company: p.company, packageName: p.packageName, cities: p.cities, formats: 1, paymentStatus: 'RECEIVED' })
+        if (u.pathname.endsWith('/preparar-aprovacao')) return json({ token: 'b'.repeat(64), start: '2026-11-19T03:00:00Z', end: '2026-12-03T03:00:00Z', cents: p.cents, company: p.company, packageName: p.packageName, cities: p.cities, formats: 1, paymentStatus: p.paymentStatus, fundingType: p.fundingType || 'paid' })
         if (u.pathname.endsWith('/aprovar')) {
             assert.equal(req.postDataJSON().confirmed, true); approvals++; p.reviewState = 'approved'; p.campaignStart = '2026-11-19T03:00:00Z'; p.campaignEnd = '2026-12-03T03:00:00Z'
             return json({ msg: 'Campanha aprovada e programada.' })
@@ -133,11 +135,12 @@ async function check(browser, kind, width) {
         console.log(`${kind} ${width}px: partner login, navigation, drafts, upload, review, account and invitation OK`)
     } finally { await context.close(); await new Promise(resolve => server.close(resolve)) }
 }
-async function admin(browser, width) {
+async function admin(browser, width, courtesy = false) {
     const { server, origin } = await serverFor('web'), context = await browser.newContext({ viewport: { width, height: 1000 }, serviceWorkers: 'block' })
     const page = await context.newPage(), p = campaign()
     page.setDefaultTimeout(8000)
-    p.assets = [{ key: p.requirements[0].key, url: 'https://media.example.test/original.webp', thumbnailUrl: 'https://media.example.test/thumbnail.webp', type: 'imagem', width: 260, height: 76, bytes: 1024 }]; p.reviewState = 'pending'; p.revision = 2
+    p.assets = [{ key: p.requirements[0].key, url: 'https://media.example.test/original.webp', thumbnailUrl: 'https://media.example.test/thumbnail.webp', type: 'imagem', width: 260, height: 76, bytes: 1024 }]; p.reviewState = courtesy ? 'draft' : 'pending'; p.revision = 2
+    if (courtesy) { p.fundingType = 'courtesy'; p.cents = 0; delete p.paymentStatus; p.assets = [] }
     const image = await sharp({ create: { width: 260, height: 76, channels: 3, background: '#1554b5' } }).png().toBuffer()
     const f = await fixtures(context, p, image)
     try {
@@ -150,7 +153,24 @@ async function admin(browser, width) {
             document.body.innerHTML = '<main class="commercial"><section id="reviewSection"></section><p id="reviewMessage" role="status"></p></main>'
             window.renderPartnerReviews(document.getElementById('reviewSection'), { message: text => { document.getElementById('reviewMessage').textContent = text } })
         })
-        await page.getByRole('button', { name: 'Abrir ficha e artes' }).click()
+        if (courtesy) {
+            await page.getByRole('button', { name: 'Nova cortesia', exact: true }).click()
+            await page.getByRole('heading', { name: 'Nova cortesia', exact: true }).waitFor()
+            await page.locator('select[name=sponsor]').selectOption('692000000000000000000003')
+            await page.getByLabel('Email do parceiro').fill('partner@example.test')
+            await page.getByLabel('Motivo da cortesia').fill('Divulgação própria de teste')
+            await page.getByRole('checkbox', { name: 'Cards das unidades' }).check()
+            await page.getByRole('checkbox', { name: 'Autorizo esta cortesia', exact: false }).check()
+            await page.getByRole('button', { name: 'Criar cortesia', exact: true }).click()
+            await page.getByRole('heading', { name: 'Enviar artes pelo administrador' }).waitFor()
+            await page.getByLabel('Link do anúncio (opcional)').fill('https://example.test/courtesy')
+            await page.locator('[data-upload]').setInputFiles({ name: 'arte.png', mimeType: 'image/png', buffer: image })
+            await page.getByText('Arte validada e salva.', { exact: false }).waitFor()
+            assert.equal(await page.getByLabel('Link do anúncio (opcional)').inputValue(), 'https://example.test/courtesy')
+            await page.screenshot({ path: path.join(output, `admin-${width}-cortesia.png`), fullPage: true })
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+            await page.getByRole('button', { name: 'Enviar para revisão', exact: true }).click()
+        } else await page.getByRole('button', { name: 'Abrir ficha e artes' }).click()
         await page.getByRole('button', { name: 'Aprovar e conferir programação' }).waitFor()
         await page.screenshot({ path: path.join(output, `admin-${width}-revisao.png`), fullPage: true })
         await page.getByRole('button', { name: 'Aprovar e conferir programação' }).click()
@@ -165,13 +185,13 @@ async function admin(browser, width) {
         await page.getByText('Campanha aprovada e programada.', { exact: true }).waitFor()
         assert.equal(f.approvals(), 1)
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
-        console.log(`admin ${width}px: two-stage approval requires explicit final confirmation OK`)
+        console.log(`admin ${width}px${courtesy ? ' courtesy' : ''}: two-stage approval requires explicit final confirmation OK`)
     } finally { await context.close(); await new Promise(resolve => server.close(resolve)) }
 }
 async function main() {
     await fs.mkdir(output, { recursive: true })
     const browser = await chromium.launch({ channel: 'chrome' })
-    try { for (const width of [320, 390, 1440]) await check(browser, 'web', width); await check(browser, 'native', 390); for (const width of [390, 1440]) await admin(browser, width) }
+    try { for (const width of [320, 390, 1440]) await check(browser, 'web', width); await check(browser, 'native', 390); for (const width of [390, 1440]) { await admin(browser, width); await admin(browser, width, true) } }
     finally { await browser.close() }
     if (process.env.PARTNER_TEST_WEBKIT === '1') { const safari = await webkit.launch(); try { await check(safari, 'web', 390) } finally { await safari.close() } }
 }

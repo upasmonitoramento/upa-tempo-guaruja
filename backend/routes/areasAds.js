@@ -243,7 +243,7 @@ function filtrarAnunciosValidos(lista, city) {
 }
 
 async function buscarAreaCompleta(query, publicView = false) {
-    const children = [{ path: 'patrocinador', select: publicView ? 'empresaNome logo status' : 'empresaNome responsavelNome email logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused' }]
+    const children = [{ path: 'patrocinador', select: publicView ? 'empresaNome logo status' : 'empresaNome responsavelNome email logo status' }, { path: 'partnership', select: 'paymentStatus publishedRevision portalPaused fundingType courtesySponsor courtesyGrantedBy courtesyGrantedAt courtesyRevokedAt cents paymentId' }]
     return AreaAds.find(query)
         .populate({ path: "anuncioAtual", populate: children })
         .populate({ path: "anunciosAtuais", populate: children })
@@ -262,6 +262,7 @@ router.get("/publicas", async (req, res) => {
             if (obj.anunciosAtuais.length === 0 && publicEligible(obj.anuncioAtual, city)) {
                 obj.anunciosAtuais = [obj.anuncioAtual]
             }
+            obj.anunciosAtuais.forEach(ad => { delete ad.partnership })
             obj.anuncioAtual = null
             return obj
         })

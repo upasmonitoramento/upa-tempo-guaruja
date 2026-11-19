@@ -92,6 +92,7 @@ router.post("/propostas/:id/pix", requireAdmin, async (req, res) => {
     if (!apiKey()) return res.status(503).json({ erro: "Configure a chave do Asaas." })
     const p = await Partnership.findOne({ _id: req.params.id, accepted: { $ne: null } })
     if (!p) return res.status(409).json({ erro: "A proposta precisa ser aceita antes da cobrança." })
+    if (p.fundingType === 'courtesy') return res.status(409).json({ erro: 'Cortesia não gera cobrança.' })
     if (p.paymentId) {
         await refresh(p, await asaas("/payments/" + encodeURIComponent(p.paymentId)))
         return res.json({ ok: true })

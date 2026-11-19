@@ -60,7 +60,7 @@
     }
     function badge(p) {
         if (p.portalPaused) return ['Pausada pela equipe', 'warning']
-        if (p.paymentStatus !== 'RECEIVED') return ['Pagamento em verificação', 'warning']
+        if (p.fundingType !== 'courtesy' && p.paymentStatus !== 'RECEIVED') return ['Pagamento em verificação', 'warning']
         if (p.campaignEnd && new Date(p.campaignEnd) <= new Date()) return ['Encerrada', 'neutral']
         if (p.reviewState === 'pending') return ['Em revisão', 'neutral']
         if (p.reviewState === 'changes') return ['Ajustes solicitados', 'warning']
@@ -94,14 +94,14 @@
                 const [label, tone] = badge(p), invoice = safeInvoice(p.paymentUrl)
                 const endsSoon = p.campaignEnd && +new Date(p.campaignEnd) - Date.now() <= 2 * 86400000 && new Date(p.campaignEnd) > new Date()
                 return `<article class="partner-card" data-campaign="${esc(p.id)}"><div class="partner-card-top"><div><h2>${esc(p.company)}</h2><p>${esc(p.packageName)}</p></div><span class="partner-badge ${tone}">${label}</span></div>
-                    <div class="partner-meta"><span>${esc(p.cities.join(' · '))}</span><span>${p.durationDays || '—'} dias</span><span>${money(p.cents)}</span></div>
+                    <div class="partner-meta"><span>${esc(p.cities.join(' · '))}</span><span>${p.durationDays || '—'} dias</span><span>${p.fundingType === 'courtesy' ? 'Cortesia · sem cobrança' : money(p.cents)}</span></div>
                     ${endsSoon ? `<p class="partner-note warning">Seu período está terminando. Solicite a renovação para continuar anunciando.</p>` : ''}
                     ${p.renewalRequestedAt ? '<p class="partner-note">Pedido de renovação recebido pela equipe.</p>' : ''}
                     <button type="button" class="primary" data-art="${esc(p.id)}">${p.reviewState === 'draft' || p.reviewState === 'changes' ? 'Enviar ou ajustar artes' : 'Ver artes e revisão'}</button>
-                    <details><summary>Período e pagamento</summary><dl class="partner-dl"><div><dt>Início</dt><dd>${date(p.campaignStart)}</dd></div><div><dt>Último dia</dt><dd>${date(p.campaignEnd, true)}</dd></div><div><dt>Pagamento</dt><dd>${paymentLabel(p.paymentStatus)}</dd></div><div><dt>Pacote</dt><dd>${esc(p.packageName)}</dd></div></dl>
-                    <p class="muted">O primeiro período começa no próximo dia útil após o recebimento do pagamento e a aprovação das artes. Alterar a arte não renova o período.</p>
-                    <div class="partner-actions">${invoice && !native() ? `<a class="partner-button" href="${esc(invoice)}" target="_blank" rel="noopener noreferrer">Ver cobrança</a>` : ''}<button type="button" data-payment="${esc(p.id)}">Conferir pagamento</button>${p.campaignEnd && !p.renewalRequestedAt ? `<button type="button" data-renew="${esc(p.id)}">Solicitar renovação</button>` : ''}</div></details></article>`
-            }).join('')}</div>` : '<div class="partner-empty"><h2>Nenhuma campanha nesta lista</h2><p>As campanhas aparecem após a confirmação do pagamento e a validação do convite enviado ao seu email.</p></div>') +
+                    <details><summary>${p.fundingType === 'courtesy' ? 'Período da cortesia' : 'Período e pagamento'}</summary><dl class="partner-dl"><div><dt>Início</dt><dd>${date(p.campaignStart)}</dd></div><div><dt>Último dia</dt><dd>${date(p.campaignEnd, true)}</dd></div><div><dt>Pagamento</dt><dd>${p.fundingType === 'courtesy' ? 'Cortesia autorizada' : paymentLabel(p.paymentStatus)}</dd></div><div><dt>Pacote</dt><dd>${esc(p.packageName)}</dd></div></dl>
+                    <p class="muted">O primeiro período começa no próximo dia útil após ${p.fundingType === 'courtesy' ? 'a autorização da cortesia e a aprovação das artes' : 'o recebimento do pagamento e a aprovação das artes'}. Alterar a arte não renova o período.</p>
+                    <div class="partner-actions">${invoice && !native() ? `<a class="partner-button" href="${esc(invoice)}" target="_blank" rel="noopener noreferrer">Ver cobrança</a>` : ''}${p.fundingType === 'courtesy' ? '' : `<button type="button" data-payment="${esc(p.id)}">Conferir pagamento</button>`}${p.campaignEnd && !p.renewalRequestedAt ? `<button type="button" data-renew="${esc(p.id)}">Solicitar renovação</button>` : ''}</div></details></article>`
+            }).join('')}</div>` : '<div class="partner-empty"><h2>Nenhuma campanha nesta lista</h2><p>As campanhas aparecem após pagamento recebido ou cortesia autorizada, com validação do convite enviado ao seu email.</p></div>') +
             `${state.pages.length || state.next ? `<div class="partner-pagination"><button type="button" data-previous ${!state.pages.length ? 'disabled' : ''}>Anterior</button><button type="button" data-next ${!state.next ? 'disabled' : ''}>Próxima</button></div>` : ''}`
         content.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => action(b, async () => { state.filter = b.dataset.filter; state.before = null; state.pages = []; await loadCampaigns(); render(); message() }))
         content.querySelectorAll('[data-art]').forEach(b => b.onclick = () => { state.selected = b.dataset.art; state.tab = 'artes'; message(); render(); window.scrollTo({ top: 0 }) })
@@ -122,7 +122,7 @@
         content.innerHTML = title('Artes e revisão', 'Envie somente os formatos incluídos na sua parceria.')
         const p = state.items.find(item => item.id === state.selected)
         if (!p) { content.insertAdjacentHTML('beforeend', '<div class="partner-empty"><h2>Selecione uma campanha</h2><p>Abra uma campanha na primeira aba para enviar suas artes.</p></div>'); return }
-        const locked = p.reviewState === 'pending' || p.portalPaused || p.paymentStatus !== 'RECEIVED' || p.campaignEnd && new Date(p.campaignEnd) <= new Date()
+        const locked = p.reviewState === 'pending' || p.portalPaused || p.fundingType !== 'courtesy' && p.paymentStatus !== 'RECEIVED' || p.campaignEnd && new Date(p.campaignEnd) <= new Date()
         const requirements = p.requirements || [], assets = p.assets || []
         const missing = requirements.filter(r => !assets.some(a => a.key === r.key)).length
         const [label, tone] = badge(p)
@@ -189,7 +189,7 @@
             content.querySelector('form').onsubmit = event => { event.preventDefault(); action(event.submitter, async () => { const data = await request('/acesso/solicitar', { method: 'POST', authenticated: false, body: { email: event.target.elements.email.value } }); message(data.msg) }) }
             return
         }
-        authFrame('Entrar como parceiro', 'Seu acesso é separado das contas da equipe do portal.', `<form class="partner-form" id="partnerLogin"><label>Email<input name="email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false"></label><label>Senha<div class="partner-field-row"><input name="password" type="password" required autocomplete="current-password" aria-label="Senha"><button type="button" data-show aria-label="Mostrar senha">Ver</button></div></label><button type="submit" class="primary">Entrar</button><button type="button" class="partner-text-button" data-recover>Esqueci minha senha ou ainda não recebi acesso</button></form>${!state.config.emailReady ? '<p class="partner-note">O envio de convites por email está sendo conectado. Não é preciso criar uma conta antes do pagamento.</p>' : '<p class="muted partner-section">Primeiro acesso? Use o convite enviado ao seu email após o pagamento. Confira também o spam.</p>'}`)
+        authFrame('Entrar como parceiro', 'Seu acesso é separado das contas da equipe do portal.', `<form class="partner-form" id="partnerLogin"><label>Email<input name="email" type="email" required autocomplete="username" autocapitalize="none" spellcheck="false"></label><label>Senha<div class="partner-field-row"><input name="password" type="password" required autocomplete="current-password" aria-label="Senha"><button type="button" data-show aria-label="Mostrar senha">Ver</button></div></label><button type="submit" class="primary">Entrar</button><button type="button" class="partner-text-button" data-recover>Esqueci minha senha ou ainda não recebi acesso</button></form>${!state.config.emailReady ? '<p class="partner-note">O envio de convites por email está sendo conectado. O acesso será liberado por convite para uma parceria paga ou cortesia.</p>' : '<p class="muted partner-section">Primeiro acesso? Use o convite enviado ao seu email após pagamento recebido ou cortesia autorizada. Confira também o spam.</p>'}`)
         content.querySelector('[data-show]').onclick = event => { const input = content.querySelector('[name=password]'); input.type = input.type === 'password' ? 'text' : 'password'; event.currentTarget.textContent = input.type === 'password' ? 'Ver' : 'Ocultar' }
         content.querySelector('[data-recover]').onclick = () => { message(); renderAuth(true) }
         content.querySelector('form').onsubmit = event => { event.preventDefault(); action(event.submitter, async () => {
